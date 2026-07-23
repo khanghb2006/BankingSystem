@@ -198,7 +198,7 @@ Future improvements include :
 * QR Payment
 * Credit Card Management
 * Multi-factor Authencation(MFA)
-* Investment and Savings Accounts
+* Investment and Savingss Accounts
 * Mobile Application
 * AI-based Fraund Detection
 * Real-time Notification via WebSocket

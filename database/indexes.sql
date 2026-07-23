@@ -54,7 +54,7 @@ create index IX_Loan_CustomerID on Loan(customer_id);
 create index IX_Loan_Status on Loan(status);
 go
 
-/* Saving Account */
+/* Savings Account */
 create index IX_SavingAccount_CustomerID on SavingAccount(deposit_account_id);
 create index IX_SavingAccount_Status on SavingAccount(status);
 go

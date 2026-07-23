@@ -143,7 +143,7 @@ create table OTP (
     otp_id nchar(10) primary key,
     customer_id nchar(10),
     otp_code nchar(6),
-    purpose nvarchar(50),
+    purpose nvarchar(20),
     expired_at datetime,
     verified bit,
     created_at datetime
