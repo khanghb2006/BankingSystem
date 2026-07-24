@@ -1,7 +1,7 @@
 /*
 =============================================
     Banking System Database Schema
-    Author : Khang Huynh Bao
+    Author : Huynh Bao Khang
     Description : Create all database tables
 */
 
