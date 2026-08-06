@@ -6,180 +6,180 @@
 ======================================================
 */
 
-use BankingSystem
-go
+USE BankingSystem
+GO
 
 -- Account Role
-insert into AccountRole
+INSERT INTO AccountRole
     (role_name, description)
-values
+VALUES
     ('Admin', 'System Administrator'),
     ('Customer', 'Bank Customer'),
     ('Employee', 'Bank Employee');
-go
+GO
 
 -- Account Status
-insert into AccountStatus
+INSERT INTO AccountStatus
     (status_name , description)
-values
+VALUES
     ('Active', 'Account is active'),
     ('Disabled', 'Account is disabled'),
     ('Locked', 'Account is locked');
-go
+GO
 
 -- Customer Status 
-insert into CustomerStatus
+INSERT INTO CustomerStatus
     (status_name, description)
-values
+VALUES
     ('Active', 'Customer is active'),
     ('Inactive', 'Customer is inactive');
 
 -- Employee Position
-insert into EmployeePosition
+INSERT INTO EmployeePosition
     (position_name, description)
-values
+VALUES
     ('Manager', 'Branch Manager'),
     ('Teller', 'Bank Teller'),
     ('Loan Officer', 'Loan Officer'),
     ('Customer Service', 'Customer Service Representative');
-go 
+GO 
 
 -- Employee Status
-insert into EmployeeStatus
+INSERT INTO EmployeeStatus
     (status_name, description)
-values
+VALUES
     ('Active', 'Employee is active'),
     ('On Leave', 'Employee is on leave'),
     ('Resigned', 'Employee has resigned');
-go
+GO
 
 -- Branch Status
-insert into BranchStatus
+INSERT INTO BranchStatus
     (status_name, description)
-values
+VALUES
     ('Active', 'Branch is active'),
     ('Closed', 'Branch is closed');
-go
+GO
 
 -- Banking Account Type
-insert into BankingAccountType
+INSERT INTO BankingAccountType
     (type_name, description)
-values
+VALUES
     ('Savings', 'Savings Account'),
     ('Checking', 'Checking Account'),
     ('Business', 'Business Account');
-go
+GO
 
 -- Banking Account Status
-insert into BankingAccountStatus
+INSERT INTO BankingAccountStatus
     (status_name, description)
-values
+VALUES
     ('Active', 'Banking account is active'),
     ('Frozen', 'Banking account is frozen'),
     ('Closed', 'Banking account is closed');
-go
+GO
 
 -- Currency
-insert into Currency
+INSERT INTO Currency
     (currency_code, currency_name, symbol)
-values
+VALUES
     ('USD', 'United States Dollar', '$'),
     ('EUR', 'Euro', '€'),
     ('GBP', 'British Pound Sterling', '£'),
     ('JPY', 'Japanese Yen', '¥'),
     ('VND', 'Vietnamese Dong', '₫');
-go
+GO
 
 -- Card Type
-insert into CardType
+INSERT INTO CardType
     (type_name, description)
-values
+VALUES
     ('Debit', 'Debit Card'),
     ('Credit', 'Credit Card');
-go
+GO
 
 -- Card Status 
-insert into CardStatus
+INSERT INTO CardStatus
     (status_name, description)
-values
+VALUES
     ('Active', 'Card is active'),
     ('Blocked', 'Card is blocked'),
     ('Expired', 'Card is expired');
-go
+GO
 
 -- Transaction Type
-insert into TransactionType
+INSERT INTO TransactionType
     (type_name, description)
-values
+VALUES
     ('Deposit', 'Deposit transaction'),
     ('Withdrawal', 'Withdrawal transaction'),
     ('Transfer', 'Transfer transaction'),
     ('Payment', 'Payment transaction');
-go
+GO
 
 -- Transaction Status
-insert into TransactionStatus
+INSERT INTO TransactionStatus
     (status_name, description)
-values
+VALUES
     ('Pending', 'Transaction is pending'),
     ('Successful', 'Transaction is successful'),
     ('Canceled', 'Transaction has been canceled'),
     ('Failed', 'Transaction has failed');
-go
+GO
 
 -- Loan Type
-insert into LoanType
+INSERT INTO LoanType
     (type_name, description)
-values
+VALUES
     ('Personal', 'Personal Loan'),
     ('Home', 'Home Loan'),
     ('Auto', 'Auto Loan'),
     ('Education', 'Education Loan');
-go
+GO
 
 -- Loan Status
-insert into LoanStatus
+INSERT INTO LoanStatus
     (status_name, description)
-values
+VALUES
     ('Pending', 'Loan application is pending'),
     ('Approved', 'Loan application is approved'),
     ('Rejected', 'Loan application is rejected'),
     ('Disbursed', 'Loan has been disbursed'),
     ('Closed', 'Loan has been closed');
-go
+GO
 
 -- Saving Account Status
-insert into SavingAccountStatus
+INSERT INTO SavingAccountStatus
     (status_name, description)
-values
+VALUES
     ('Active', 'Saving account is active'),
     ('Matured', 'Saving account has matured'),
     ('Closed', 'Saving account is closed');
-go
+GO
 
 -- Notification Type
-insert into NotificationType
+INSERT INTO NotificationType
     (type_name, description)
-values
+VALUES
     ('System', 'System Notification'),
     ('Transaction', 'Transaction Notification'),
     ('OTP', 'One-Time Password Notification');
-go
+GO
 
 -- OTP Purpose
-insert into OTPPurpose
+INSERT INTO OTPPurpose
     (purpose_name, description)
-values
+VALUES
     ('Login', 'OTP for login verification'),
     ('Register', 'OTP for account registration'),
     ('Transaction', 'OTP for transaction verification'),
     ('Verify Email', 'OTP for email verification'),
     ('PasswordReset', 'OTP for password reset');
-go
+GO
 
 -- Login History Status
-insert into LoginHistoryStatus
+INSERT INTO LoginHistoryStatus
     (status_name, description)
-values
+VALUES
     ('Successful', 'Login attempt was successful'),
     ('Failed', 'Login attempt failed');
