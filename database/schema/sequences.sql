@@ -6,8 +6,8 @@
 ======================================================
 */
 
-use BankingSystem;
-go
+USE BankingSystem;
+GO
 
 /* 
 ------------------------------------------------------
@@ -17,11 +17,11 @@ go
         CIF000002
 ------------------------------------------------------
 */
-create sequence seq_CustomerID
+CREATE SEQUENCE seq_CustomerID
     as int
     start with 1
     increment by 1
-go
+GO
 
 /*
 ------------------------------------------------------
@@ -31,11 +31,11 @@ go
         EMP000002
 ------------------------------------------------------
 */
-create sequence seq_EmployeeID
+CREATE SEQUENCE seq_EmployeeID
     as int
     start with 1
     increment by 1
-go
+GO
 
 /* 
 ------------------------------------------------------
@@ -45,9 +45,9 @@ go
         BR000002
 ------------------------------------------------------
 */
-create sequence seq_BranchID
+CREATE SEQUENCE seq_BranchID
     as int
     start with 1
     increment by 1
-go
+GO
 

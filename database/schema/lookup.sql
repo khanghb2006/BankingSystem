@@ -6,156 +6,156 @@
 ========================================
 */
 
-use BankingSystem
-go
+USE BankingSystem
+GO
 
 -- Account Role
-create table AccountRole (
-    role_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE AccountRole (
+    role_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Account Status
-create table AccountStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE AccountStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Customer Status
-create table CustomerStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE CustomerStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
 
 -- Employee Position
-create table EmployeePosition (
-    position_name varchar(50) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE EmployeePosition (
+    position_name VARCHAR(50) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Employee Status
-create table EmployeeStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE EmployeeStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Branch Status
-create table BranchStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE BranchStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Banking Account Type
-create table BankingAccountType (
-    type_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE BankingAccountType (
+    type_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 --Banking Account Status
-create table BankingAccountStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE BankingAccountStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Currency 
-create table Currency (
-    currency_code varchar(10) primary key,
-    currency_name nvarchar(50),
-    symbol nvarchar(10),
-    is_active bit not null default 1
+CREATE TABLE Currency (
+    currency_code VARCHAR(10) PRIMARY KEY,
+    currency_name NVARCHAR(50),
+    symbol NVARCHAR(10),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go 
+GO 
 
 -- Card Type
-create table CardType (
-    type_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE CardType (
+    type_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Card Status
-create table CardStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE CardStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Transaction Type
-create table TransactionType (
-    type_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE TransactionType (
+    type_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Transaction Status
-create table TransactionStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE TransactionStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Loan Type 
-create table LoanType (
-    type_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE LoanType (
+    type_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Loan Status
-create table LoanStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE LoanStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Saving Account Status
-create table SavingAccountStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE SavingAccountStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Notification Type
-create table NotificationType (
-    type_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE NotificationType (
+    type_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- OTP Purpose
-create table OTPPurpose (
-    purpose_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE OTPPurpose (
+    purpose_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );
-go
+GO
 
 -- Login History Status
-create table LoginHistoryStatus (
-    status_name varchar(20) primary key,
-    description nvarchar(100),
-    is_active bit not null default 1
+CREATE TABLE LoginHistoryStatus (
+    status_name VARCHAR(20) PRIMARY KEY,
+    description NVARCHAR(100),
+    is_active BIT NOT NULL DEFAULT 1
 );

@@ -1,188 +1,188 @@
 /*
 ======================================================
-    Banking System Database Constraints
+    Banking System Database CONSTRAINTs
     Author : Huynh Bao Khang
-    Description : Foreign key, unique , check constraints 
+    Description : FOREIGN KEY, UNIQUE , CHECK CONSTRAINTS
 ======================================================
 */
 
-use BankingSystem;
-go
+USE BankingSystem;
+GO
 
 /* 
 --------------------------------------------------------
-                Foreign Key Constraints
+                FOREIGN KEY CONSTRAINTS
 --------------------------------------------------------
 */
 
 -- Account
-alter table Account add
-    constraint FK_Account_Role foreign key(role) references AccountRole(role_name),
-    constraint FK_Account_Status foreign key(status) references AccountStatus(status_name);
-go
+ALTER TABLE Account ADD
+    CONSTRAINT FK_Account_Role FOREIGN KEY(role) REFERENCES AccountRole(role_name),
+    CONSTRAINT FK_Account_Status FOREIGN KEY(status) REFERENCES AccountStatus(status_name);
+GO
 
 -- Customer
-alter table Customer add
-    constraint FK_Customer_Status foreign key(status) references CustomerStatus(status_name),
-    constraint FK_Customer_Account foreign key(account_id) references Account(account_id),
-    constraint FK_Customer_Branch foreign key(branch_id) references Branch(branch_id);
-go
+ALTER TABLE Customer ADD
+    CONSTRAINT FK_Customer_Status FOREIGN KEY(status) REFERENCES CustomerStatus(status_name),
+    CONSTRAINT FK_Customer_Account FOREIGN KEY(account_id) REFERENCES Account(account_id),
+    CONSTRAINT FK_Customer_Branch FOREIGN KEY(branch_id) REFERENCES Branch(branch_id);
+GO
 
 -- Employee
-alter table Employee add
-    constraint FK_Employee_Account foreign key(account_id) references Account(account_id),
-    constraint FK_Employee_Branch foreign key(branch_id) references Branch(branch_id),
-    constraint FK_Employee_Position foreign key(position) references EmployeePosition(position_name),
-    constraint FK_Employee_Status foreign key(status) references EmployeeStatus(status_name);
-go
+ALTER TABLE Employee ADD
+    CONSTRAINT FK_Employee_Account FOREIGN KEY(account_id) REFERENCES Account(account_id),
+    CONSTRAINT FK_Employee_Branch FOREIGN KEY(branch_id) REFERENCES Branch(branch_id),
+    CONSTRAINT FK_Employee_Position FOREIGN KEY(position) REFERENCES EmployeePosition(position_name),
+    CONSTRAINT FK_Employee_Status FOREIGN KEY(status) REFERENCES EmployeeStatus(status_name);
+GO
 
 -- Branch
-alter table Branch add
-    constraint FK_Branch_Status foreign key(status) references BranchStatus(status_name);
-go
+ALTER TABLE Branch ADD
+    CONSTRAINT FK_Branch_Status FOREIGN KEY(status) REFERENCES BranchStatus(status_name);
+GO
 
 -- Banking Account
-alter table BankingAccount add
-    constraint FK_BankingAccount_Customer foreign key(customer_id) references Customer(customer_id),
-    constraint FK_BankingAccount_Type foreign key(account_type) references BankingAccountType(type_name),
-    constraint FK_BankingAccount_Currency foreign key(currency) references Currency(currency_code),
-    constraint FK_BankingAccount_Status foreign key(status) references BankingAccountStatus(status_name);
-go
+ALTER TABLE BankingAccount ADD
+    CONSTRAINT FK_BankingAccount_Customer FOREIGN KEY(customer_id) REFERENCES Customer(customer_id),
+    CONSTRAINT FK_BankingAccount_Type FOREIGN KEY(account_type) REFERENCES BankingAccountType(type_name),
+    CONSTRAINT FK_BankingAccount_Currency FOREIGN KEY(currency) REFERENCES Currency(currency_code),
+    CONSTRAINT FK_BankingAccount_Status FOREIGN KEY(status) REFERENCES BankingAccountStatus(status_name);
+GO
 
 -- Card 
-alter table Card add
-    constraint FK_Card_BankingAccount foreign key(bank_account_id) references BankingAccount(bank_account_id),
-    constraint FK_Card_Type foreign key(card_type) references CardType(type_name),
-    constraint FK_Card_Status foreign key(status) references CardStatus(status_name);
-go
+ALTER TABLE Card ADD
+    CONSTRAINT FK_Card_BankingAccount FOREIGN KEY(bank_account_id) REFERENCES BankingAccount(bank_account_id),
+    CONSTRAINT FK_Card_Type FOREIGN KEY(card_type) REFERENCES CardType(type_name),
+    CONSTRAINT FK_Card_Status FOREIGN KEY(status) REFERENCES CardStatus(status_name);
+GO
 
 -- Transaction
-alter table BankTransaction add
-    constraint FK_BankTransaction_BankingAccount foreign key(from_bank_account_id) references BankingAccount(bank_account_id),
-    constraint FK_BankTransaction_BankingAccount_To foreign key(to_bank_account_id) references BankingAccount(bank_account_id),
-    constraint FK_BankTransaction_Type foreign key(transaction_type) references TransactionType(type_name),
-    constraint FK_BankTransaction_Status foreign key(status) references TransactionStatus(status_name);
-go
+ALTER TABLE BankTransaction ADD
+    CONSTRAINT FK_BankTransaction_BankingAccount FOREIGN KEY(from_bank_account_id) REFERENCES BankingAccount(bank_account_id),
+    CONSTRAINT FK_BankTransaction_BankingAccount_To FOREIGN KEY(to_bank_account_id) REFERENCES BankingAccount(bank_account_id),
+    CONSTRAINT FK_BankTransaction_Type FOREIGN KEY(transaction_type) REFERENCES TransactionType(type_name),
+    CONSTRAINT FK_BankTransaction_Status FOREIGN KEY(status) REFERENCES TransactionStatus(status_name);
+GO
 
 -- Loan 
-alter table Loan add
-    constraint FK_Loan_Customer foreign key(customer_id) references Customer(customer_id),
-    constraint FK_Loan_ApproveBy foreign key(approved_by) references Employee(employee_id),
-    constraint FK_Loan_Type foreign key(loan_type) references LoanType(type_name),
-    constraint FK_Loan_Status foreign key(status) references LoanStatus(status_name);
-go
+ALTER TABLE Loan ADD
+    CONSTRAINT FK_Loan_Customer FOREIGN KEY(customer_id) REFERENCES Customer(customer_id),
+    CONSTRAINT FK_Loan_ApproveBy FOREIGN KEY(approved_by) REFERENCES Employee(employee_id),
+    CONSTRAINT FK_Loan_Type FOREIGN KEY(loan_type) REFERENCES LoanType(type_name),
+    CONSTRAINT FK_Loan_Status FOREIGN KEY(status) REFERENCES LoanStatus(status_name);
+GO
 
 -- Saving Account
-alter table SavingAccount add
-    constraint FK_SavingAccount_Source foreign key(source_bank_account) references BankingAccount(bank_account_id),
-    constraint FK_SavingAccount_Status foreign key(status) references SavingAccountStatus(status_name);
-go
+ALTER TABLE SavingAccount ADD
+    CONSTRAINT FK_SavingAccount_Source FOREIGN KEY(source_bank_account) REFERENCES BankingAccount(bank_account_id),
+    CONSTRAINT FK_SavingAccount_Status FOREIGN KEY(status) REFERENCES SavingAccountStatus(status_name);
+GO
 
 -- Beneficiary
-alter table Beneficiary add
-    constraint FK_Beneficiary_Customer foreign key(customer_id) references Customer(customer_id),
-    constraint FK_Beneficiary_BankingAccount foreign key(bank_account_id) references BankingAccount(bank_account_id);
-go
+ALTER TABLE Beneficiary ADD
+    CONSTRAINT FK_Beneficiary_Customer FOREIGN KEY(customer_id) REFERENCES Customer(customer_id),
+    CONSTRAINT FK_Beneficiary_BankingAccount FOREIGN KEY(bank_account_id) REFERENCES BankingAccount(bank_account_id);
+GO
 
 -- Notification
-alter table Notification add
-    constraint FK_Notification_Title foreign key(title) references NotificationType(type_name),
-    constraint FK_Notification_Customer foreign key(account_id) references Account(account_id);
-go
+ALTER TABLE Notification ADD
+    CONSTRAINT FK_Notification_Title FOREIGN KEY(title) REFERENCES NotificationType(type_name),
+    CONSTRAINT FK_Notification_Customer FOREIGN KEY(account_id) REFERENCES Account(account_id);
+GO
 
 -- OTP
-alter table OTP add
-    constraint FK_OTP_Purpose foreign key(purpose) references OTPPurpose(purpose_name),
-    constraint FK_OTP_Account foreign key(account_id) references Account(account_id);
-go
+ALTER TABLE OTP ADD
+    CONSTRAINT FK_OTP_Purpose FOREIGN KEY(purpose) REFERENCES OTPPurpose(purpose_name),
+    CONSTRAINT FK_OTP_Account FOREIGN KEY(account_id) REFERENCES Account(account_id);
+GO
 
 -- Login History
-alter table LoginHistory add
-    constraint FK_LoginHistory_Status foreign key(status) references LoginHistoryStatus(status_name),
-    constraint FK_LoginHistory_Account foreign key(account_id) references Account(account_id);
-go
+ALTER TABLE LoginHistory ADD
+    CONSTRAINT FK_LoginHistory_Status FOREIGN KEY(status) REFERENCES LoginHistoryStatus(status_name),
+    CONSTRAINT FK_LoginHistory_Account FOREIGN KEY(account_id) REFERENCES Account(account_id);
+GO
 
 /* 
 --------------------------------------------------------
-                Unique Constraints
+                UNIQUE CONSTRAINTS
 --------------------------------------------------------
 */
 
 -- Account
-alter table Account add
-    constraint UQ_Account_Username unique(username),
-    constraint UQ_Account_Email unique(email),
-    constraint UQ_Account_PhoneNumber unique(phone_number);
-go
+ALTER TABLE Account ADD
+    CONSTRAINT UQ_Account_USErname UNIQUE(USErname),
+    CONSTRAINT UQ_Account_Email UNIQUE(email),
+    CONSTRAINT UQ_Account_PhoneNumber UNIQUE(phone_number);
+GO
 
 -- Customer
-alter table Customer add
-    constraint UQ_Customer_CitizenID unique(citizen_id);
-go
+ALTER TABLE Customer ADD
+    CONSTRAINT UQ_Customer_CitizenID UNIQUE(citizen_id);
+GO
 
 -- Employee
-alter table Employee add
-    constraint UQ_Employee_CitizenID unique(citizen_id);
-go
+ALTER TABLE Employee ADD
+    CONSTRAINT UQ_Employee_CitizenID UNIQUE(citizen_id);
+GO
 
 -- BankingAccount
-alter table BankingAccount add
-    constraint UQ_BankingAccount_AccountNumber unique(bank_account_number);
-go
+ALTER TABLE BankingAccount ADD
+    CONSTRAINT UQ_BankingAccount_AccountNumber UNIQUE(bank_account_number);
+GO
 
 -- Card 
-alter table Card add
-    constraint UQ_Card_CardNumber unique(card_number);
-go
+ALTER TABLE Card ADD
+    CONSTRAINT UQ_Card_CardNumber UNIQUE(card_number);
+GO
 
 /* 
 --------------------------------------------------------
-                Check Constraints
+                CHECK CONSTRAINTS
 --------------------------------------------------------
 */
 
 -- Customer 
-alter table Customer add
-    constraint CK_Customer_Gender 
-        check(gender in ('Male', 'Female' , 'Other'));
-go
+ALTER TABLE Customer ADD
+    CONSTRAINT CK_Customer_Gender 
+        CHECK(gender in ('Male', 'Female' , 'Other'));
+GO
 
 -- Employee
-alter table Employee add
-    constraint CK_Employee_Gender 
-        check(gender in ('Male', 'Female' , 'Other'));
-go
+ALTER TABLE Employee ADD
+    CONSTRAINT CK_Employee_Gender 
+        CHECK(gender in ('Male', 'Female' , 'Other'));
+GO
 
 -- Banking Account
-alter table BankingAccount add
-    constraint CK_BankingAccount_Balance 
-        check(
+ALTER TABLE BankingAccount ADD
+    CONSTRAINT CK_BankingAccount_Balance 
+        CHECK(
             balance >= 0
-            and available_balance >= 0
-            and available_balance <= balance
+            AND available_balance >= 0
+            AND available_balance <= balance
         );
-go
+GO
 
 -- Bank Transaction
-alter table BankTransaction add
-    constraint CK_BankTransaction_Amount 
-        check(amount > 0);
-go
+ALTER TABLE BankTransaction ADD
+    CONSTRAINT CK_BankTransaction_Amount 
+        CHECK(amount > 0);
+GO
 
 -- Loan
-alter table Loan add
-    constraint CK_Loan_Amount 
-        check(amount > 0),
-    constraint CK_Loan_InterestRate
-        check(interest_rate >= 0),
-    constraint CK_Loan_Remaining
-        check(remaining_balance >= 0);
-go
+ALTER TABLE Loan ADD
+    CONSTRAINT CK_Loan_Amount 
+        CHECK(amount > 0),
+    CONSTRAINT CK_Loan_InterestRate
+        CHECK(interest_rate >= 0),
+    CONSTRAINT CK_Loan_Remaining
+        CHECK(remaining_balance >= 0);
+GO
 
 -- Saving Account
-alter table SavingAccount add
-    constraint CK_SavingAccount_InterestRate 
-        check(interest_rate >= 0),
-    constraint CK_SavingAccount_Amount 
-        check(deposit_amount > 0);
-go
+ALTER TABLE SavingAccount ADD
+    CONSTRAINT CK_SavingAccount_InterestRate 
+        CHECK(interest_rate >= 0),
+    CONSTRAINT CK_SavingAccount_Amount 
+        CHECK(deposit_amount > 0);
+GO

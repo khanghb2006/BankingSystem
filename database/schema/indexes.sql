@@ -2,106 +2,106 @@
 ======================================================
     Banking System Database Indexes
     Author : Huynh Bao Khang
-    Description : Performance indexes
+    DescriptiON : Performance indexes
 ======================================================
 */
 
-use BankingSystem;
-go
+USE BankingSystem;
+GO
 
 -- Account
-create index IX_Account_Username on Account(username);
-create index IX_Account_Email on Account(email);
-create index IX_Account_PhoneNumber on Account(phone_number);
-create index IX_Account_Role on Account(role);
-create index IX_Account_Status on Account(status);
-create index IX_Account_AccountId on Account(account_id);
-go
+CREATE INDEX IX_Account_USERNAME ON Account(username);
+CREATE INDEX IX_Account_Email ON Account(email);
+CREATE INDEX IX_Account_PhoneNumber ON Account(phone_number);
+CREATE INDEX IX_Account_Role ON Account(role);
+CREATE INDEX IX_Account_Status ON Account(status);
+CREATE INDEX IX_Account_AccountId ON Account(account_id);
+GO
 
 -- Customer
-create index IX_Customer_CustomerId on Customer(customer_id);
-create index IX_Customer_FullName on Customer(full_name);
-create index IX_Customer_CitizenId on Customer(citizen_id);
-create index IX_Customer_Address on Customer(address);
-create index IX_Customer_DOB on Customer(dob);
-go
+CREATE INDEX IX_Customer_CustomerId ON Customer(customer_id);
+CREATE INDEX IX_Customer_FullName ON Customer(full_name);
+CREATE INDEX IX_Customer_CitizenId ON Customer(citizen_id);
+CREATE INDEX IX_Customer_Address ON Customer(address);
+CREATE INDEX IX_Customer_DOB ON Customer(dob);
+GO
 
 -- Employee
-create index IX_Employee_EmployeeId on Employee(employee_id);
-create index IX_Employee_FullName on Employee(full_name);
-create index IX_Employee_CitizenId on Employee(citizen_id);
-create index IX_Employee_Address on Employee(address);
-create index IX_Employee_Position on Employee(position);
-create index IX_Employee_Status on Employee(status);
-create index IX_Employee_DOB on Employee(dob);
-create index IX_Employee_HiredAt on Employee(hired_at);
-go
+CREATE INDEX IX_Employee_EmployeeId ON Employee(employee_id);
+CREATE INDEX IX_Employee_FullName ON Employee(full_name);
+CREATE INDEX IX_Employee_CitizenId ON Employee(citizen_id);
+CREATE INDEX IX_Employee_Address ON Employee(address);
+CREATE INDEX IX_Employee_PositiON ON Employee(positiON);
+CREATE INDEX IX_Employee_Status ON Employee(status);
+CREATE INDEX IX_Employee_DOB ON Employee(dob);
+CREATE INDEX IX_Employee_HiredAt ON Employee(hired_at);
+GO
 
 -- Branch
-create index IX_Branch_BranchId on Branch(branch_id);
-create index IX_Branch_BranchName on Branch(branch_name);
-create index IX_Branch_Address on Branch(address);
-create index IX_Branch_Status on Branch(status);
-go
+CREATE INDEX IX_Branch_BranchId ON Branch(branch_id);
+CREATE INDEX IX_Branch_BranchName ON Branch(branch_name);
+CREATE INDEX IX_Branch_Address ON Branch(address);
+CREATE INDEX IX_Branch_Status ON Branch(status);
+GO
 
 -- Banking Account
-create index IX_BankingAccount_AccountId on BankingAccount(bank_account_id);
-create index IX_BankingAccount_AccountNumber on BankingAccount(bank_account_number);
-create index IX_BankingAccount_Currency on BankingAccount(currency);
-create index IX_BankingAccount_Type on BankingAccount(account_type);
-create index IX_BankingAccount_CloseAt on BankingAccount(closed_at);
-create index IX_BankingAccount_Status on BankingAccount(status);
-go
+CREATE INDEX IX_BankingAccount_AccountId ON BankingAccount(bank_account_id);
+CREATE INDEX IX_BankingAccount_AccountNumber ON BankingAccount(bank_account_number);
+CREATE INDEX IX_BankingAccount_Currency ON BankingAccount(currency);
+CREATE INDEX IX_BankingAccount_Type ON BankingAccount(account_type);
+CREATE INDEX IX_BankingAccount_CloseAt ON BankingAccount(closed_at);
+CREATE INDEX IX_BankingAccount_Status ON BankingAccount(status);
+GO
 
 -- Card 
-create index IX_Card_CardId on Card(card_id);
-create index IX_Card_CardNumber on Card(card_number);
-create index IX_Card_Type on Card(card_type);
-create index IX_Card_ExpiredAt on Card(expired_at);
-create index IX_Card_Status on Card(status);
-go
+CREATE INDEX IX_Card_CardId ON Card(card_id);
+CREATE INDEX IX_Card_CardNumber ON Card(card_number);
+CREATE INDEX IX_Card_Type ON Card(card_type);
+CREATE INDEX IX_Card_ExpiredAt ON Card(expired_at);
+CREATE INDEX IX_Card_Status ON Card(status);
+GO
 
 -- Loan
-create index IX_Loan_LoanId on Loan(loan_id);
-create index IX_Loan_LoanType on Loan(loan_type);
-create index IX_Loan_Status on Loan(status);
-create index IX_Loan_ApprovedBy on Loan(approved_by);
-create index IX_Loan_Duration on Loan(duration_months);
-create index IX_Loan_Amount on Loan(amount);
-go
+CREATE INDEX IX_Loan_LoanId ON Loan(loan_id);
+CREATE INDEX IX_Loan_LoanType ON Loan(loan_type);
+CREATE INDEX IX_Loan_Status ON Loan(status);
+CREATE INDEX IX_Loan_ApprovedBy ON Loan(approved_by);
+CREATE INDEX IX_Loan_Duration ON Loan(duration_months);
+CREATE INDEX IX_Loan_Amount ON Loan(amount);
+GO
 
 -- Saving Account
-create index IX_SavingAccount_SavingId on SavingAccount(saving_id);
-create index IX_SavingAccount_SourceBankAccountId on SavingAccount(source_bank_account_id);
-create index IX_SavingAccount_DepositAmount on SavingAccount(deposit_amount);
-create index IX_SavingAccount_InterestRate on SavingAccount(interest_rate);
-create index IX_SavingAccount_TermMonths on SavingAccount(term_months);
-create index IX_SavingAccount_Status on SavingAccount(status);
-go
+CREATE INDEX IX_SavingAccount_SavingId ON SavingAccount(saving_id);
+CREATE INDEX IX_SavingAccount_SourceBankAccountId ON SavingAccount(source_bank_account_id);
+CREATE INDEX IX_SavingAccount_DepositAmount ON SavingAccount(deposit_amount);
+CREATE INDEX IX_SavingAccount_InterestRate ON SavingAccount(interest_rate);
+CREATE INDEX IX_SavingAccount_TermMMonths ON SavingAccount(term_months);
+CREATE INDEX IX_SavingAccount_Status ON SavingAccount(status);
+GO
 
 -- Beneficiary
-create index IX_Beneficiary_BeneficiaryId on Beneficiary(beneficiary_id);
-create index IX_Beneficiary_Name on Beneficiary(beneficiary_name);
-create index IX_Beneficiary_BankName on Beneficiary(bank_name);
-go 
+CREATE INDEX IX_Beneficiary_BeneficiaryId ON Beneficiary(beneficiary_id);
+CREATE INDEX IX_Beneficiary_Name ON Beneficiary(beneficiary_name);
+CREATE INDEX IX_Beneficiary_BankName ON Beneficiary(bank_name);
+GO 
 
--- Notification
-create index IX_Notification_NotificationId on Notification(notification_id);
-create index IX_Notification_Title on Notification(title);
-create index IX_Notification_IsRead on Notification(is_read);
-go
+-- NotificatiON
+CREATE INDEX IX_NotificatiON_NotificatiONId ON NotificatiON(notification_id);
+CREATE INDEX IX_NotificatiON_Title ON NotificatiON(title);
+CREATE INDEX IX_NotificatiON_IsRead ON NotificatiON(is_read);
+GO
 
 -- OTP
-create index IX_OTP_OTPId on OTP(otp_id);
-create index IX_OTP_Code on OTP(otp_code);
-create index IX_OTP_Purpose on OTP(purpose);
-create index IX_OTP_Verified on OTP(verified);
-go
+CREATE INDEX IX_OTP_OTPId ON OTP(otp_id);
+CREATE INDEX IX_OTP_Code ON OTP(otp_code);
+CREATE INDEX IX_OTP_Purpose ON OTP(purpose);
+CREATE INDEX IX_OTP_Verified ON OTP(verified);
+GO
 
 -- Login History
-create index IX_LoginHistory_LoginHistoryId on LoginHistory(login_id);
-create index IX_LoginHistory_LoginAt on LoginHistory(login_time);
-create index IX_LoginHistory_IPAddress on LoginHistory(ip_address);
-create index IX_LoginHistory_Device on LoginHistory(device);
-create index IX_LoginHistory_Status on LoginHistory(login_status);
-go
+CREATE INDEX IX_LoginHistory_LoginHistoryId ON LoginHistory(login_id);
+CREATE INDEX IX_LoginHistory_LoginAt ON LoginHistory(login_time);
+CREATE INDEX IX_LoginHistory_IPAddress ON LoginHistory(ip_address);
+CREATE INDEX IX_LoginHistory_Device ON LoginHistory(device);
+CREATE INDEX IX_LoginHistory_Status ON LoginHistory(login_status);
+GO

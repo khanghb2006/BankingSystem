@@ -6,184 +6,184 @@
 =============================================
 */
 
-create database BankingSystem;
-go
+CREATE DATABASE BankingSystem;
+GO
 
 use BankingSystem;
-go
+GO
 
-create table Account (
-    account_id bigint identity(1,1) primary key,
+CREATE TABLE Account (
+    account_id BIGINT IDENTITY(1,1) PRIMARY KEY,
 
-    username varchar(50) not null,
-    email nvarchar(100) not null,
-    phone_number varchar(20) not null,
-    password_hash varchar(255) not null,
-    role varchar(20) not null,
+    username VARCHAR(50) NOT NULL,
+    email NVARCHAR(100) NOT NULL,
+    phone_number VARCHAR(20) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL,
 
-    created_at datetime not null,
-    updated_at datetime,
-    status varchar(20) not null
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    status VARCHAR(20) NOT NULL
 );
-go
+GO
 
-create table Customer (
-    customer_id nchar(10) primary key,
-    account_id bigint not null,
-    branch_id nchar(10) not null,
+CREATE TABLE Customer (
+    customer_id NCHAR(10) PRIMARY KEY,
+    account_id BIGINT NOT NULL,
+    branch_id NCHAR(10) NOT NULL,
 
-    full_name nvarchar(100) not null,
-    dob date not null,
-    gender varchar(10) not null,
-    citizen_id varchar(20) not null,
-    address nvarchar(255) not null,
+    full_name NVARCHAR(100) NOT NULL,
+    dob DATE NOT NULL,
+    gender VARCHAR(10) NOT NULL,
+    citizen_id VARCHAR(20) NOT NULL,
+    address NVARCHAR(255) NOT NULL,
     
-    created_at datetime not null,
-    updated_at datetime
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME
 );
-go
+GO
 
-create table Employee (
-    employee_id nchar(10) primary key,
-    account_id bigint not null,
-    branch_id nchar(10) not null,
+CREATE TABLE Employee (
+    employee_id NCHAR(10) PRIMARY KEY,
+    account_id BIGINT NOT NULL,
+    branch_id NCHAR(10) NOT NULL,
 
-    position varchar(50) not null,
-    full_name nvarchar(100) not null,
-    dob date not null,
-    gender varchar(10) not null,
-    citizen_id varchar(20) not null,
-    address nvarchar(255) not null,
+    position VARCHAR(50) NOT NULL,
+    full_name NVARCHAR(100) NOT NULL,
+    dob DATE NOT NULL,
+    gender VARCHAR(10) NOT NULL,
+    citizen_id VARCHAR(20) NOT NULL,
+    address NVARCHAR(255) NOT NULL,
 
-    status nvarchar(20) not null,
-    hired_at datetime not null,
-    created_at datetime not null,
-    updated_at datetime
+    status NVARCHAR(20) NOT NULL,
+    hired_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME
 );
-go
+GO
 
-create table Branch (
-    branch_id nchar(10) primary key,
-    branch_name nvarchar(100) not null,
-    address nvarchar(100),
-    phone_number varchar(20) not null,
+CREATE TABLE Branch (
+    branch_id NCHAR(10) PRIMARY KEY,
+    branch_name NVARCHAR(100) NOT NULL,
+    address NVARCHAR(100),
+    phone_number VARCHAR(20) NOT NULL,
 
-    created_at datetime not null,
-    updated_at datetime,
-    status nvarchar(20) not null
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    status NVARCHAR(20) NOT NULL
 );
-go
+GO
 
-create table BankingAccount (
-    bank_account_id bigint identity(1,1) primary key,
-    customer_id nchar(10) not null,
+CREATE TABLE BankingAccount (
+    bank_account_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    customer_id NCHAR(10) NOT NULL,
 
-    bank_account_number nchar(20) not null,
-    balance decimal(18, 2) not null,
-    account_type varchar(20) not null,
-    currency nvarchar(10) not null,
-    available_balance decimal(18, 2) not null,
+    bank_account_number NCHAR(20) NOT NULL,
+    balance DECIMAL(18, 2) NOT NULL,
+    account_type VARCHAR(20) NOT NULL,
+    currency NVARCHAR(10) NOT NULL,
+    available_balance DECIMAL(18, 2) NOT NULL,
 
-    opened_at datetime not null,
-    closed_at datetime,
-    status nvarchar(20) not null
+    opened_at DATETIME NOT NULL,
+    closed_at DATETIME,
+    status NVARCHAR(20) NOT NULL
 );
-go
+GO
 
-create table Card (
-    card_id bigint identity(1 , 1) primary key,
-    bank_account_id bigint not null,
+CREATE TABLE Card (
+    card_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
+    bank_account_id BIGINT NOT NULL,
 
-    card_number varchar(20) not null,
-    card_type varchar(20) not null,
-    expired_at date,
-    cvv_hash varchar(255) not null,
-    issued_at datetime not null,
-    status nvarchar(20) not null
+    card_number VARCHAR(20) NOT NULL,
+    card_type VARCHAR(20) NOT NULL,
+    expired_at DATE,
+    cvv_hash VARCHAR(255) NOT NULL,
+    issued_at DATETIME NOT NULL,
+    status NVARCHAR(20) NOT NULL
 );
-go
+GO
 
-create table BankTransaction (
-    transaction_id bigint identity(1 , 1) primary key,
-    from_bank_account_id bigint not null,
-    to_bank_account_id bigint not null,
+CREATE TABLE BankTransaction (
+    transaction_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
+    from_bank_account_id BIGINT NOT NULL,
+    to_bank_account_id BIGINT NOT NULL,
 
-    transaction_type varchar(20) not null,
-    amount decimal(18, 2) not null,
-    description nvarchar(255),
-    created_at datetime not null,
-    status nvarchar(20) not null
+    transaction_type VARCHAR(20) NOT NULL,
+    amount DECIMAL(18, 2) NOT NULL,
+    description NVARCHAR(255),
+    created_at DATETIME NOT NULL,
+    status NVARCHAR(20) NOT NULL
 );
-go
+GO
 
-create table Loan (
-    loan_id bigint identity(1 , 1) primary key,
-    customer_id nchar(10) not null,
+CREATE TABLE Loan (
+    loan_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
+    customer_id NCHAR(10) NOT NULL,
 
-    loan_type varchar(20) not null,
-    amount decimal(18, 2) not null,
-    interest_rate decimal(18, 2) not null,
-    remaining_balance decimal(18, 2) not null,
-    duration_months int not null,
-    start_date date not null,
-    end_date date not null,
-    monthly_payment decimal(18, 2) not null,
+    loan_type VARCHAR(20) NOT NULL,
+    amount DECIMAL(18, 2) NOT NULL,
+    INTerest_rate DECIMAL(18, 2) NOT NULL,
+    remaining_balance DECIMAL(18, 2) NOT NULL,
+    duration_months INT NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    monthly_payment DECIMAL(18, 2) NOT NULL,
 
-    approved_by nchar(10) not null,
-    status varchar(20) not null
+    approved_by NCHAR(10) NOT NULL,
+    status VARCHAR(20) NOT NULL
 );
-go
+GO
 
-create table SavingAccount (
-    saving_id bigint identity(1 , 1) primary key,
-    source_bank_account_id bigint not null,
-    deposit_amount decimal(18, 2) not null,
-    interest_rate decimal(18, 2) not null,
-    term_months int not null,
-    start_date date not null,
-    maturity_date date not null,
-    status nvarchar(20) not null
+CREATE TABLE SavingAccount (
+    saving_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
+    source_bank_account_id BIGINT NOT NULL,
+    deposit_amount DECIMAL(18, 2) NOT NULL,
+    INTerest_rate DECIMAL(18, 2) NOT NULL,
+    term_months INT NOT NULL,
+    start_date DATE NOT NULL,
+    maturity_date DATE NOT NULL,
+    status NVARCHAR(20) NOT NULL
 );
-go
+GO
 
-create table Beneficiary (
-    beneficiary_id bigint identity(1 , 1) primary key,
-    customer_id nchar(10) not null,
-    beneficiary_name nvarchar(50) not null,
-    bank_account_id bigint not null,
-    bank_name nvarchar(100) not null,
-    created_at datetime not null
+CREATE TABLE Beneficiary (
+    beneficiary_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
+    customer_id NCHAR(10) NOT NULL,
+    beneficiary_name NVARCHAR(50) NOT NULL,
+    bank_account_id BIGINT NOT NULL,
+    bank_name NVARCHAR(100) NOT NULL,
+    created_at DATETIME NOT NULL
 );
-go
+GO
 
-create table Notification (
-    notification_id bigint identity(1 , 1) primary key,
-    account_id bigint not null,
-    title nvarchar(100),
-    message nvarchar(255) not null,
+CREATE TABLE Notification (
+    notification_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
+    account_id BIGINT NOT NULL,
+    title NVARCHAR(100),
+    message NVARCHAR(255) NOT NULL,
     is_read bit,
-    created_at datetime not null
+    created_at DATETIME NOT NULL
 );
-go
+GO
 
-create table OTP (
-    otp_id bigint identity(1 , 1) primary key,
-    account_id bigint not null,
+CREATE TABLE OTP (
+    otp_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
+    account_id BIGINT NOT NULL,
 
-    otp_code nchar(6) not null,
-    purpose varchar(50) not null,
-    expired_at datetime not null,
-    verified bit not null,
-    created_at datetime not null
+    otp_code NCHAR(6) NOT NULL,
+    purpose VARCHAR(50) NOT NULL,
+    expired_at DATETIME NOT NULL,
+    verified bit NOT NULL,
+    created_at DATETIME NOT NULL
 );
-go
+GO
 
-create table LoginHistory (
-    login_id bigint identity(1 , 1) primary key,
-    account_id bigint not null,
-    login_time datetime not null,
-    ip_address varchar(50) not null,
-    device nvarchar(100) not null,
-    login_status varchar(20) not null
+CREATE TABLE LoginHistory (
+    login_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
+    account_id BIGINT NOT NULL,
+    login_time DATETIME NOT NULL,
+    ip_address VARCHAR(50) NOT NULL,
+    device NVARCHAR(100) NOT NULL,
+    login_status VARCHAR(20) NOT NULL
 );
-go
+GO

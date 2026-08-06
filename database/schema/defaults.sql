@@ -1,140 +1,140 @@
 /*
 ====================================================
-    Banking System Default Values
+    Banking System DEFAULT Values
     Author : Huynh Bao Khang
-    Description : Default Constraints
+    Description : DEFAULT CONSTRAINTs
 ====================================================
 */
 
-use BankingSystem;
-go
+USE BankingSystem;
+GO
 
 -- Account
-alter table Account add
-    constraint DF_Account_CreatedAt
-        default getdate() for created_at,
-    constraint DF_Account_Status
-        default 'Active' for status,
-    constraint DF_Account_UpdatedAt
-        default getdate() for updated_at;
+ALTER TABLE  Account ADD
+    CONSTRAINT DF_Account_CreatedAt
+        DEFAULT GETDATE() for created_at,
+    CONSTRAINT DF_Account_Status
+        DEFAULT 'Active' for status,
+    CONSTRAINT DF_Account_UpdatedAt
+        DEFAULT GETDATE() for updated_at;
 
 -- Customer
-alter table Customer add
-    constraint DF_Customer_CreatedAt
-        default getdate() for created_at,
-    constraint DF_Customer_UpdatedAt
-        default getdate() for updated_at,
-    constraint DF_Customer_Status
-        default 'Active' for status;
-go
+ALTER TABLE  Customer ADD
+    CONSTRAINT DF_Customer_CreatedAt
+        DEFAULT GETDATE() for created_at,
+    CONSTRAINT DF_Customer_UpdatedAt
+        DEFAULT GETDATE() for updated_at,
+    CONSTRAINT DF_Customer_Status
+        DEFAULT 'Active' for status;
+GO
 
 -- Employee
-alter table Employee add
-    constraint DF_Employee_HiredAt
-        default getdate() for hired_at,
-    constraint DF_Employee_CreatedAt
-        default getdate() for created_at,
-    constraint DF_Employee_UpdatedAt
-        default getdate() for updated_at,
-    constraint DF_Employee_Status
-        default 'Active' for status;
-go
+ALTER TABLE  Employee ADD
+    CONSTRAINT DF_Employee_HiredAt
+        DEFAULT GETDATE() for hired_at,
+    CONSTRAINT DF_Employee_CreatedAt
+        DEFAULT GETDATE() for created_at,
+    CONSTRAINT DF_Employee_UpdatedAt
+        DEFAULT GETDATE() for updated_at,
+    CONSTRAINT DF_Employee_Status
+        DEFAULT 'Active' for status;
+GO
 
 -- Branch
-alter table Branch add
-    constraint DF_Branch_Status
-        default 'Active' for status,
-    constraint DF_Branch_UpdatedAt
-        default getdate() for updated_at,
-    constraint DF_Branch_CreatedAt
-        default getdate() for created_at;
-go
+ALTER TABLE  Branch ADD
+    CONSTRAINT DF_Branch_Status
+        DEFAULT 'Active' for status,
+    CONSTRAINT DF_Branch_UpdatedAt
+        DEFAULT GETDATE() for updated_at,
+    CONSTRAINT DF_Branch_CreatedAt
+        DEFAULT GETDATE() for created_at;
+GO
 
 -- Banking Account
-alter table BankingAccount add
-    constraint DF_Account_Balance
-        default 0 for balance,
-    constraint DF_Account_AvailableBalance
-        default 0 for available_balance,
-    constraint DF_Account_OpenedAt
-        default getdate() for opened_at,
-    constraint DF_Account_Status
-        default 'Active' for status;
-go
+ALTER TABLE  BankingAccount ADD
+    CONSTRAINT DF_Account_Balance
+        DEFAULT 0 for balance,
+    CONSTRAINT DF_Account_AvailableBalance
+        DEFAULT 0 for available_balance,
+    CONSTRAINT DF_Account_OpenedAt
+        DEFAULT GETDATE() for opened_at,
+    CONSTRAINT DF_Account_Status
+        DEFAULT 'Active' for status;
+GO
 
 -- Card
-alter table Card add
-    constraint DF_Card_IssuedAt
-        default getdate() for issued_at,
-    constraint DF_Card_Status
-        default 'Active' for status;
-go
+ALTER TABLE  Card ADD
+    CONSTRAINT DF_Card_IssuedAt
+        DEFAULT GETDATE() for issued_at,
+    CONSTRAINT DF_Card_Status
+        DEFAULT 'Active' for status;
+GO
 
 -- Bank Transaction
-alter table BankTransaction add
-    constraint DF_BankTransaction_CreatedAt
-        default getdate() for created_at,
-    constraint DF_BankTransaction_Status
-        default 'Pending' for status,
-    constraint DF_BankTransaction_Fee
-        default 0 for fee;
-go
+ALTER TABLE  BankTransaction ADD
+    CONSTRAINT DF_BankTransaction_CreatedAt
+        DEFAULT GETDATE() for created_at,
+    CONSTRAINT DF_BankTransaction_Status
+        DEFAULT 'Pending' for status,
+    CONSTRAINT DF_BankTransaction_Fee
+        DEFAULT 0 for fee;
+GO
 
 -- Loan
-alter table Loan add
-    constraint DF_Loan_LoanType
-        default 'Personal' for loan_type,
-    constraint DF_Loan_Amount
-        default 0 for amount,
-    constraint DF_Loan_InterestRate
-        default 0 for interest_rate,
-    constraint DF_Loan_RemainingBalance
-        default 0 for remaining_balance,
-    constraint DF_Loan_StartDate
-        default getdate() for start_date,
-    constraint DF_Loan_DurationMonths
-        default 12 for duration_months,
-    constraint DF_Loan_Status
-        default 'Active' for status;
-go
+ALTER TABLE  Loan ADD
+    CONSTRAINT DF_Loan_LoanType
+        DEFAULT 'Personal' for loan_type,
+    CONSTRAINT DF_Loan_Amount
+        DEFAULT 0 for amount,
+    CONSTRAINT DF_Loan_InterestRate
+        DEFAULT 0 for interest_rate,
+    CONSTRAINT DF_Loan_RemainingBalance
+        DEFAULT 0 for remaining_balance,
+    CONSTRAINT DF_Loan_StartDate
+        DEFAULT GETDATE() for start_date,
+    CONSTRAINT DF_Loan_DurationMonths
+        DEFAULT 12 for duration_months,
+    CONSTRAINT DF_Loan_Status
+        DEFAULT 'Active' for status;
+GO
 
 -- Saving Account
-alter table SavingAccount add 
-    constraint DF_SavingAccount_DepositAmount
-        default 0 for deposit_amount,
-    constraint DF_SavingAccount_InterestRate
-        default 0 for interest_rate,
-    constraint DF_SavingAccount_TermMonths
-        default 12 for term_months,
-    constraint DF_SavingAccount_StartDate
-        default getdate() for start_date,
-    constraint DF_SavingAccount_Status
-        default 'Active' for status;
-go
+ALTER TABLE  SavingAccount ADD 
+    CONSTRAINT DF_SavingAccount_DepositAmount
+        DEFAULT 0 for deposit_amount,
+    CONSTRAINT DF_SavingAccount_InterestRate
+        DEFAULT 0 for interest_rate,
+    CONSTRAINT DF_SavingAccount_TermMonths
+        DEFAULT 12 for term_months,
+    CONSTRAINT DF_SavingAccount_StartDate
+        DEFAULT GETDATE() for start_date,
+    CONSTRAINT DF_SavingAccount_Status
+        DEFAULT 'Active' for status;
+GO
 
 -- Beneficiary
-alter table Beneficiary add
-    constraint DF_Beneficiary_CreatedAt
-        default getdate() for created_at;
-go
+ALTER TABLE  Beneficiary ADD
+    CONSTRAINT DF_Beneficiary_CreatedAt
+        DEFAULT GETDATE() for created_at;
+GO
 
 /* Notification */
-alter table Notification add
-    constraint DF_Notification_Isread
-        default 0 for is_read,
-    constraint DF_Notification_CreatedAt
-        default getdate() for created_at;
-go
+ALTER TABLE  Notification ADD
+    CONSTRAINT DF_Notification_Isread
+        DEFAULT 0 for is_read,
+    CONSTRAINT DF_Notification_CreatedAt
+        DEFAULT GETDATE() for created_at;
+GO
 
 /* OTP */
-alter table OTP add
-    constraint DF_OTP_CreatedAt
-        default getdate() for created_at,
-    constraint DF_OTP_Verified
-            default 0 for verified;
-go
+ALTER TABLE  OTP ADD
+    CONSTRAINT DF_OTP_CreatedAt
+        DEFAULT GETDATE() for created_at,
+    CONSTRAINT DF_OTP_Verified
+            DEFAULT 0 for verified;
+GO
 
 /* Login History */
-alter table LoginHistory add
-    constraint DF_LoginHistory_Time
-        default getdate() for login_time;
+ALTER TABLE  LoginHistory ADD
+    CONSTRAINT DF_LoginHistory_Time
+        DEFAULT GETDATE() for login_time;
