@@ -30,7 +30,7 @@ go
 create table Customer (
     customer_id nchar(10) primary key,
     account_id bigint not null,
-    branch_id bigint not null,
+    branch_id nchar(10) not null,
 
     full_name nvarchar(100) not null,
     dob date not null,
@@ -46,7 +46,7 @@ go
 create table Employee (
     employee_id nchar(10) primary key,
     account_id bigint not null,
-    branch_id bigint not null,
+    branch_id nchar(10) not null,
 
     position varchar(50) not null,
     full_name nvarchar(100) not null,
@@ -80,7 +80,7 @@ create table BankingAccount (
 
     bank_account_number nchar(20) not null,
     balance decimal(18, 2) not null,
-    account_type nvarchar(20) not null,
+    account_type varchar(20) not null,
     currency nvarchar(10) not null,
     available_balance decimal(18, 2) not null,
 
@@ -95,7 +95,7 @@ create table Card (
     bank_account_id bigint not null,
 
     card_number varchar(20) not null,
-    card_type nvarchar(20) not null,
+    card_type varchar(20) not null,
     expired_at date,
     cvv_hash varchar(255) not null,
     issued_at datetime not null,
@@ -108,7 +108,7 @@ create table BankTransaction (
     from_bank_account_id bigint not null,
     to_bank_account_id bigint not null,
 
-    transaction_type nvarchar(20) not null,
+    transaction_type varchar(20) not null,
     amount decimal(18, 2) not null,
     description nvarchar(255),
     created_at datetime not null,
@@ -130,7 +130,7 @@ create table Loan (
     monthly_payment decimal(18, 2) not null,
 
     approved_by nchar(10) not null,
-    status nvarchar(20) not null
+    status varchar(20) not null
 );
 go
 
@@ -150,7 +150,7 @@ create table Beneficiary (
     beneficiary_id bigint identity(1 , 1) primary key,
     customer_id nchar(10) not null,
     beneficiary_name nvarchar(50) not null,
-    bank_account_number nchar(20) not null,
+    bank_account_id bigint not null,
     bank_name nvarchar(100) not null,
     created_at datetime not null
 );
@@ -171,7 +171,7 @@ create table OTP (
     account_id bigint not null,
 
     otp_code nchar(6) not null,
-    purpose nvarchar(50) not null,
+    purpose varchar(50) not null,
     expired_at datetime not null,
     verified bit not null,
     created_at datetime not null
@@ -184,6 +184,6 @@ create table LoginHistory (
     login_time datetime not null,
     ip_address varchar(50) not null,
     device nvarchar(100) not null,
-    login_status nvarchar(20) not null
+    login_status varchar(20) not null
 );
 go

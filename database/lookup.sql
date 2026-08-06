@@ -144,3 +144,11 @@ create table OTPPurpose (
     description nvarchar(100),
     is_active bit not null default 1
 );
+go
+
+-- Login History Status
+create table LoginHistoryStatus (
+    status_name varchar(20) primary key,
+    description nvarchar(100),
+    is_active bit not null default 1
+);
