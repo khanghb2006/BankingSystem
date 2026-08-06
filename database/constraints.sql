@@ -23,6 +23,7 @@ go
 
 -- Customer
 alter table Customer add
+    constraint FK_Customer_Status foreign key(status) references CustomerStatus(status_name),
     constraint FK_Customer_Account foreign key(account_id) references Account(account_id),
     constraint FK_Customer_Branch foreign key(branch_id) references Branch(branch_id);
 go

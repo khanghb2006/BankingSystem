@@ -25,6 +25,13 @@ create table AccountStatus (
 );
 go
 
+-- Customer Status
+create table CustomerStatus (
+    status_name varchar(20) primary key,
+    description nvarchar(100),
+    is_active bit not null default 1
+);
+
 -- Employee Position
 create table EmployeePosition (
     position_name varchar(50) primary key,
