@@ -46,7 +46,7 @@ AS
         C.full_name,
         BA.account_type,
         BA.status
-    from BankingAccount BA
+    FROM BankingAccount BA
     JOIN Customer C ON BA.customer_id = C.customer_id
     JOIN Branch B ON C.branch_id = B.branch_id;
 GO
