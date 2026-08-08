@@ -20,7 +20,7 @@ CREATE TABLE Account (
     phone_number VARCHAR(20) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL,
-
+    image_url VARCHAR(2048),
     created_at DATETIME NOT NULL,
     updated_at DATETIME,
     status VARCHAR(20) NOT NULL
@@ -107,9 +107,9 @@ CREATE TABLE BankTransaction (
     transaction_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
     from_bank_account_id BIGINT NOT NULL,
     to_bank_account_id BIGINT NOT NULL,
-
     transaction_type VARCHAR(20) NOT NULL,
     amount DECIMAL(18, 2) NOT NULL,
+    fee DECIMAL(18, 2) NOT NULL,
     description NVARCHAR(255),
     created_at DATETIME NOT NULL,
     status NVARCHAR(20) NOT NULL
