@@ -42,15 +42,15 @@ BEGIN
         BEGIN TRANSACTION;
 
             -- Check if the username already exists
-            IF dbo.fn_validate_username(@username) = 1
+            IF dbo.fn_account_validate_username(@username) = 1
                 THROW 20000, 'Username already exists.', 1;
             
             -- Check if the email already exists
-            IF dbo.fn_validate_email(@email) = 1
+            IF dbo.fn_account_validate_email(@email) = 1
                 THROW 20001, 'Email already exists.', 1;
             
             -- Check if the phone number already exists
-            IF dbo.fn_validate_phone_number(@phone_number) = 1
+            IF dbo.fn_account_validate_phone_number(@phone_number) = 1
                 THROW 20002, 'Phone number already exists.', 1;
 
             -- Create a new account

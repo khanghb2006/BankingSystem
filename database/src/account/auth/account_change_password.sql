@@ -35,11 +35,11 @@ BEGIN
         BEGIN TRANSACTION;
 
             -- Validate account ID
-            IF dbo.fn_validate_account_id(@account_id) = 0
+            IF dbo.fn_account_validate_id(@account_id) = 0
                 THROW 10000, 'Invalid account ID.', 1;
             
             -- Validate old password
-            IF dbo.fn_validate_password(@account_id, @old_password) = 0
+            IF dbo.fn_account_validate_password(@account_id, @old_password) = 0
                 THROW 10001, 'Old password is incorrect.', 1;
             
             -- new password should not be the same as the old password
