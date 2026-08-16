@@ -41,7 +41,7 @@ BEGIN
             -- Validate old password
             IF dbo.fn_account_validate_password(@account_id, @old_password) = 0
                 THROW 10001, 'Old password is incorrect.', 1;
-            
+
             -- new password should not be the same as the old password
             IF @old_password = @new_password
                 THROW 10002, 'New password cannot be the same as the old password.', 1;
