@@ -34,11 +34,11 @@ BEGIN
         BEGIN TRANSACTION;
 
             -- Validate account
-            IF dbo.fn_validate_account(@account_id) = 0
+            IF dbo.fn_account_validate_account_id(@account_id) = 0
                 THROW 50030, 'Invalid account ID.', 1;
             
             -- Validate account status
-            IF dbo.fn_valid_account_status(@account_id, 'Active') = 0
+            IF dbo.fn_account_validate_status(@account_id, 'Active') = 0
                 THROW 50031, 'Account status must be Active.', 1;
 
             -- Update image URL in Account table
