@@ -1,11 +1,11 @@
 /* 
-    Function : fn_validate_otp_purpose
+    Function : fn_otp_validate_purpose
     Description: This function is used to validate the OTP purpose.
 */
 USE BankingSystem
 GO
 
-CREATE OR ALTER FUNCTION fn_validate_otp_purpose
+CREATE OR ALTER FUNCTION fn_otp_validate_purpose
     (@account_id BIGINT, @otp_code NCHAR(6), @purpose VARCHAR(50))
 RETURNS BIT
 AS

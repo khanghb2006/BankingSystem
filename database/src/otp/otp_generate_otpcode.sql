@@ -1,5 +1,5 @@
 /* 
-    OTP - Generate OTP
+    OTP - Generate OTP Code
     Description: This script is used to generate a One-Time Password (OTP) for a specific account and purpose.
 */
 
@@ -20,7 +20,7 @@ GO
         + created_at
         + message
 */
-CREATE PROCEDURE sp_generate_otp
+CREATE PROCEDURE sp_otp_generate_otpcode
     @account_id BIGINT,
     @purpose VARCHAR(50)
 AS
