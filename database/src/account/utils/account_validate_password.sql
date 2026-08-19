@@ -1,9 +1,17 @@
 USE BankingSystem;
 GO
 
-/*
+/**
     Function : fn_account_validate_password
-    Description : Validates if a password exists in the system
+    Description : Validates if a password exists in the system.
+
+    Input:
+        + @username : The username to validate
+        + @password : The password to validate (hashed)
+
+    Output:
+        + 1 : Password matches
+        + 0 : Password does not match
 */
 
 CREATE OR ALTER FUNCTION fn_account_validate_password 

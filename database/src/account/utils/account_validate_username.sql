@@ -1,9 +1,16 @@
 USE BankingSystem;
 GO
 
-/* 
+/**
     Function : fn_account_validate_username
-    Description : Validates if a username exists in the system
+    Description : Validates if a username exists in the system.
+
+    Input:
+        + @username : The username to validate
+
+    Output:
+        + 1 : Username exists
+        + 0 : Username does not exist
 */
 CREATE OR ALTER FUNCTION fn_account_validate_username 
     (@username VARCHAR(50))

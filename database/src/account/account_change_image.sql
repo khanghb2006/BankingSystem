@@ -1,22 +1,20 @@
-/* 
-    Account - Change Image 
-    Description: This stored procedure allows a user to change the image associated with their account. It validates the account ID, checks if the account is active, and updates the image URL in the Account table.
-*/
-
-USE BankingSystem;
+USE BankingSystem
 GO
 
-/*
-    Parameters:
-        + @account_id : Account ID
+/**
+    Function : sp_account_change_image
+    Description : Allows a user to change the image associated with their account. Validates account ID and status, then updates the image URL in the Account table.
+
+    Input:
+        + @account_id : The account ID
         + @image_url : New image URL
 
-    Returns:
-        + account_id
-        + image_url
-        + updated_at
-        + message
-    
+    Output:
+        + account_id : The updated account ID
+        + image_url : The new image URL
+        + updated_at : Timestamp of update
+        + message : Status message (e.g., 'Image updated successfully')
+
     Note:
         + The actual image file is NOT stored in SQL SERVER
         + This procedure only updates the image URL in the Account table.

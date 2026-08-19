@@ -1,9 +1,16 @@
 USE BankingSystem
 GO
 
-/* 
-    Function : account_validate_phone_number
-    Description : Validates if a phone number exists in the system
+/**
+    Function : fn_account_validate_phone_number
+    Description : Validates if a phone number exists in the system.
+
+    Input:
+        + @phone_number : The phone number to validate
+
+    Output:
+        + 1 : Phone number exists
+        + 0 : Phone number does not exist
 */
 CREATE OR ALTER FUNCTION fn_account_validate_phone_number 
     (@phone_number VARCHAR(20))

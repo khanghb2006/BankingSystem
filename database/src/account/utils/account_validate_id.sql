@@ -1,9 +1,16 @@
 USE BankingSystem
 GO
 
-/*
+/**
     Function : fn_account_validate_id
-    Description: This function is used to validate the account ID.
+    Description : This function is used to validate the account ID.
+
+    Input:
+        + @account_id : The account ID to validate
+
+    Output:
+        + 1 : Account ID exists
+        + 0 : Account ID does not exist
 */
 CREATE OR ALTER FUNCTION fn_account_validate_id
     (@account_id BIGINT)
