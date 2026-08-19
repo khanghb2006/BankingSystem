@@ -8,12 +8,12 @@ USE BankingSystem
 GO
 
 /* 
-    Parameters:
+    Input:
         @account_id : The account ID of the user.
         @otp_code : The OTP provided by the user.
         @purpose : The purpose of the OTP (e.g., 'Register', 'PasswordReset').
 
-    Returns:
+    Output:
         + account_id
         + username
         + email
@@ -38,12 +38,12 @@ BEGIN
         BEGIN TRANSACTION;
 
             -- Validate account existence
-            IF dbo.fn_validate_account_id(@account_id) = 0
+            IF dbo.fn_account_validate_id(@account_id) = 0
                 THROW 20000, 'Account does not exist.', 1;
 
-            -- Validate OTP Purpose
-            IF dbo.fn_validate_otp_purpose(@account_id, @otp_code, @purpose) = 0
-                THROW 30001, 'Invalid or Expired OTP purpose.', 1;
+            -- Validate OTP code matches an unverified, unexpired record
+            IF dbo.fn_otp_validate_purpose(@account_id, @otp_code, @purpose) = 0
+                THROW 30001, 'Invalid or Expired OTP code.', 1;
 
             -- Marked OTP as verified
             UPDATE OTP

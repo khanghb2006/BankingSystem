@@ -7,11 +7,11 @@ USE BankingSystem
 GO
 
 /* 
-    Parameters:
+    Input:
         + @account_id : The account ID for which the OTP is being generated.
         + @purpose : The purpose for which the OTP is being generated (e.g., "login", "transaction").
 
-    Returns:
+    Output:
         + otp_id
         + account_id
         + otp_code
@@ -31,11 +31,11 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
             -- Validate customer
-            IF dbo.fn_validate_account_id(@account_id) = 0
+            IF dbo.fn_account_validate_id(@account_id) = 0
                 THROW 130000, 'Invalid account ID.', 1;
-            
+
             -- Validate purpose
-            IF dbo.fn_validate_otp_purpose(@account_id, NULL, @purpose) = 0
+            IF dbo.fn_otp_validate_purpose_type(@purpose) = 0
                 THROW 130001, 'Invalid OTP purpose.', 1;
 
             -- Generate random 6-digit OTP code
