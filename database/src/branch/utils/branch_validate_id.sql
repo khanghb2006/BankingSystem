@@ -2,11 +2,11 @@ USE BankingSystem
 GO
 
 /* 
-    Function : fn_validate_branch_id
+    Function : fn_branch_validate_id
     Description : Check if the branch ID is valid.
 */
-CREATE OR ALTER FUNCTION fn_validate_branch_id
-    (@branch_id BIGINT)
+CREATE OR ALTER FUNCTION fn_branch_validate_id
+    (@branch_id NCHAR(10))
 RETURNS BIT
 AS
 BEGIN
