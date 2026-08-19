@@ -32,8 +32,8 @@ AS
         E.branch_id,
         E.position,
         E.hired_at,
-        
-        A.status,
+
+        E.status,
         E.created_at,
         E.updated_at
     FROM Employee E
@@ -59,7 +59,7 @@ AS
         dbo.fn_mask_citizen_id(E.citizen_id) AS masked_citizen_id,
         
         E.hired_at,
-        A.status
+        E.status
     FROM Employee E
     JOIN Account A ON E.account_id = A.account_id;
 GO
