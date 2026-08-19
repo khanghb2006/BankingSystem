@@ -7,13 +7,13 @@ USE BankingSystem;
 GO
 
 /*
-    Parameters:
+    Input:
         @username : The username of the new user.
         @email : The email address of the new user.
         @phone_number : The phone number of the new user.
         @password : The password of the new user (hashed).
 
-    Returns:
+    Output:
         + account_id
         + username
         + email

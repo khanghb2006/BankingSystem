@@ -6,7 +6,7 @@ GO
     Description : Validates if a password exists in the system.
 
     Input:
-        + @username : The username to validate
+        + @account_id : The account ID to validate
         + @password : The password to validate (hashed)
 
     Output:
@@ -14,8 +14,8 @@ GO
         + 0 : Password does not match
 */
 
-CREATE OR ALTER FUNCTION fn_account_validate_password 
-    (@username VARCHAR(50) , @password VARCHAR(255))
+CREATE OR ALTER FUNCTION fn_account_validate_password
+    (@account_id BIGINT, @password VARCHAR(255))
 RETURNS BIT
 AS
 BEGIN
@@ -24,7 +24,7 @@ BEGIN
     IF EXISTS (
         SELECT 1
         FROM Account
-        WHERE username = @username 
+        WHERE account_id = @account_id
             AND password_hash = @password
     )
         SET @exists = 1;

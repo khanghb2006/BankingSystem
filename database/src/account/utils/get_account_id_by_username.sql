@@ -13,7 +13,7 @@ GO
 */
 CREATE OR ALTER FUNCTION fn_get_account_id_by_username
     (@username VARCHAR(50))
-RETURNS INT
+RETURNS BIGINT
 AS
 BEGIN
     DECLARE @account_id BIGINT;

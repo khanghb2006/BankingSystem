@@ -1,17 +1,17 @@
-/*
+/**
     Authentication: Reset Password
-    Description: This stored procedure is used to reset the password for a user account.
+    Description : This stored procedure is used to reset the password for a user account.
 */
 
 USE BankingSystem;
 GO
 
 /* 
-    Parameters:
+    Input:
         @account_id : The account ID of the user.
         @new_password : The new password for the user (hashed).
 
-    Returns:
+    Output:
         + account_id
         + updated_at
         + message

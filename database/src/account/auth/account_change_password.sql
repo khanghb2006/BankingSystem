@@ -7,12 +7,12 @@ USE BankingSystem;
 GO
 
 /* 
-    Parameters:
+    Input:
         + @account_id : Account ID
         + @old_password : Old password
         + @new_password : New password
 
-    Returns:
+    Output:
         + account_id
         + updated_at
         + message
