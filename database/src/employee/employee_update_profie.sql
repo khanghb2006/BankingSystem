@@ -38,12 +38,16 @@ BEGIN
             IF dbo.fn_account_validate_id(@account_id) = 0
                 THROW 90010, 'Invalid account ID.', 1;
 
+            -- Validate account role
+            IF dbo.fn_account_validate_role(@account_id, 'Employee') = 0
+                THROW 90011, 'Account role must be Employee.', 1;
+
             -- Check whether there is anything to update
             IF @full_name IS NULL
                 AND @dob IS NULL
                 AND @gender IS NULL
                 AND @address IS NULL
-                THROW 90011, 'No fields provided for update.', 1;
+                THROW 90012, 'No fields provided for update.', 1;
 
             -- Update employee profile
             UPDATE Employee
@@ -56,7 +60,7 @@ BEGIN
             WHERE account_id = @account_id;
 
             IF @@ROWCOUNT = 0
-                THROW 90012, 'Failed to update employee profile.', 1;
+                THROW 90013, 'Failed to update employee profile.', 1;
 
         COMMIT TRANSACTION;
 
