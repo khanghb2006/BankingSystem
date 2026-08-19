@@ -6,14 +6,14 @@ USE BankingSystem;
 GO
 
 /* 
-    Parameters:
+    Input:
         + @account_id : Account ID
         + @full_name : New full name (optional)
         + @dob : New date of birth (optional)
         + @gender : New gender (optional)
         + @address : New address (optional)
 
-    Returns:
+    Output:
         + customer_id
         + account_id
         + branch_id

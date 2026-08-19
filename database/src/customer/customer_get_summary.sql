@@ -7,10 +7,10 @@ USE BankingSystem;
 GO
 
 /* 
-    Parameters:
+    Input:
         + @customer_id : Customer ID
 
-    Returns:
+    Output:
         + customer_id
         + full_name
         + email

@@ -7,7 +7,7 @@ USE BankingSystem;
 GO
 
 /*
-    Parameters:
+    Input:
         + @account_id: The unique identifier for the account.
         + @branch_id: The unique identifier for the branch.
         + @full_name: The full name of the customer.
@@ -15,8 +15,8 @@ GO
         + @gender: The gender of the customer.
         + @citizen_id: The citizen ID of the customer.
         + @address: The address of the customer.
-    
-    Returns:
+
+    Output:
         + customer_id
         + account_id
         + branch_id
@@ -25,7 +25,7 @@ GO
         + gender
         + citizen_id
         + address
-        + status
+        + created_at
         + message
 
     Note : 
@@ -35,7 +35,7 @@ GO
 */
 CREATE OR ALTER PROCEDURE sp_create_customer_profile
     @account_id BIGINT,
-    @branch_id BIGINT,
+    @branch_id NCHAR(10),
     @full_name NVARCHAR(255),
     @dob DATE,
     @gender VARCHAR(10),

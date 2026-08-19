@@ -7,11 +7,11 @@ USE BankingSystem;
 GO
 
 /* 
-    Parameters:
+    Input:
         + @account_id : Account ID
 
-    Returns:
-        + vv_CustomerProfile : Customer profile information
+    Output:
+        + vw_CustomerProfile : Customer profile information
 */
 CREATE OR ALTER PROCEDURE sp_customer_get_profile
     @account_id BIGINT
@@ -32,7 +32,7 @@ BEGIN
 
         -- Retrieve customer profile information
         SELECT *
-        FROM vv_CustomerDetails
+        FROM vw_CustomerDetails
         WHERE account_id = @account_id;
 
     END TRY
