@@ -22,8 +22,11 @@ GO
         + status
         + message
     
-    Note : 
+    Note :
         + The OTP should be hashed before calling this stored procedure.
+        + This procedure only marks the OTP as verified. Purpose-specific follow-up
+          actions (e.g. activating a Pending account for 'Register') are handled by
+          separate procedures that check fn_otp_validate_verify afterward.
 */
 CREATE OR ALTER PROCEDURE sp_otp_verify
     @account_id BIGINT,
@@ -54,16 +57,8 @@ BEGIN
                 AND verified = 0
                 AND expired_at > GETDATE();
 
-            -- Activate pending account
-            IF @purpose = 'Register'
-            BEGIN
-                UPDATE Account
-                SET 
-                    status = 'Active',
-                    updated_at = GETDATE()
-                WHERE account_id = @account_id
-                    AND status = 'Pending';
-            END
+            IF @@ROWCOUNT = 0
+                THROW 30002, 'Failed to verify OTP.', 1;
 
             -- Return verification result
             SELECT *,

@@ -17,13 +17,13 @@ GO
         + message
     
     Flow:
-        1. User request password reset
-        2. sp_generate_otpcode is called to generate OTP and send to user
-        3. User submits OTP and new password
-        4. sp_otp_verify is called to verify OTP
+        1. User requests a password reset
+        2. sp_otp_generate_otpcode is called to generate a 'PasswordReset' OTP and send to user
+        3. User submits the OTP and new password
+        4. sp_otp_verify is called to verify the OTP
         5. Backend hashes the new password
-        6. sp_reset_password updates new password
-        7. Used OTP is marked as verified
+        6. sp_account_reset_password checks the OTP is verified, updates the
+           password, and deletes the used OTP
 */
 CREATE OR ALTER PROCEDURE sp_account_reset_password
     @account_id BIGINT,
@@ -42,14 +42,17 @@ BEGIN
 
             -- Validate OTP is verified
             IF dbo.fn_otp_validate_verify(@account_id, 'PasswordReset') = 0
-                THROW 10002, 'OTP is not verified.', 1;
+                THROW 10001, 'OTP is not verified.', 1;
 
             -- Update password
             UPDATE Account
-            SET 
+            SET
                 password_hash = @new_password,
                 updated_at = GETDATE()
             WHERE account_id = @account_id;
+
+            IF @@ROWCOUNT = 0
+                THROW 10002, 'Failed to reset password.', 1;
 
             -- Delete used OTP
             DELETE FROM OTP

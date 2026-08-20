@@ -7,11 +7,11 @@ USE BankingSystem;
 GO
 
 /* 
-    Parameters : 
+    Input : 
         + @username : Username of the user
         + @password : Password of the user
 
-    Returns : 
+    Output : 
         + user type 
         + user/customer/employee id
         + email

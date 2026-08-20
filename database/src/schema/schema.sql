@@ -122,7 +122,7 @@ CREATE TABLE Loan (
 
     loan_type VARCHAR(20) NOT NULL,
     amount DECIMAL(18, 2) NOT NULL,
-    INTerest_rate DECIMAL(18, 2) NOT NULL,
+    interest_rate DECIMAL(18, 2) NOT NULL,
     remaining_balance DECIMAL(18, 2) NOT NULL,
     duration_months INT NOT NULL,
     start_date DATE NOT NULL,
@@ -138,7 +138,7 @@ CREATE TABLE SavingAccount (
     saving_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
     source_bank_account_id BIGINT NOT NULL,
     deposit_amount DECIMAL(18, 2) NOT NULL,
-    INTerest_rate DECIMAL(18, 2) NOT NULL,
+    interest_rate DECIMAL(18, 2) NOT NULL,
     term_months INT NOT NULL,
     start_date DATE NOT NULL,
     maturity_date DATE NOT NULL,

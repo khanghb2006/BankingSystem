@@ -22,11 +22,18 @@ GO
         + status
         + message
     
-    Note : 
+    Note :
         + Password should be hashed before calling this stored procedure.
         + Public registeration can only create Customer accounts
         + New accounts are created with 'Pending' status
         + The account can only be used after OTP verification
+
+    Flow:
+        1. sp_account_register creates the account with 'Pending' status
+        2. sp_otp_generate_otpcode is called to generate a 'Register' OTP and send to user
+        3. User submits the OTP
+        4. sp_otp_verify is called to verify the OTP
+        5. sp_account_activate activates the account
 */
 CREATE OR ALTER PROCEDURE sp_account_register
     @username VARCHAR(50),
