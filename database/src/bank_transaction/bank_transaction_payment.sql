@@ -2,8 +2,9 @@ USE BankingSystem
 GO
 
 /**
-    Procedure: sp_bank_transaction_transfer
-    Description: Transfer money from one bank account to another.
+    Procedure: sp_bank_transaction_payment
+    Description: Pay for a service/bill from a bank account to a destination
+        bank account (e.g. merchant, biller).
 
     Input:
         + @from_bank_account_id BIGINT
@@ -20,9 +21,9 @@ GO
         + @amount + @fee is deducted from the source account; @amount is
           credited to the destination account.
         + The balance check and deduction happen in a single UPDATE ... WHERE
-          statement so concurrent transfers cannot overdraw the source account.
+          statement so concurrent payments cannot overdraw the source account.
 */
-CREATE OR ALTER PROCEDURE sp_bank_transaction_transfer
+CREATE OR ALTER PROCEDURE sp_bank_transaction_payment
     @from_bank_account_id BIGINT,
     @to_bank_account_id BIGINT,
     @amount DECIMAL(18, 2),
@@ -38,19 +39,19 @@ BEGIN
 
             -- Validate from_bank_account_id
             IF dbo.fn_bank_account_validate_id(@from_bank_account_id) = 0
-                THROW 25000, 'Source bank account does not exist.', 1;
+                THROW 23000, 'Source bank account does not exist.', 1;
 
             -- Validate to_bank_account_id
             IF dbo.fn_bank_account_validate_id(@to_bank_account_id) = 0
-                THROW 25001, 'Destination bank account does not exist.', 1;
+                THROW 23001, 'Destination bank account does not exist.', 1;
 
             -- Validate accounts are different
             IF @from_bank_account_id = @to_bank_account_id
-                THROW 25002, 'Source and destination accounts must be different.', 1;
+                THROW 23002, 'Source and destination accounts must be different.', 1;
 
             -- Validate amount
             IF @amount <= 0
-                THROW 25003, 'Amount must be greater than 0.', 1;
+                THROW 23003, 'Amount must be greater than 0.', 1;
 
             -- Debit the source account only if there is enough available balance
             UPDATE BankingAccount
@@ -62,7 +63,7 @@ BEGIN
                 AND available_balance >= (@amount + @fee);
 
             IF @@ROWCOUNT = 0
-                THROW 25004, 'Insufficient balance or source account is not active.', 1;
+                THROW 23004, 'Insufficient balance or source account is not active.', 1;
 
             -- Credit the destination account
             UPDATE BankingAccount
@@ -73,14 +74,14 @@ BEGIN
                 AND status = 'Active';
 
             IF @@ROWCOUNT = 0
-                THROW 25005, 'Destination account is not active.', 1;
+                THROW 23005, 'Destination account is not active.', 1;
 
             -- Record the transaction
             INSERT INTO BankTransaction
                 (from_bank_account_id, to_bank_account_id, transaction_type,
                     amount, fee, description, created_at, status)
             VALUES
-                (@from_bank_account_id, @to_bank_account_id, 'Transfer',
+                (@from_bank_account_id, @to_bank_account_id, 'Payment',
                     @amount, @fee, @description, GETDATE(), 'Successful');
 
             DECLARE @transaction_id BIGINT = SCOPE_IDENTITY();
@@ -89,7 +90,7 @@ BEGIN
 
         -- Return message
         SELECT *,
-            'Transfer successful.' AS message
+            'Payment successful.' AS message
         FROM vw_TransactionDetails
         WHERE transaction_id = @transaction_id;
 
