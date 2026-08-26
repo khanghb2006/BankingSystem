@@ -28,7 +28,7 @@ BEGIN
 
     BEGIN TRY
         IF @citizen_id IS NULL AND @full_name IS NULL
-            THROW 90060, 'At least one of citizen_id or full_name must be provided.', 1;
+            THROW 84000, 'At least one of citizen_id or full_name must be provided.', 1;
 
         SELECT S.*
         FROM vw_EmployeeSummary S

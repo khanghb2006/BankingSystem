@@ -25,15 +25,15 @@ BEGIN
 
             -- Validate account id
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 90030, 'Invalid account ID.', 1;
+                THROW 81000, 'Invalid account ID.', 1;
 
             -- Validate account role
             IF dbo.fn_account_validate_role(@account_id, 'Employee') = 0
-                THROW 90031, 'Account role must be Employee.', 1;
+                THROW 81001, 'Account role must be Employee.', 1;
 
             -- Validate new branch id
             IF dbo.fn_branch_validate_id(@new_branch_id) = 0
-                THROW 90032, 'Invalid branch ID.', 1;
+                THROW 81002, 'Invalid branch ID.', 1;
 
             -- Reject no-op transfer
             IF EXISTS (
@@ -42,7 +42,7 @@ BEGIN
                 WHERE account_id = @account_id
                     AND branch_id = @new_branch_id
             )
-                THROW 90033, 'Employee already belongs to this branch.', 1;
+                THROW 81003, 'Employee already belongs to this branch.', 1;
 
             -- Update employee branch assignment
             UPDATE Employee
@@ -52,7 +52,7 @@ BEGIN
             WHERE account_id = @account_id;
 
             IF @@ROWCOUNT = 0
-                THROW 90034, 'Failed to assign branch to employee.', 1;
+                THROW 81004, 'Failed to assign branch to employee.', 1;
 
         COMMIT TRANSACTION;
 

@@ -21,11 +21,11 @@ BEGIN
 
         -- Validate account
         IF dbo.fn_account_validate_id(@account_id) = 0
-            THROW 90040, 'Invalid account ID.', 1;
+            THROW 83000, 'Invalid account ID.', 1;
 
         -- Validate account role
         IF dbo.fn_account_validate_role(@account_id, 'Employee') = 0
-            THROW 90041, 'Account role must be Employee.', 1;
+            THROW 83001, 'Account role must be Employee.', 1;
 
         -- Retrieve employee profile information
         SELECT *

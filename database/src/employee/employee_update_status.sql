@@ -25,15 +25,15 @@ BEGIN
 
             -- Validate account id
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 90050, 'Invalid account ID.', 1;
+                THROW 87000, 'Invalid account ID.', 1;
 
             -- Validate account role
             IF dbo.fn_account_validate_role(@account_id, 'Employee') = 0
-                THROW 90051, 'Account role must be Employee.', 1;
+                THROW 87001, 'Account role must be Employee.', 1;
 
             -- Validate new status
             IF dbo.fn_employee_validate_status(@new_status) = 0
-                THROW 90052, 'Invalid status.', 1;
+                THROW 87002, 'Invalid status.', 1;
 
             -- Update employee status
             UPDATE Employee
@@ -43,7 +43,7 @@ BEGIN
             WHERE account_id = @account_id;
 
             IF @@ROWCOUNT = 0
-                THROW 90053, 'Failed to update employee status.', 1;
+                THROW 87003 , 'Failed to update employee status.', 1;
 
         COMMIT TRANSACTION;
 

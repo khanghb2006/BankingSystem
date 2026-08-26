@@ -39,31 +39,31 @@ BEGIN
         BEGIN TRANSACTION
             -- Validate account id
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 90000, 'Invalid account ID.', 1;
+                THROW 82000, 'Invalid account ID.', 1;
 
             -- Validate account role
             IF dbo.fn_account_validate_role(@account_id, 'Employee') = 0
-                THROW 90001, 'Invalid account role. Account must be an Employee.', 1;
+                THROW 82001, 'Invalid account role. Account must be an Employee.', 1;
 
             -- Validate account status
             IF dbo.fn_account_validate_status(@account_id, 'Active') = 0
-                THROW 90002, 'Invalid account status. Account must be Active.', 1;
+                THROW 82002, 'Invalid account status. Account must be Active.', 1;
 
             -- Validate employee profile existence
             IF dbo.fn_employee_validate_exists(@account_id) = 1
-                THROW 90003, 'Employee profile already exists for this account.', 1;
+                THROW 82003, 'Employee profile already exists for this account.', 1;
 
             -- Validate branch id
             IF dbo.fn_branch_validate_id(@branch_id) = 0
-                THROW 90004, 'Invalid branch ID.', 1;
+                THROW 82004, 'Invalid branch ID.', 1;
 
             -- Validate citizen id
             IF dbo.fn_employee_validate_citizen_id(@citizen_id) = 1
-                THROW 90005, 'Invalid citizen ID.', 1;
+                THROW 82005, 'Invalid citizen ID.', 1;
 
             -- Validate Position
             IF dbo.fn_employee_validate_position(@position) = 0
-                THROW 90006, 'Invalid position.', 1;
+                THROW 82006, 'Invalid position.', 1;
 
             -- Generate employee id
             DECLARE @employee_id NCHAR(10) = 'EMP' +
@@ -78,7 +78,7 @@ BEGIN
                     @dob, @gender, @citizen_id, @address, 'Active', GETDATE(), GETDATE());
 
             IF @@ROWCOUNT = 0
-                THROW 90007, 'Failed to create employee profile.', 1;
+                THROW 82007, 'Failed to create employee profile.', 1;
 
         COMMIT TRANSACTION;
 
