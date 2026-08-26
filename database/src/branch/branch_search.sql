@@ -28,7 +28,7 @@ BEGIN
 
         -- Validate status
         IF @status IS NOT NULL AND dbo.fn_branch_validate_status(@status) = 0
-            THROW 50000, 'Invalid status.', 1;
+            THROW 54000, 'Invalid status.', 1;
 
         SELECT *
         FROM vw_Branch

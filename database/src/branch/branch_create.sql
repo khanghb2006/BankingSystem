@@ -27,13 +27,13 @@ BEGIN
 
             -- Validate branch_name
             IF @branch_name IS NULL OR LEN(@branch_name) = 0
-                THROW 50000, 'Branch name cannot be empty.', 1;
+                THROW 51000, 'Branch name cannot be empty.', 1;
             
             IF @address IS NULL OR LEN(@address) = 0
-                THROW 50001, 'Address cannot be empty.', 1;
+                THROW 51001, 'Address cannot be empty.', 1;
             
             IF @phone_number IS NULL OR LEN(@phone_number) = 0
-                THROW 50002, 'Phone number cannot be empty.', 1;
+                THROW 51002, 'Phone number cannot be empty.', 1;
 
             -- Generate a unique branch_id
             DECLARE @branch_id NCHAR(10) = 'BR' + 
@@ -46,7 +46,7 @@ BEGIN
                 (@branch_id, @branch_name, @address, @phone_number, GETDATE(), 'Active');
 
             IF @@ROWCOUNT = 0
-                THROW 50003, 'Failed to create branch.', 1;
+                THROW 51003, 'Failed to create branch.', 1;
 
         COMMIT TRANSACTION;
         -- Return message and branch information
