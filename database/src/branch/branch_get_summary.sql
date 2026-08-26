@@ -28,7 +28,7 @@ BEGIN
 
         -- Validate branch id
         IF dbo.fn_branch_validate_id(@branch_id) = 0
-            THROW 60000, 'Invalid branch ID.', 1;
+            THROW 50000, 'Invalid branch ID.', 1;
 
         SELECT
             B.branch_id,

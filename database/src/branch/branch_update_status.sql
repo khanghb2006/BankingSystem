@@ -25,11 +25,11 @@ BEGIN
 
             -- Validate branch_id
             IF dbo.fn_branch_validate_id(@branch_id) = 0
-                THROW 40000, 'Invalid branch ID.', 1;
+                THROW 50000, 'Invalid branch ID.', 1;
 
             -- Validate status
             IF dbo.fn_branch_validate_status(@new_status) = 0
-                THROW 40001, 'Invalid status.', 1;
+                THROW 50001, 'Invalid status.', 1;
 
             -- Update branch status
             UPDATE Branch
@@ -39,7 +39,7 @@ BEGIN
             WHERE branch_id = @branch_id;
 
             IF @@ROWCOUNT = 0
-                THROW 40002, 'Failed to update branch status.', 1;
+                THROW 50002, 'Failed to update branch status.', 1;
 
         COMMIT TRANSACTION;
 
