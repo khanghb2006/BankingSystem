@@ -20,7 +20,7 @@ GO
         + created_at
         + message
 */
-CREATE PROCEDURE sp_otp_generate_otpcode
+CREATE OR ALTER PROCEDURE sp_otp_generate_otpcode
     @account_id BIGINT,
     @purpose VARCHAR(50)
 AS
@@ -32,11 +32,11 @@ BEGIN
         BEGIN TRANSACTION;
             -- Validate customer
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 130000, 'Invalid account ID.', 1;
+                THROW 121000, 'Invalid account ID.', 1;
 
             -- Validate purpose
             IF dbo.fn_otp_validate_purpose_type(@purpose) = 0
-                THROW 130001, 'Invalid OTP purpose.', 1;
+                THROW 121001, 'Invalid OTP purpose.', 1;
 
             -- Generate random 6-digit OTP code
             DECLARE @otp_code NCHAR(6) = 
@@ -60,7 +60,7 @@ BEGIN
                 (@account_id, @otp_code, @purpose, @expired_at, 0, GETDATE());
 
             IF @@ROWCOUNT = 0
-                THROW 130002, 'Failed to generate OTP.', 1;
+                THROW 121002, 'Failed to generate OTP.', 1;
 
             -- Get the newly generated OTP ID
             DECLARE @otp_id BIGINT = SCOPE_IDENTITY();

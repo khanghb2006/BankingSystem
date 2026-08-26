@@ -42,11 +42,11 @@ BEGIN
 
             -- Validate account existence
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 20000, 'Account does not exist.', 1;
+                THROW 122000, 'Account does not exist.', 1;
 
             -- Validate OTP code matches an unverified, unexpired record
             IF dbo.fn_otp_validate_purpose(@account_id, @otp_code, @purpose) = 0
-                THROW 30001, 'Invalid or Expired OTP code.', 1;
+                THROW 122001, 'Invalid or Expired OTP code.', 1;
 
             -- Marked OTP as verified
             UPDATE OTP
@@ -58,7 +58,7 @@ BEGIN
                 AND expired_at > GETDATE();
 
             IF @@ROWCOUNT = 0
-                THROW 30002, 'Failed to verify OTP.', 1;
+                THROW 122002, 'Failed to verify OTP.', 1;
 
             -- Return verification result
             SELECT *,
