@@ -23,11 +23,11 @@ BEGIN
 
         -- Validate account
         IF dbo.fn_account_validate_id(@account_id) = 0
-            THROW 50010, 'Invalid account ID.', 1;
+            THROW 73000, 'Invalid account ID.', 1;
         
         -- Validate account role
         IF dbo.fn_account_validate_role(@account_id, 'Customer') = 0
-            THROW 50011, 'Account role must be Customer.', 1;
+            THROW 73001, 'Account role must be Customer.', 1;
 
 
         -- Retrieve customer profile information

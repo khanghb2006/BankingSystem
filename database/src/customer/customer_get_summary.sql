@@ -28,7 +28,7 @@ BEGIN
     BEGIN TRY
         -- Validate customer id
         IF dbo.fn_customer_validate_id(@customer_id) = 0
-            THROW 80000, 'Invalid customer ID.', 1;
+            THROW 74000, 'Invalid customer ID.', 1;
 
         SELECT
             C.customer_id,

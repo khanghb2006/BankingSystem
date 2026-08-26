@@ -48,26 +48,26 @@ BEGIN
 
             -- Validate account
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 50020, 'Invalid account ID.', 1;
+                THROW 76000, 'Invalid account ID.', 1;
             
             -- Validate account role
             IF dbo.fn_account_validate_role(@account_id, 'Customer') = 0
-                THROW 50021, 'Account role must be Customer.', 1;
+                THROW 76001, 'Account role must be Customer.', 1;
 
             -- Validate account status
             IF dbo.fn_account_validate_status(@account_id, 'Active') = 0
-                THROW 50022, 'Account status must be Active.', 1;
+                THROW 76002, 'Account status must be Active.', 1;
 
             -- Validate customer profile existence
             IF dbo.fn_customer_validate_exists(@account_id) = 0
-                THROW 50023, 'Customer profile does not exist.', 1;
+                THROW 76003, 'Customer profile does not exist.', 1;
             
             -- Check whether there is anything to update
             IF @full_name IS NULL
                 AND @dob IS NULL
                 AND @gender IS NULL
                 AND @address IS NULL
-                THROW 50024, 'No fields provided for update.', 1;
+                THROW 76004, 'No fields provided for update.', 1;
 
             -- Update profie fields if provided
             UPDATE Customer
@@ -80,7 +80,7 @@ BEGIN
             WHERE account_id = @account_id;
 
             IF @@ROWCOUNT = 0
-                THROW 50025, 'No rows were updated. Please check the provided fields.', 1;
+                THROW 76005, 'No rows were updated. Please check the provided fields.', 1;
 
         COMMIT TRANSACTION;
 
