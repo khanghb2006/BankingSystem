@@ -28,11 +28,11 @@ BEGIN
         BEGIN TRANSACTION;
             -- Validate bank_account_id
             IF dbo.fn_bank_account_validate_id(@bank_account_id) = 0
-                THROW 30013, 'Bank account does not exist.', 1;
+                THROW 34000, 'Bank account does not exist.', 1;
 
             -- Validate new_status
             IF dbo.fn_bank_account_validate_status(@new_status) = 0
-                THROW 30012, 'Invalid status.', 1;
+                THROW 34001, 'Invalid status.', 1;
 
             -- Update the status of the bank account
             UPDATE BankingAccount
@@ -40,7 +40,7 @@ BEGIN
             WHERE bank_account_id = @bank_account_id;
 
             IF @@ROWCOUNT = 0
-                THROW 30014, 'Status update failed', 1;
+                THROW 34002, 'Status update failed', 1;
 
         COMMIT TRANSACTION;
         -- Return message

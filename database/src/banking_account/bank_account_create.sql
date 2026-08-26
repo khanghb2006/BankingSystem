@@ -32,15 +32,15 @@ BEGIN
 
             -- Validate customer_id
             IF dbo.fn_customer_validate_id(@customer_id) = 0
-                THROW 30000, 'Invalid customer ID.', 1;
+                THROW 31000, 'Invalid customer ID.', 1;
 
             -- Validate account_type
             IF dbo.fn_bank_account_validate_type(@account_type) = 0
-                THROW 30001, 'Invalid account type.', 1;
+                THROW 31001, 'Invalid account type.', 1;
 
             -- Validate currency
             IF dbo.fn_bank_account_validate_currency(@currency) = 0
-                THROW 30002, 'Invalid currency.', 1;
+                THROW 31002, 'Invalid currency.', 1;
 
             -- Generate unique bank account number
             DECLARE @bank_account_number NCHAR(20);
@@ -71,7 +71,7 @@ BEGIN
                     @currency, 0, GETDATE(), 'Active');
 
             IF @@ROWCOUNT = 0
-                THROW 30003, 'Failed to create bank account.', 1;
+                THROW 31003, 'Failed to create bank account.', 1;
 
         COMMIT TRANSACTION;
 

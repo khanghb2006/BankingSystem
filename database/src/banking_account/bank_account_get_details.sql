@@ -18,7 +18,7 @@ BEGIN
     BEGIN TRY
         -- Validate the bank account id
         IF dbo.fn_bank_account_validate_id(@bank_account_id) = 0
-            THROW 50000, 'Bank account id does not exist.', 1;
+            THROW 32000, 'Bank account id does not exist.', 1;
 
         -- Retrieve the bank account details
         SELECT * 
