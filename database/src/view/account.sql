@@ -1,19 +1,9 @@
-/*
-====================================================
-    Account Views
-    Author : Huynh Bao Khang
-    Description : Views related to bank accounts
-====================================================
-*/
-
-use BankingSystem;
-go
+USE BankingSystem;
+GO
 
 /* 
-------------------------------------------------------
     View: vw_Account
-    Description : Public account information (without password)
-------------------------------------------------------
+    Description : View to display account information, including role and status details.
 */
 CREATE OR ALTER VIEW vw_Account 
 AS

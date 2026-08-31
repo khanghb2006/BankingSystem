@@ -1,19 +1,9 @@
-/*
-====================================================
-    Transaction Views
-    Author : Huynh Bao Khang
-    Description : Views related to bank transactions
-====================================================
-*/
-
 USE BankingSystem;
 GO
  
 /*
-------------------------------------------------
     View: vw_TransactionDetails
     Description: View to retrieve bank transaction details
-------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_TransactionDetails 
 AS
@@ -53,12 +43,10 @@ AS
 GO
 
 /*
-----------------------------------------------------
     View: vw_TransactionSummary
     Description:
         Lightweight transaction information for
         transaction history and listing.
-----------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_TransactionSummary
 AS

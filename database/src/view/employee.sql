@@ -1,19 +1,9 @@
-/*
-====================================================
-    Employee Views
-    Author : Huynh Bao Khang
-    Description : Views related to employees
-====================================================
-*/
-
 USE BankingSystem;
 GO
 
-/* 
-------------------------------------------------------
+/**
     View: vw_EmployeeDetails
     Description : Public employee information (masked sensitive data)
-------------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_EmployeeDetails 
 AS
@@ -40,11 +30,9 @@ AS
     JOIN Account A ON E.account_id = A.account_id;
 GO
 
-/* 
-------------------------------------------------------
+/**
     View: vw_EmployeeSummary
     Description : Lightweight employee information for employee listing and searching
-------------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_EmployeeSummary
 AS

@@ -1,17 +1,9 @@
-/*
-    Bank Account Views
-    Author : Huynh Bao Khang
-    Description : Views related to bank accounts
-*/
-
 USE BankingSystem;
 Go
 
 /* 
-------------------------------------------------------
     View: vw_BankAccountDetails
     Description : Public bank account information (masked sensitive data)
-------------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_BankAccountDetails
 AS
@@ -32,10 +24,8 @@ AS
 GO
 
 /* 
-------------------------------------------------------
     View: vw_BankAccountSummary
     Description : Lightweight bank account information for listing and searching
-------------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_BankAccountSummary
 AS

@@ -1,19 +1,9 @@
-/*
-====================================================
-    Customer Views
-    Author : Huynh Bao Khang
-    Description : Views related to customers
-====================================================
-*/
-
 USE BankingSystem;
 GO
 
 /* 
-------------------------------------------------------
     View: vw_CustomerDetails
     Description : Public customer information (masked sensitive data)
-------------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_CustomerDetails
 AS
@@ -36,10 +26,8 @@ AS
 GO
 
 /* 
-------------------------------------------------------
     View: vw_CustomerSummary
     Description : Lightweight customer information for customer listing and searching
-------------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_CustomerSummary
 AS
@@ -56,10 +44,8 @@ AS
 GO
 
 /*
-------------------------------------------------------
     View: vw_CustomerStatistics
     Description : Customer statistics for reporting and analytics
-------------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_CustomerStatistics
 AS

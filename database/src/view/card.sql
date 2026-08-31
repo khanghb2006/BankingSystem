@@ -1,19 +1,9 @@
-/*
-====================================================
-    Card Views
-    Author : Huynh Bao Khang
-    Description : Views related to bank cards
-====================================================
-*/
-
 USE BankingSystem;
 GO
 
 /*
-------------------------------------------------------
     View: vw_CardDetails
     Description : Public card information (masked sensitive data)
-------------------------------------------------------
 */
 CREATE OR ALTER VIEW vw_CardDetails
 AS
