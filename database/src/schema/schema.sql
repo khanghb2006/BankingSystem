@@ -129,7 +129,7 @@ CREATE TABLE Loan (
     end_date DATE NOT NULL,
     monthly_payment DECIMAL(18, 2) NOT NULL,
 
-    approved_by NCHAR(10) NOT NULL,
+    approved_by NCHAR(10) NULL,
     status VARCHAR(20) NOT NULL
 );
 GO
