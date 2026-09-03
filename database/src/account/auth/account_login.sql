@@ -38,18 +38,18 @@ BEGIN
 
             -- Validate username
             IF dbo.fn_account_validate_username(@username) = 0
-                THROW 10000, 'Username does not exist', 1;
+                THROW 13000, 'Username does not exist', 1;
 
             -- Get account_id for the username
             SET @account_id = dbo.fn_get_account_id_by_username(@username);
 
             -- Validate password
             IF dbo.fn_account_validate_password(@account_id, @password) = 0
-                THROW 10001, 'Incorrect password', 1;
+                THROW 13001, 'Incorrect password', 1;
 
             -- Validate account is Active
             IF dbo.fn_account_validate_status(@account_id, 'Active') = 0
-                THROW 10002, 'Account is not active', 1;
+                THROW 13002, 'Account is not active', 1;
 
             -- Get account information
             SELECT *,

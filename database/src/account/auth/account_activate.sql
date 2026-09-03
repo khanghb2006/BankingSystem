@@ -40,11 +40,11 @@ BEGIN
 
             -- Validate account id
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 10000, 'Invalid account ID.', 1;
+                THROW 11000, 'Invalid account ID.', 1;
 
             -- Validate OTP is verified
             IF dbo.fn_otp_validate_verify(@account_id, 'Register') = 0
-                THROW 10001, 'OTP is not verified.', 1;
+                THROW 11001, 'OTP is not verified.', 1;
 
             -- Activate account
             UPDATE Account
@@ -55,7 +55,7 @@ BEGIN
                 AND status = 'Pending';
 
             IF @@ROWCOUNT = 0
-                THROW 10002, 'Failed to activate account.', 1;
+                THROW 11002, 'Failed to activate account.', 1;
 
             -- Delete used OTP
             DELETE FROM OTP

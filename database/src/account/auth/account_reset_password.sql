@@ -38,11 +38,11 @@ BEGIN
 
             -- Validate account id
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 10000, 'Invalid account ID.', 1;
+                THROW 15000, 'Invalid account ID.', 1;
 
             -- Validate OTP is verified
             IF dbo.fn_otp_validate_verify(@account_id, 'PasswordReset') = 0
-                THROW 10001, 'OTP is not verified.', 1;
+                THROW 15001, 'OTP is not verified.', 1;
 
             -- Update password
             UPDATE Account
@@ -52,7 +52,7 @@ BEGIN
             WHERE account_id = @account_id;
 
             IF @@ROWCOUNT = 0
-                THROW 10002, 'Failed to reset password.', 1;
+                THROW 15002, 'Failed to reset password.', 1;
 
             -- Delete used OTP
             DELETE FROM OTP

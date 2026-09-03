@@ -36,15 +36,15 @@ BEGIN
 
             -- Validate account ID
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 10000, 'Invalid account ID.', 1;
+                THROW 12000, 'Invalid account ID.', 1;
             
             -- Validate old password
             IF dbo.fn_account_validate_password(@account_id, @old_password) = 0
-                THROW 10001, 'Old password is incorrect.', 1;
+                THROW 12001, 'Old password is incorrect.', 1;
 
             -- new password should not be the same as the old password
             IF @old_password = @new_password
-                THROW 10002, 'New password cannot be the same as the old password.', 1;
+                THROW 12002, 'New password cannot be the same as the old password.', 1;
             
             -- Update password;
             UPDATE Account
@@ -54,7 +54,7 @@ BEGIN
             WHERE account_id = @account_id;
 
             IF @@ROWCOUNT = 0
-                THROW 10003, 'Failed to update password.', 1;
+                THROW 12003, 'Failed to update password.', 1;
 
         COMMIT TRANSACTION;
 

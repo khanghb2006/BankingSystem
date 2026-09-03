@@ -50,15 +50,15 @@ BEGIN
 
             -- Validate username
             IF dbo.fn_account_validate_username(@username) = 1
-                THROW 20000, 'Username already exists.', 1;
+                THROW 14000, 'Username already exists.', 1;
             
             -- Validate email
             IF dbo.fn_account_validate_email(@email) = 1
-                THROW 20001, 'Email already exists.', 1;
+                THROW 14001, 'Email already exists.', 1;
             
             -- Validate phone number
             IF dbo.fn_account_validate_phone_number(@phone_number) = 1
-                THROW 20002, 'Phone number already exists.', 1;
+                THROW 14002, 'Phone number already exists.', 1;
 
             -- Create a new account
             INSERT INTO Account
@@ -69,7 +69,7 @@ BEGIN
                     'Customer', GETDATE(), NULL, 'Pending')
 
             IF @@ROWCOUNT = 0
-                THROW 20003, 'Failed to create account.', 1;
+                THROW 14003, 'Failed to create account.', 1;
             
             -- Return created account information
             SELECT *,

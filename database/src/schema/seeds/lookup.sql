@@ -114,7 +114,9 @@ VALUES
     ('Deposit', 'Deposit transaction'),
     ('Withdrawal', 'Withdrawal transaction'),
     ('Transfer', 'Transfer transaction'),
-    ('Payment', 'Payment transaction');
+    ('Payment', 'Payment transaction'),
+    ('LoanDisbursement', 'Loan disbursement transaction'),
+    ('LoanRepayment', 'Loan repayment transaction');
 GO
 
 -- Transaction Status

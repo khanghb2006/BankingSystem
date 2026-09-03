@@ -118,7 +118,7 @@ GO
 
 CREATE TABLE Loan (
     loan_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
-    customer_id NCHAR(10) NOT NULL,
+    customer_id /NCHAR(10) NOT NULL,
 
     loan_type VARCHAR(20) NOT NULL,
     amount DECIMAL(18, 2) NOT NULL,
@@ -159,7 +159,7 @@ GO
 CREATE TABLE Notification (
     notification_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
     account_id BIGINT NOT NULL,
-    title NVARCHAR(100),
+    title VARCHAR(20),
     message NVARCHAR(255) NOT NULL,
     is_read bit,
     created_at DATETIME NOT NULL

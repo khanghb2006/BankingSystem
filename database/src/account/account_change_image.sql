@@ -32,7 +32,7 @@ BEGIN
         BEGIN TRANSACTION;
 
             -- Validate account
-            IF dbo.fn_account_validate_account_id(@account_id) = 0
+            IF dbo.fn_account_validate_id(@account_id) = 0
                 THROW 50030, 'Invalid account ID.', 1;
             
             -- Validate account status

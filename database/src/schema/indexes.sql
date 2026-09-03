@@ -63,6 +63,7 @@ GO
 
 -- Loan
 CREATE INDEX IX_Loan_LoanId ON Loan(loan_id);
+CREATE INDEX IX_Loan_Customer ON Loan(customer_id);
 CREATE INDEX IX_Loan_LoanType ON Loan(loan_type);
 CREATE INDEX IX_Loan_Status ON Loan(status);
 CREATE INDEX IX_Loan_ApprovedBy ON Loan(approved_by);
@@ -86,9 +87,9 @@ CREATE INDEX IX_Beneficiary_BankName ON Beneficiary(bank_name);
 GO 
 
 -- NotificatiON
-CREATE INDEX IX_NotificatiON_NotificatiONId ON NotificatiON(notification_id);
-CREATE INDEX IX_NotificatiON_Title ON NotificatiON(title);
-CREATE INDEX IX_NotificatiON_IsRead ON NotificatiON(is_read);
+CREATE INDEX IX_Notification_NotificationId ON Notification(notification_id);
+CREATE INDEX IX_Notification_Title ON Notification(title);
+CREATE INDEX IX_Notification_IsRead ON Notification(is_read);
 GO
 
 -- OTP

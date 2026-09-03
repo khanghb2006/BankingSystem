@@ -16,8 +16,10 @@ AS
         L.remaining_balance,
         L.duration_months,
         L.start_date,
+        L.end_date,
         L.monthly_payment,
         L.status,
+        L.approved_by,
 
         -- Customer information
         C.customer_id,
@@ -27,4 +29,5 @@ AS
         C.address
     FROM Loan L
     JOIN Customer C ON L.customer_id = C.customer_id
-    JOIN Account A ON C.account_id = A.account_id
+    JOIN Account A ON C.account_id = A.account_id;
+GO

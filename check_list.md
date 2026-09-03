@@ -15,5 +15,8 @@
 13. Procedures/customer.sql
 14. Functions/card.sql
 15. Procedures/card.sql
+16. Functions/loan.sql
+17. Procedures/loan.sql
+18. view/loan.sql
 ## On Process
 1. 

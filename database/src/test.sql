@@ -1,5 +1,6 @@
 USE BankingSystem;
 GO
 
-alter table Account
-    add image_url VARCHAR(2048);
+IF OBJECT_ID('dbo.sp_notification_create', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.sp_notification_create;
+GO
