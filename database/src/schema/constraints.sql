@@ -98,7 +98,7 @@ GO
 
 -- Login History
 ALTER TABLE LoginHistory ADD
-    CONSTRAINT FK_LoginHistory_Status FOREIGN KEY(status) REFERENCES LoginHistoryStatus(status_name),
+    CONSTRAINT FK_LoginHistory_Status FOREIGN KEY(login_status) REFERENCES LoginHistoryStatus(status_name),
     CONSTRAINT FK_LoginHistory_Account FOREIGN KEY(account_id) REFERENCES Account(account_id);
 GO
 
