@@ -22,7 +22,7 @@ BEGIN
     BEGIN TRY
         -- Validate customer id
         IF dbo.fn_customer_validate_id(@customer_id) = 0
-            THROW 43000, 'Invalid customer ID.', 1;
+            THROW 430000, 'Invalid customer ID.', 1;
 
         -- Search for beneficiaries
         SELECT *

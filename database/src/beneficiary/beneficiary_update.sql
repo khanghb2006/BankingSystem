@@ -36,11 +36,11 @@ BEGIN
 
             -- Validate beneficiary_id
             IF dbo.fn_beneficiary_validate_id(@beneficiary_id) = 0
-                THROW 44000, 'Invalid beneficiary ID.', 1;
+                THROW 440000, 'Invalid beneficiary ID.', 1;
 
             -- Validate ownership
             IF dbo.fn_beneficiary_validate_owner(@beneficiary_id, @customer_id) = 0
-                THROW 44001, 'This beneficiary does not belong to the given customer.', 1;
+                THROW 440010, 'This beneficiary does not belong to the given customer.', 1;
 
             -- Update beneficiary name
             UPDATE Beneficiary
@@ -48,7 +48,7 @@ BEGIN
             WHERE beneficiary_id = @beneficiary_id;
 
             IF @@ROWCOUNT = 0
-                THROW 44002, 'Failed to update beneficiary.', 1;
+                THROW 440020, 'Failed to update beneficiary.', 1;
 
         COMMIT TRANSACTION;
 

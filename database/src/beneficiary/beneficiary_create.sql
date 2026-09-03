@@ -33,19 +33,19 @@ BEGIN
         BEGIN TRANSACTION
             -- Validate customer id
             IF dbo.fn_customer_validate_id(@customer_id) = 0
-                THROW 41000, 'Invalid customer ID.', 1;
+                THROW 410000, 'Invalid customer ID.', 1;
 
             -- Validate bank account id
             IF dbo.fn_bank_account_validate_id(@bank_account_id) = 0
-                THROW 41001, 'Invalid bank account ID.', 1;
+                THROW 410010, 'Invalid bank account ID.', 1;
 
             -- Check if the bank account belongs to the customer
             IF dbo.fn_bank_account_validate_owner(@bank_account_id, @customer_id) = 1
-                THROW 41002, 'Cannot add your own bank account as a beneficiary.', 1;
+                THROW 410020, 'Cannot add your own bank account as a beneficiary.', 1;
 
             -- Check for duplicate beneficiary
             IF dbo.fn_beneficiary_validate_duplicate(@customer_id, @bank_account_id) = 1
-                THROW 41003, 'Beneficiary with this bank account already exists for this customer.', 1;
+                THROW 410030, 'Beneficiary with this bank account already exists for this customer.', 1;
 
             -- Insert new beneficiary record
             INSERT INTO Beneficiary 
@@ -54,7 +54,7 @@ BEGIN
                 (@customer_id, @beneficiary_name, @bank_account_id, @bank_name , GETDATE());
 
             IF @@ROWCOUNT = 0
-                THROW 41004, 'Failed to create beneficiary.', 1;
+                THROW 410040, 'Failed to create beneficiary.', 1;
 
         COMMIT TRANSACTION;
         -- Return message

@@ -20,7 +20,7 @@ BEGIN
     BEGIN TRY
         -- Validate beneficiary id
         IF dbo.fn_beneficiary_validate_id(@beneficiary_id) = 0
-            THROW 42000, 'Invalid beneficiary ID.', 1;
+            THROW 420000, 'Invalid beneficiary ID.', 1;
 
         -- Retrieve beneficiary details
         SELECT *
