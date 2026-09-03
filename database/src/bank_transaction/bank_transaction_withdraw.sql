@@ -34,11 +34,11 @@ BEGIN
 
             -- Validate bank_account_id
             IF dbo.fn_bank_account_validate_id(@bank_account_id) = 0
-                THROW 27000, 'Bank account does not exist.', 1;
+                THROW 270000, 'Bank account does not exist.', 1;
 
             -- Validate amount
             IF @amount <= 0
-                THROW 27001, 'Amount must be greater than 0.', 1;
+                THROW 270010, 'Amount must be greater than 0.', 1;
 
             -- Debit the account only if there is enough available balance
             UPDATE BankingAccount
@@ -50,7 +50,7 @@ BEGIN
                 AND available_balance >= @amount;
 
             IF @@ROWCOUNT = 0
-                THROW 27002, 'Insufficient balance or account is not active.', 1;
+                THROW 270020, 'Insufficient balance or account is not active.', 1;
 
             -- Record the transaction
             INSERT INTO BankTransaction

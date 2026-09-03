@@ -27,22 +27,22 @@ BEGIN
     BEGIN TRY
         -- Validate bank_account_id
         IF dbo.fn_bank_account_validate_id(@bank_account_id) = 0
-            THROW 24000, 'Invalid bank account ID.', 1;
+            THROW 240000, 'Invalid bank account ID.', 1;
         
         -- Validate transaction_type if provided
         IF dbo.fn_bank_transaction_validate_type(@transaction_type) = 0
             AND @transaction_type IS NOT NULL
-                THROW 24001, 'Invalid transaction type.', 1;
+                THROW 240010, 'Invalid transaction type.', 1;
 
         -- Validate status if provided
         IF dbo.fn_bank_transaction_validate_status(@status) = 0
             AND @status IS NOT NULL
-                THROW 24002, 'Invalid transaction status.', 1;
+                THROW 240020, 'Invalid transaction status.', 1;
 
         -- Validate date range if provided
         IF @from_date IS NOT NULL AND @to_date IS NOT NULL 
             AND @from_date > @to_date
-            THROW 24003, 'Invalid date range. From date cannot be later than to date.', 1;
+            THROW 240030, 'Invalid date range. From date cannot be later than to date.', 1;
             
         -- Retrieve transactions based on the provided criteria
         SELECT *

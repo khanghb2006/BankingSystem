@@ -26,11 +26,11 @@ BEGIN
 
             -- Validate transaction_id
             IF dbo.fn_bank_transaction_validate_id(@transaction_id) = 0
-                THROW 26000, 'Invalid transaction ID.', 1;
+                THROW 260000, 'Invalid transaction ID.', 1;
 
             -- Validate new_status
             IF dbo.fn_bank_transaction_validate_status(@new_status) = 0
-                THROW 26001, 'Invalid status.', 1;
+                THROW 260010, 'Invalid status.', 1;
 
             -- Update transaction status
             UPDATE BankTransaction
@@ -38,7 +38,7 @@ BEGIN
             WHERE transaction_id = @transaction_id;
 
             IF @@ROWCOUNT = 0
-                THROW 26002, 'Failed to update transaction status.', 1;
+                THROW 260020, 'Failed to update transaction status.', 1;
 
         COMMIT TRANSACTION;
 

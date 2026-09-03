@@ -21,7 +21,7 @@ BEGIN
     BEGIN TRY
         -- Validate transaction ID  
         IF dbo.fn_bank_transaction_validate_id(@transaction_id) = 0
-            THROW 22000, 'Invalid transaction ID.', 1;
+            THROW 220000, 'Invalid transaction ID.', 1;
 
         -- Retrieve transaction details
         SELECT *

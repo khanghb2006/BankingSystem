@@ -33,11 +33,11 @@ BEGIN
 
             -- Validate bank_account_id
             IF dbo.fn_bank_account_validate_id(@bank_account_id) = 0
-                THROW 21000, 'Bank account does not exist.', 1;
+                THROW 210000, 'Bank account does not exist.', 1;
 
             -- Validate amount
             IF @amount <= 0
-                THROW 21001, 'Amount must be greater than 0.', 1;
+                THROW 210010, 'Amount must be greater than 0.', 1;
 
             -- Credit the account (atomic; also enforces the account is Active)
             UPDATE BankingAccount
@@ -48,7 +48,7 @@ BEGIN
                 AND status = 'Active';
 
             IF @@ROWCOUNT = 0
-                THROW 21002, 'Account is not active.', 1;
+                THROW 210020, 'Account is not active.', 1;
 
             -- Record the transaction
             INSERT INTO BankTransaction

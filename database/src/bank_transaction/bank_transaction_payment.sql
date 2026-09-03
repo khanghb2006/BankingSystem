@@ -39,19 +39,19 @@ BEGIN
 
             -- Validate from_bank_account_id
             IF dbo.fn_bank_account_validate_id(@from_bank_account_id) = 0
-                THROW 23000, 'Source bank account does not exist.', 1;
+                THROW 230000, 'Source bank account does not exist.', 1;
 
             -- Validate to_bank_account_id
             IF dbo.fn_bank_account_validate_id(@to_bank_account_id) = 0
-                THROW 23001, 'Destination bank account does not exist.', 1;
+                THROW 230010, 'Destination bank account does not exist.', 1;
 
             -- Validate accounts are different
             IF @from_bank_account_id = @to_bank_account_id
-                THROW 23002, 'Source and destination accounts must be different.', 1;
+                THROW 230020, 'Source and destination accounts must be different.', 1;
 
             -- Validate amount
             IF @amount <= 0
-                THROW 23003, 'Amount must be greater than 0.', 1;
+                THROW 230030, 'Amount must be greater than 0.', 1;
 
             -- Debit the source account only if there is enough available balance
             UPDATE BankingAccount
@@ -63,7 +63,7 @@ BEGIN
                 AND available_balance >= (@amount + @fee);
 
             IF @@ROWCOUNT = 0
-                THROW 23004, 'Insufficient balance or source account is not active.', 1;
+                THROW 230040, 'Insufficient balance or source account is not active.', 1;
 
             -- Credit the destination account
             UPDATE BankingAccount
@@ -74,7 +74,7 @@ BEGIN
                 AND status = 'Active';
 
             IF @@ROWCOUNT = 0
-                THROW 23005, 'Destination account is not active.', 1;
+                THROW 230050, 'Destination account is not active.', 1;
 
             -- Record the transaction
             INSERT INTO BankTransaction
