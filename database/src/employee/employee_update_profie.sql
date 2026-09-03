@@ -20,7 +20,7 @@ GO
         + Branch reassignment is handled separately by sp_employee_assign_branch.
         + Only provided fields will be updated, others will remain unchanged.
 */
-CREATE OR ALTER PROCEDURE sp_employee_update_profile
+CREATE OR ALTER PROCEDURE dbo.sp_employee_update_profile
     @account_id BIGINT,
     @full_name NVARCHAR(100) = NULL,
     @dob DATE = NULL,

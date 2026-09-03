@@ -20,7 +20,7 @@ GO
         + remaining_balance = remaining_balance - amount
         + if amount >= remaining_balance, then status = 'Closed'
 */
-CREATE OR ALTER PROCEDURE sp_loan_repay
+CREATE OR ALTER PROCEDURE dbo.sp_loan_repay
     @customer_id NCHAR(10),
     @loan_id BIGINT,
     @bank_account_id BIGINT,

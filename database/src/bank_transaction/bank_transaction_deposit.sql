@@ -19,7 +19,7 @@ GO
           @bank_account_id since deposits have no source account in the system.
         + Only 'Active' accounts can receive deposits.
 */
-CREATE OR ALTER PROCEDURE sp_bank_transaction_deposit
+CREATE OR ALTER PROCEDURE dbo.sp_bank_transaction_deposit
     @bank_account_id BIGINT,
     @amount DECIMAL(18, 2),
     @description NVARCHAR(255) = NULL

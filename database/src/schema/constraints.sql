@@ -23,7 +23,6 @@ GO
 
 -- Customer
 ALTER TABLE Customer ADD
-    CONSTRAINT FK_Customer_Status FOREIGN KEY(status) REFERENCES CustomerStatus(status_name),
     CONSTRAINT FK_Customer_Account FOREIGN KEY(account_id) REFERENCES Account(account_id),
     CONSTRAINT FK_Customer_Branch FOREIGN KEY(branch_id) REFERENCES Branch(branch_id);
 GO
@@ -74,7 +73,7 @@ GO
 
 -- Saving Account
 ALTER TABLE SavingAccount ADD
-    CONSTRAINT FK_SavingAccount_Source FOREIGN KEY(source_bank_account) REFERENCES BankingAccount(bank_account_id),
+    CONSTRAINT FK_SavingAccount_Source FOREIGN KEY(source_bank_account_id) REFERENCES BankingAccount(bank_account_id),
     CONSTRAINT FK_SavingAccount_Status FOREIGN KEY(status) REFERENCES SavingAccountStatus(status_name);
 GO
 
@@ -87,7 +86,7 @@ GO
 -- Notification
 ALTER TABLE Notification ADD
     CONSTRAINT FK_Notification_Title FOREIGN KEY(title) REFERENCES NotificationType(type_name),
-    CONSTRAINT FK_Notification_Customer FOREIGN KEY(account_id) REFERENCES Account(account_id);
+    CONSTRAINT FK_Notification_Account FOREIGN KEY(account_id) REFERENCES Account(account_id);
 GO
 
 -- OTP
@@ -110,7 +109,7 @@ GO
 
 -- Account
 ALTER TABLE Account ADD
-    CONSTRAINT UQ_Account_USErname UNIQUE(USErname),
+    CONSTRAINT UQ_Account_Username UNIQUE(username),
     CONSTRAINT UQ_Account_Email UNIQUE(email),
     CONSTRAINT UQ_Account_PhoneNumber UNIQUE(phone_number);
 GO
@@ -165,24 +164,30 @@ GO
 
 -- Bank Transaction
 ALTER TABLE BankTransaction ADD
-    CONSTRAINT CK_BankTransaction_Amount 
-        CHECK(amount > 0);
+    CONSTRAINT CK_BankTransaction_Amount
+        CHECK(amount > 0),
+    CONSTRAINT CK_BankTransaction_Fee
+        CHECK(fee >= 0);
 GO
 
 -- Loan
 ALTER TABLE Loan ADD
-    CONSTRAINT CK_Loan_Amount 
+    CONSTRAINT CK_Loan_Amount
         CHECK(amount > 0),
     CONSTRAINT CK_Loan_InterestRate
         CHECK(interest_rate >= 0),
     CONSTRAINT CK_Loan_Remaining
-        CHECK(remaining_balance >= 0);
+        CHECK(remaining_balance >= 0),
+    CONSTRAINT CK_Loan_Duration
+        CHECK(duration_months > 0);
 GO
 
 -- Saving Account
 ALTER TABLE SavingAccount ADD
-    CONSTRAINT CK_SavingAccount_InterestRate 
+    CONSTRAINT CK_SavingAccount_InterestRate
         CHECK(interest_rate >= 0),
-    CONSTRAINT CK_SavingAccount_Amount 
-        CHECK(deposit_amount > 0);
+    CONSTRAINT CK_SavingAccount_Amount
+        CHECK(deposit_amount > 0),
+    CONSTRAINT CK_SavingAccount_Term
+        CHECK(term_months > 0);
 GO

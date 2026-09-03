@@ -18,7 +18,7 @@ GO
         + number_of_employees
         + number_of_customers
 */
-CREATE OR ALTER PROCEDURE sp_branch_get_summary
+CREATE OR ALTER PROCEDURE dbo.sp_branch_get_summary
     @branch_id NCHAR(10)
 AS
 BEGIN

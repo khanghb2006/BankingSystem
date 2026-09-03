@@ -21,7 +21,7 @@ GO
         + vw_EmployeeDetails
         + message : Success or Failure message
 */
-CREATE OR ALTER PROCEDURE sp_employee_create_profile
+CREATE OR ALTER PROCEDURE dbo.sp_employee_create_profile
     @account_id BIGINT,
     @branch_id NCHAR(10),
     @full_name NVARCHAR(100),

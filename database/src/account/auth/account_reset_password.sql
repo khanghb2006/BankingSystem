@@ -25,7 +25,7 @@ GO
         6. sp_account_reset_password checks the OTP is verified, updates the
            password, and deletes the used OTP
 */
-CREATE OR ALTER PROCEDURE sp_account_reset_password
+CREATE OR ALTER PROCEDURE dbo.sp_account_reset_password
     @account_id BIGINT,
     @new_password VARCHAR(255)
 AS

@@ -20,7 +20,7 @@ GO
         + This procedure only updates the image URL in the Account table.
         + Image storage will be handled by the backend
 */
-CREATE OR ALTER PROCEDURE ChangeAccountImage
+CREATE OR ALTER PROCEDURE dbo.ChangeAccountImage
     @account_id BIGINT,
     @image_url VARCHAR(2048)
 AS

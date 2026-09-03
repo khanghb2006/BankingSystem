@@ -31,7 +31,7 @@ GO
         + Only provided fields will be updated, others will remain unchanged.
         + Customer cannot change customer_id, account_id, branch_id, citizen_id, created_at.
 */
-CREATE OR ALTER PROCEDURE sp_customer_update_profile
+CREATE OR ALTER PROCEDURE dbo.sp_customer_update_profile
     @account_id BIGINT,
     @full_name NVARCHAR(100) = NULL,
     @dob DATE = NULL,

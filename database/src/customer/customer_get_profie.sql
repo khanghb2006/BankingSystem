@@ -13,7 +13,7 @@ GO
     Output:
         + vw_CustomerProfile : Customer profile information
 */
-CREATE OR ALTER PROCEDURE sp_customer_get_profile
+CREATE OR ALTER PROCEDURE dbo.sp_customer_get_profile
     @account_id BIGINT
 AS
 BEGIN

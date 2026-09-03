@@ -12,7 +12,7 @@ GO
         + @from_date DATE (optional)
         + @to_date DATE (optional)
 */
-CREATE OR ALTER PROCEDURE sp_bank_transaction_search
+CREATE OR ALTER PROCEDURE dbo.sp_bank_transaction_search
     @bank_account_id BIGINT,
     @transaction_type VARCHAR(20) = NULL,
     @status NVARCHAR(20) = NULL,

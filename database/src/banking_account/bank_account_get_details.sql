@@ -11,7 +11,7 @@ GO
     Output: 
         + Returns the details of the bank account if it exists, otherwise returns an empty result set.
 */
-CREATE OR ALTER PROCEDURE sp_bank_account_get_details
+CREATE OR ALTER PROCEDURE dbo.sp_bank_account_get_details
     @bank_account_id BIGINT
 AS
 BEGIN

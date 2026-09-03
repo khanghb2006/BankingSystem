@@ -11,7 +11,7 @@ GO
     Output:
         + vw_CardDetails : A view containing the details of the card.
 */
-CREATE OR ALTER PROCEDURE sp_card_get_details
+CREATE OR ALTER PROCEDURE dbo.sp_card_get_details
     @card_number VARCHAR(20)
 AS
 BEGIN

@@ -12,7 +12,7 @@ GO
     Output:
         + vw_EmployeeDetails : Employee profile information
 */
-CREATE OR ALTER PROCEDURE sp_employee_update_status
+CREATE OR ALTER PROCEDURE dbo.sp_employee_update_status
     @account_id BIGINT,
     @new_status NVARCHAR(20)
 AS

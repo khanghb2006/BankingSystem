@@ -28,7 +28,7 @@ GO
           actions (e.g. activating a Pending account for 'Register') are handled by
           separate procedures that check fn_otp_validate_verify afterward.
 */
-CREATE OR ALTER PROCEDURE sp_otp_verify
+CREATE OR ALTER PROCEDURE dbo.sp_otp_verify
     @account_id BIGINT,
     @otp_code NCHAR(6),
     @purpose VARCHAR(50)

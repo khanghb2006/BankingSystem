@@ -27,13 +27,6 @@ VALUES
     ('Locked', 'Account is locked');
 GO
 
--- Customer Status 
-INSERT INTO CustomerStatus
-    (status_name, description)
-VALUES
-    ('Active', 'Customer is active'),
-    ('Inactive', 'Customer is inactive');
-
 -- Employee Position
 INSERT INTO EmployeePosition
     (position_name, description)
@@ -116,7 +109,9 @@ VALUES
     ('Transfer', 'Transfer transaction'),
     ('Payment', 'Payment transaction'),
     ('LoanDisbursement', 'Loan disbursement transaction'),
-    ('LoanRepayment', 'Loan repayment transaction');
+    ('LoanRepayment', 'Loan repayment transaction'),
+    ('SavingDeposit', 'Saving account deposit transaction'),
+    ('SavingWithdrawal', 'Saving account withdrawal transaction');
 GO
 
 -- Transaction Status

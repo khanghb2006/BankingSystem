@@ -14,7 +14,7 @@ GO
     Output:
         + vw_Branch : Branch information
 */
-CREATE OR ALTER PROCEDURE sp_branch_update
+CREATE OR ALTER PROCEDURE dbo.sp_branch_update
     @branch_id NCHAR(10),
     @branch_name NVARCHAR(100) NULL,
     @address NVARCHAR(100) NULL,

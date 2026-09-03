@@ -13,7 +13,7 @@ GO
         + vw_TransactionDetails
         + message
 */
-CREATE OR ALTER PROCEDURE sp_bank_transaction_update_status
+CREATE OR ALTER PROCEDURE dbo.sp_bank_transaction_update_status
     @transaction_id BIGINT,
     @new_status NVARCHAR(20)
 AS

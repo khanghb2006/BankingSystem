@@ -11,7 +11,7 @@ GO
     Output: 
         + vw_NotificationDetails
 */
-CREATE OR ALTER PROCEDURE sp_notification_get_details
+CREATE OR ALTER PROCEDURE dbo.sp_notification_get_details
     @notification_id BIGINT
 AS
 BEGIN
@@ -20,7 +20,7 @@ BEGIN
     BEGIN TRY
         -- Validate notification id
         IF dbo.fn_notification_validate_id(@notification_id) = 0
-            THROW 11200, 'Notification does not exist.', 1;
+            THROW 112000, 'Notification does not exist.', 1;
 
         -- Retrieve the notification details
         SELECT *

@@ -12,7 +12,7 @@ GO
     Output:
         + vw_EmployeeDetails : Employee profile information
 */
-CREATE OR ALTER PROCEDURE sp_employee_assign_branch
+CREATE OR ALTER PROCEDURE dbo.sp_employee_assign_branch
     @account_id BIGINT,
     @new_branch_id NCHAR(10)
 AS

@@ -19,7 +19,7 @@ GO
         + At least one of @citizen_id or @full_name must be provided.
         + @citizen_id is matched exactly; @full_name is matched as a partial (contains) search.
 */
-CREATE OR ALTER PROCEDURE sp_customer_search
+CREATE OR ALTER PROCEDURE dbo.sp_customer_search
     @citizen_id VARCHAR(20) = NULL,
     @full_name NVARCHAR(100) = NULL
 AS

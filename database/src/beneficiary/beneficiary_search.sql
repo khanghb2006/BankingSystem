@@ -12,7 +12,7 @@ GO
     Output: 
         + vw_BeneficiaryDetails
 */
-CREATE OR ALTER PROCEDURE sp_beneficiary_search
+CREATE OR ALTER PROCEDURE dbo.sp_beneficiary_search
     @customer_id NCHAR(10),
     @beneficiary_name NVARCHAR(50) = NULL
 AS

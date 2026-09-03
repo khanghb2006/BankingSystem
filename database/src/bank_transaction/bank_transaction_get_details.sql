@@ -11,7 +11,7 @@ GO
     Output :
         + vw_TransactionDetails
 */
-CREATE OR ALTER PROCEDURE sp_bank_transaction_get_details
+CREATE OR ALTER PROCEDURE dbo.sp_bank_transaction_get_details
     @transaction_id BIGINT
 AS
 BEGIN

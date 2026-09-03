@@ -23,7 +23,7 @@ GO
         + The balance check and deduction happen in a single UPDATE ... WHERE
           statement so concurrent payments cannot overdraw the source account.
 */
-CREATE OR ALTER PROCEDURE sp_bank_transaction_payment
+CREATE OR ALTER PROCEDURE dbo.sp_bank_transaction_payment
     @from_bank_account_id BIGINT,
     @to_bank_account_id BIGINT,
     @amount DECIMAL(18, 2),

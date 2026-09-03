@@ -33,7 +33,7 @@ GO
         + Account role must be Customer
         + Customer profie can be created only once for each account
 */
-CREATE OR ALTER PROCEDURE sp_create_customer_profile
+CREATE OR ALTER PROCEDURE dbo.sp_create_customer_profile
     @account_id BIGINT,
     @branch_id NCHAR(10),
     @full_name NVARCHAR(255),

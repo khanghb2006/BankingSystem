@@ -13,7 +13,7 @@ GO
         + vw_NotificationDetails
         + result_message
 */
-CREATE OR ALTER PROCEDURE sp_notification_mark_is_read
+CREATE OR ALTER PROCEDURE dbo.sp_notification_mark_is_read
     @notification_id BIGINT,
     @account_id BIGINT
 AS
@@ -26,11 +26,11 @@ BEGIN
 
             -- Validate notification id
             IF dbo.fn_notification_validate_id(@notification_id) = 0
-                THROW 11300, 'Notification does not exist.', 1;
+                THROW 113000, 'Notification does not exist.', 1;
 
             -- Validate ownership
             IF dbo.fn_notification_validate_owner(@notification_id, @account_id) = 0
-                THROW 11301, 'This notification does not belong to the given account.', 1;
+                THROW 113010, 'This notification does not belong to the given account.', 1;
 
             -- Mark the notification as read
             UPDATE Notification
@@ -38,7 +38,7 @@ BEGIN
             WHERE notification_id = @notification_id;
 
             IF @@ROWCOUNT = 0
-                THROW 11302, 'Failed to mark notification as read.', 1;
+                THROW 113020, 'Failed to mark notification as read.', 1;
 
         COMMIT TRANSACTION;
 

@@ -22,7 +22,7 @@ GO
     Note : 
         + The password should be hashed by the backend before calling this procedure.
 */
-CREATE OR ALTER PROCEDURE sp_account_login
+CREATE OR ALTER PROCEDURE dbo.sp_account_login
     @username VARCHAR(50),
     @password VARCHAR(255)
 AS

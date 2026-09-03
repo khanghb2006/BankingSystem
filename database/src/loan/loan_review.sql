@@ -17,7 +17,7 @@ GO
     Note:
         + approved_by is set to the employee_id of the employee who reviewed the loan application.
 */
-CREATE OR ALTER PROCEDURE sp_loan_review
+CREATE OR ALTER PROCEDURE dbo.sp_loan_review
     @loan_id BIGINT,
     @reviewer_id NCHAR(10),
     @decision VARCHAR(20)

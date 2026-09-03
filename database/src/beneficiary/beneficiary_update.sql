@@ -22,7 +22,7 @@ GO
           the customer making the request (prevents editing someone
           else's saved beneficiary).
 */
-CREATE OR ALTER PROCEDURE sp_beneficiary_update
+CREATE OR ALTER PROCEDURE dbo.sp_beneficiary_update
     @beneficiary_id BIGINT,
     @customer_id NCHAR(10),
     @beneficiary_name NVARCHAR(50)

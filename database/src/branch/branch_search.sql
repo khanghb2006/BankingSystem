@@ -17,7 +17,7 @@ GO
         + Both parameters are optional; calling with no parameters returns all branches.
         + @branch_name is matched as a partial (contains) search.
 */
-CREATE OR ALTER PROCEDURE sp_branch_search
+CREATE OR ALTER PROCEDURE dbo.sp_branch_search
     @branch_name NVARCHAR(100) = NULL,
     @status NVARCHAR(20) = NULL
 AS

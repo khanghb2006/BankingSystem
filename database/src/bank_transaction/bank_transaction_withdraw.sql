@@ -20,7 +20,7 @@ GO
         + The balance check and deduction happen in a single UPDATE ... WHERE
           statement so concurrent withdrawals cannot overdraw the account.
 */
-CREATE OR ALTER PROCEDURE sp_bank_transaction_withdraw
+CREATE OR ALTER PROCEDURE dbo.sp_bank_transaction_withdraw
     @bank_account_id BIGINT,
     @amount DECIMAL(18, 2),
     @description NVARCHAR(255) = NULL

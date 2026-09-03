@@ -16,7 +16,7 @@ GO
     Output :
         + vw_LoginHistoryDetails
 */
-CREATE OR ALTER PROCEDURE sp_login_history_search
+CREATE OR ALTER PROCEDURE dbo.sp_login_history_search
     @account_id BIGINT,
     @login_status VARCHAR(20) = NULL,
     @ip_address VARCHAR(50) = NULL,

@@ -25,13 +25,6 @@ CREATE TABLE AccountStatus (
 );
 GO
 
--- Customer Status
-CREATE TABLE CustomerStatus (
-    status_name VARCHAR(20) PRIMARY KEY,
-    description NVARCHAR(100),
-    is_active BIT NOT NULL DEFAULT 1
-);
-
 -- Employee Position
 CREATE TABLE EmployeePosition (
     position_name VARCHAR(50) PRIMARY KEY,
@@ -147,7 +140,7 @@ GO
 
 -- OTP Purpose
 CREATE TABLE OTPPurpose (
-    purpose_name VARCHAR(20) PRIMARY KEY,
+    purpose_name VARCHAR(50) PRIMARY KEY,
     description NVARCHAR(100),
     is_active BIT NOT NULL DEFAULT 1
 );

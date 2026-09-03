@@ -20,7 +20,7 @@ GO
           in practice the app should hash a CVV it generated/showed once
           and pass the hash in, never store/return the plaintext CVV
 */
-CREATE OR ALTER PROCEDURE sp_card_create
+CREATE OR ALTER PROCEDURE dbo.sp_card_create
     @bank_account_id BIGINT,
     @card_type VARCHAR(20)
 AS

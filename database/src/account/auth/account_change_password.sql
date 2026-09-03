@@ -21,7 +21,7 @@ GO
         + Passwords are stored as hashed values in the Authentication table.
         + This procedure only updates the password in the Authentication table.
 */
-CREATE OR ALTER PROCEDURE sp_account_change_password
+CREATE OR ALTER PROCEDURE dbo.sp_account_change_password
     @account_id BIGINT,
     @old_password VARCHAR(255),
     @new_password VARCHAR(255)

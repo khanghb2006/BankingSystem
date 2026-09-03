@@ -13,7 +13,7 @@ GO
     Output:
         + vw_CardDetails
 */
-CREATE OR ALTER PROCEDURE sp_card_search
+CREATE OR ALTER PROCEDURE dbo.sp_card_search
     @bank_account_id BIGINT,
     @card_type VARCHAR(20) = NULL,
     @status VARCHAR(20) = NULL

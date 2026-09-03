@@ -11,7 +11,7 @@ GO
     Output:
         + vw_Branch : Branch information
 */
-CREATE OR ALTER PROCEDURE sp_branch_get_info
+CREATE OR ALTER PROCEDURE dbo.sp_branch_get_info
     @branch_id NCHAR(10)
 AS
 BEGIN

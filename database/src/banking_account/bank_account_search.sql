@@ -19,7 +19,7 @@ GO
         + @bank_account_number is matched as a partial (contains) search.
         + @account_type and @customer_id are matched exactly.
 */
-CREATE OR ALTER PROCEDURE sp_bank_account_search
+CREATE OR ALTER PROCEDURE dbo.sp_bank_account_search
     @bank_account_number NVARCHAR(20) = NULL,
     @customer_id NCHAR(10) = NULL,
     @account_type VARCHAR(20) = NULL,

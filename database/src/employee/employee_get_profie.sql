@@ -11,7 +11,7 @@ GO
     Output:
         + vw_EmployeeDetails : Employee profile information
 */
-CREATE OR ALTER PROCEDURE sp_employee_get_profile
+CREATE OR ALTER PROCEDURE dbo.sp_employee_get_profile
     @account_id BIGINT
 AS
 BEGIN

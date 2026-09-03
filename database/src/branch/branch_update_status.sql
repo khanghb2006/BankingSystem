@@ -12,7 +12,7 @@ GO
     Output:
         + vw_Branch : Branch information
 */
-CREATE OR ALTER PROCEDURE sp_branch_update_status
+CREATE OR ALTER PROCEDURE dbo.sp_branch_update_status
     @branch_id NCHAR(10),
     @new_status NVARCHAR(20)
 AS

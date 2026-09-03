@@ -18,7 +18,7 @@ GO
         + number_of_accounts
         + number_of_cards
 */
-CREATE OR ALTER PROCEDURE sp_customer_get_summary
+CREATE OR ALTER PROCEDURE dbo.sp_customer_get_summary
     @customer_id NCHAR(10)
 AS
 BEGIN

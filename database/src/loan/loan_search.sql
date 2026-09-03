@@ -19,7 +19,7 @@ GO
     Note:
         + Must have at least one search criteria in @customer_id, @status or @approved_by
 */
-CREATE OR ALTER PROCEDURE sp_loan_search
+CREATE OR ALTER PROCEDURE dbo.sp_loan_search
     @customer_id NCHAR(10) = NULL,
     @loan_type VARCHAR(20) = NULL,
     @status VARCHAR(20) = NULL,

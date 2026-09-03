@@ -12,7 +12,7 @@ GO
     Output:
         + vw_LoanDetails : A view that provides comprehensive details of the specified loan, including customer information, loan amount, duration, interest rate, monthly payment, remaining balance, and status.
 */
-CREATE OR ALTER PROCEDURE sp_loan_get_details
+CREATE OR ALTER PROCEDURE dbo.sp_loan_get_details
     @customer_id NCHAR(10),
     @loan_id BIGINT
 AS

@@ -15,7 +15,7 @@ GO
         + result_message
 */
 
-CREATE OR ALTER PROCEDURE sp_notification_create
+CREATE OR ALTER PROCEDURE dbo.sp_notification_create
     @account_id BIGINT,
     @title VARCHAR(20),
     @message NVARCHAR(255)
@@ -29,15 +29,15 @@ BEGIN
 
             -- Validate account id
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 11100, 'Account does not exist.', 1;
+                THROW 111000, 'Account does not exist.', 1;
 
             -- Validate title
             IF dbo.fn_notification_validate_type(@title) = 0
-                THROW 11101, 'Invalid notification title.', 1;
+                THROW 111010, 'Invalid notification title.', 1;
 
             -- Validate message
             IF @message IS NULL OR LEN(@message) = 0
-                THROW 11102, 'Notification message cannot be empty.', 1;
+                THROW 111020, 'Notification message cannot be empty.', 1;
 
             -- Insert the new notification
             INSERT INTO Notification
@@ -46,7 +46,7 @@ BEGIN
                 (@account_id, @title, @message, 0, GETDATE());
 
             IF @@ROWCOUNT = 0
-                THROW 11103, 'Failed to create notification.', 1;
+                THROW 111030, 'Failed to create notification.', 1;
 
         COMMIT TRANSACTION;
 

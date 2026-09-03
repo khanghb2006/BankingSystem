@@ -19,7 +19,7 @@ GO
         + A customer cannot save their own bank account as a beneficiary.
         + A customer cannot save the same bank account as a beneficiary more than once.
 */
-CREATE OR ALTER PROCEDURE sp_beneficiary_create
+CREATE OR ALTER PROCEDURE dbo.sp_beneficiary_create
     @customer_id NCHAR(10),
     @beneficiary_name NVARCHAR(50),
     @bank_account_id BIGINT,

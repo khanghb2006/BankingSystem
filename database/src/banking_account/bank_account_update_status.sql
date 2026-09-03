@@ -16,7 +16,7 @@ GO
     Note :
         + The new status must be a valid status as defined in the system.
 */
-CREATE OR ALTER PROCEDURE sp_bank_account_update_status
+CREATE OR ALTER PROCEDURE dbo.sp_bank_account_update_status
     @bank_account_id INT,
     @new_status NVARCHAR(20)
 AS

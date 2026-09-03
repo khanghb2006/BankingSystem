@@ -35,7 +35,7 @@ GO
         4. sp_otp_verify is called to verify the OTP
         5. sp_account_activate activates the account
 */
-CREATE OR ALTER PROCEDURE sp_account_register
+CREATE OR ALTER PROCEDURE dbo.sp_account_register
     @username VARCHAR(50),
     @email NVARCHAR(100),
     @phone_number VARCHAR(20),

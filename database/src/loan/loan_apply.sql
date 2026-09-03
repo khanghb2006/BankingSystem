@@ -30,7 +30,7 @@ GO
         + status is initially set to 'Pending' and will be updated based on the approval process.
 */
 
-CREATE OR ALTER PROCEDURE sp_loan_apply
+CREATE OR ALTER PROCEDURE dbo.sp_loan_apply
     @customer_id NCHAR(10),
     @loan_type VARCHAR(20),
     @loan_amount DECIMAL(18, 2),

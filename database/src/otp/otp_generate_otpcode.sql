@@ -20,7 +20,7 @@ GO
         + created_at
         + message
 */
-CREATE OR ALTER PROCEDURE sp_otp_generate_otpcode
+CREATE OR ALTER PROCEDURE dbo.sp_otp_generate_otpcode
     @account_id BIGINT,
     @purpose VARCHAR(50)
 AS

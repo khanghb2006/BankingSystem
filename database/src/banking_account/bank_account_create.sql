@@ -18,7 +18,7 @@ GO
         + bank_acccount_number is randomly generated (20 digits) and guaranteed unique
         + initial_balance = 0 , available_balance = 0 , status = 'Active'
 */
-CREATE OR ALTER PROCEDURE sp_bank_account_create
+CREATE OR ALTER PROCEDURE dbo.sp_bank_account_create
     @customer_id NCHAR(10),
     @account_type VARCHAR(20),
     @currency NVARCHAR(10)

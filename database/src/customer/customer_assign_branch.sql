@@ -20,7 +20,7 @@ GO
     Note :
         + Customer cannot be assigned to the branch they already belong to.
 */
-CREATE OR ALTER PROCEDURE sp_customer_assign_branch
+CREATE OR ALTER PROCEDURE dbo.sp_customer_assign_branch
     @customer_id NCHAR(10),
     @new_branch_id NCHAR(10),
     @employee_id NCHAR(10)

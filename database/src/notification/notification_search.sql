@@ -15,7 +15,7 @@ GO
     Output: 
         + vw_NotificationDetails
 */
-CREATE OR ALTER PROCEDURE sp_notification_search
+CREATE OR ALTER PROCEDURE dbo.sp_notification_search
     @account_id BIGINT,
     @title VARCHAR(20) = NULL,
     @is_read BIT = NULL,
@@ -28,15 +28,15 @@ BEGIN
     BEGIN TRY
         -- Validate account id
         IF dbo.fn_account_validate_id(@account_id) = 0
-            THROW 11400, 'Account does not exist.', 1;
+            THROW 114000, 'Account does not exist.', 1;
 
         -- Validate title if provided
         IF @title IS NOT NULL AND dbo.fn_notification_validate_type(@title) = 0
-            THROW 11401, 'Invalid notification title.', 1;
+            THROW 114010, 'Invalid notification title.', 1;
 
         -- Validate date range if provided
         IF @start_date IS NOT NULL AND @end_date IS NOT NULL AND @start_date > @end_date
-            THROW 11402, 'Start date cannot be later than end date.', 1;
+            THROW 114020, 'Start date cannot be later than end date.', 1;
 
         -- Search for notifications based on the provided criteria
         SELECT *

@@ -55,7 +55,7 @@ CREATE TABLE Employee (
     citizen_id VARCHAR(20) NOT NULL,
     address NVARCHAR(255) NOT NULL,
 
-    status NVARCHAR(20) NOT NULL,
+    status VARCHAR(20) NOT NULL,
     hired_at DATETIME NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME
@@ -70,7 +70,7 @@ CREATE TABLE Branch (
 
     created_at DATETIME NOT NULL,
     updated_at DATETIME,
-    status NVARCHAR(20) NOT NULL
+    status VARCHAR(20) NOT NULL
 );
 GO
 
@@ -81,12 +81,12 @@ CREATE TABLE BankingAccount (
     bank_account_number NCHAR(20) NOT NULL,
     balance DECIMAL(18, 2) NOT NULL,
     account_type VARCHAR(20) NOT NULL,
-    currency NVARCHAR(10) NOT NULL,
+    currency VARCHAR(10) NOT NULL,
     available_balance DECIMAL(18, 2) NOT NULL,
 
     opened_at DATETIME NOT NULL,
     closed_at DATETIME,
-    status NVARCHAR(20) NOT NULL
+    status VARCHAR(20) NOT NULL
 );
 GO
 
@@ -99,7 +99,7 @@ CREATE TABLE Card (
     expired_at DATE,
     cvv_hash VARCHAR(255) NOT NULL,
     issued_at DATETIME NOT NULL,
-    status NVARCHAR(20) NOT NULL
+    status VARCHAR(20) NOT NULL
 );
 GO
 
@@ -112,13 +112,13 @@ CREATE TABLE BankTransaction (
     fee DECIMAL(18, 2) NOT NULL,
     description NVARCHAR(255),
     created_at DATETIME NOT NULL,
-    status NVARCHAR(20) NOT NULL
+    status VARCHAR(20) NOT NULL
 );
 GO
 
 CREATE TABLE Loan (
     loan_id BIGINT IDENTITY(1 , 1) PRIMARY KEY,
-    customer_id /NCHAR(10) NOT NULL,
+    customer_id NCHAR(10) NOT NULL,
 
     loan_type VARCHAR(20) NOT NULL,
     amount DECIMAL(18, 2) NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE SavingAccount (
     term_months INT NOT NULL,
     start_date DATE NOT NULL,
     maturity_date DATE NOT NULL,
-    status NVARCHAR(20) NOT NULL
+    status VARCHAR(20) NOT NULL
 );
 GO
 

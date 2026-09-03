@@ -28,7 +28,7 @@ GO
         5. sp_account_activate activates the account
         6. Used OTP is marked as verified
 */
-CREATE OR ALTER PROCEDURE sp_account_activate
+CREATE OR ALTER PROCEDURE dbo.sp_account_activate
     @account_id BIGINT
 AS
 BEGIN

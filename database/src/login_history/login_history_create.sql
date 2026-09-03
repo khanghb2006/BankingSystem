@@ -16,7 +16,7 @@ GO
         + vw_LoginHistoryDetails
         + message
 */
-CREATE OR ALTER PROCEDURE sp_login_history_create
+CREATE OR ALTER PROCEDURE dbo.sp_login_history_create
     @account_id BIGINT,
     @login_time DATETIME = NULL,
     @ip_address VARCHAR(50),

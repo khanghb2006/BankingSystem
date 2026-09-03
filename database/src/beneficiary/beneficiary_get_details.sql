@@ -11,7 +11,7 @@ GO
     Output:
         + vw_BeneficiaryDetails
 */
-CREATE OR ALTER PROCEDURE sp_beneficiary_get_details
+CREATE OR ALTER PROCEDURE dbo.sp_beneficiary_get_details
     @beneficiary_id BIGINT
 AS
 BEGIN

@@ -17,15 +17,14 @@ ALTER TABLE  Account ADD
         DEFAULT 'Active' for status,
     CONSTRAINT DF_Account_UpdatedAt
         DEFAULT GETDATE() for updated_at;
+GO
 
 -- Customer
 ALTER TABLE  Customer ADD
     CONSTRAINT DF_Customer_CreatedAt
         DEFAULT GETDATE() for created_at,
     CONSTRAINT DF_Customer_UpdatedAt
-        DEFAULT GETDATE() for updated_at,
-    CONSTRAINT DF_Customer_Status
-        DEFAULT 'Active' for status;
+        DEFAULT GETDATE() for updated_at;
 GO
 
 -- Employee
@@ -52,13 +51,13 @@ GO
 
 -- Banking Account
 ALTER TABLE  BankingAccount ADD
-    CONSTRAINT DF_Account_Balance
+    CONSTRAINT DF_BankingAccount_Balance
         DEFAULT 0 for balance,
-    CONSTRAINT DF_Account_AvailableBalance
+    CONSTRAINT DF_BankingAccount_AvailableBalance
         DEFAULT 0 for available_balance,
-    CONSTRAINT DF_Account_OpenedAt
+    CONSTRAINT DF_BankingAccount_OpenedAt
         DEFAULT GETDATE() for opened_at,
-    CONSTRAINT DF_Account_Status
+    CONSTRAINT DF_BankingAccount_Status
         DEFAULT 'Active' for status;
 GO
 
@@ -82,26 +81,18 @@ GO
 
 -- Loan
 ALTER TABLE  Loan ADD
-    CONSTRAINT DF_Loan_LoanType
-        DEFAULT 'Personal' for loan_type,
-    CONSTRAINT DF_Loan_Amount
-        DEFAULT 0 for amount,
     CONSTRAINT DF_Loan_InterestRate
         DEFAULT 0 for interest_rate,
-    CONSTRAINT DF_Loan_RemainingBalance
-        DEFAULT 0 for remaining_balance,
     CONSTRAINT DF_Loan_StartDate
         DEFAULT GETDATE() for start_date,
     CONSTRAINT DF_Loan_DurationMonths
         DEFAULT 12 for duration_months,
     CONSTRAINT DF_Loan_Status
-        DEFAULT 'Active' for status;
+        DEFAULT 'Pending' for status;
 GO
 
 -- Saving Account
-ALTER TABLE  SavingAccount ADD 
-    CONSTRAINT DF_SavingAccount_DepositAmount
-        DEFAULT 0 for deposit_amount,
+ALTER TABLE  SavingAccount ADD
     CONSTRAINT DF_SavingAccount_InterestRate
         DEFAULT 0 for interest_rate,
     CONSTRAINT DF_SavingAccount_TermMonths

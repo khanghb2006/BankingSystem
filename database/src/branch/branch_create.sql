@@ -13,7 +13,7 @@ GO
     Output:
         + vw_Branch : Branch information
 */
-CREATE OR ALTER PROCEDURE sp_branch_create
+CREATE OR ALTER PROCEDURE dbo.sp_branch_create
     @branch_name NVARCHAR(100),
     @address NVARCHAR(100),
     @phone_number NVARCHAR(20)

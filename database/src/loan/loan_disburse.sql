@@ -19,7 +19,7 @@ GO
         + The procedure checks if the loan is in 'Approved' status before disbursing it.
         + Upon successful disbursement, the loan status is updated to 'Disbursed', and the disbursement date is recorded.
 */
-CREATE OR ALTER PROCEDURE sp_loan_disburse
+CREATE OR ALTER PROCEDURE dbo.sp_loan_disburse
     @customer_id NCHAR(10),
     @loan_id BIGINT,
     @bank_account_id BIGINT,
