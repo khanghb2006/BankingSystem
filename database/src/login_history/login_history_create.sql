@@ -32,11 +32,11 @@ BEGIN
 
             -- Validate account id
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 10100, 'Account does not exist.', 1;
+                THROW 101000, 'Account does not exist.', 1;
 
             -- Validate login status
             IF dbo.fn_login_history_validate_status(@login_status) = 0
-                THROW 10101, 'Invalid login status.', 1;
+                THROW 101001, 'Invalid login status.', 1;
 
             -- Insert new login history record
             INSERT INTO LoginHistory 
@@ -45,7 +45,7 @@ BEGIN
                 (@account_id, COALESCE(@login_time, GETDATE()), @ip_address, @device, @login_status);
 
             IF @@ROWCOUNT = 0
-                THROW 10102, 'Failed to create login history record.', 1;
+                THROW 101002, 'Failed to create login history record.', 1;
         COMMIT TRANSACTION;
 
         DECLARE @new_login_id BIGINT = SCOPE_IDENTITY();

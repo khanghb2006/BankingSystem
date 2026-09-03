@@ -30,15 +30,15 @@ BEGIN
     BEGIN TRY
         -- Validate account id
         IF dbo.fn_account_validate_id(@account_id) = 0
-            THROW 10200, 'Account does not exist.', 1;
+            THROW 102000, 'Account does not exist.', 1;
 
         -- Validate login status if provided
         IF @login_status IS NOT NULL AND dbo.fn_login_history_validate_status(@login_status) = 0
-            THROW 10201, 'Invalid login status.', 1;
+            THROW 102001, 'Invalid login status.', 1;
 
         -- Validate date range if provided
         IF @start_date IS NOT NULL AND @end_date IS NOT NULL AND @start_date > @end_date
-            THROW 10202, 'Start date cannot be later than end date.', 1;
+            THROW 102002, 'Start date cannot be later than end date.', 1;
 
         -- Search for login history records based on the provided criteria
         SELECT *
