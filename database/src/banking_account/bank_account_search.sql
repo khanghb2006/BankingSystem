@@ -30,15 +30,15 @@ BEGIN
 
     BEGIN TRY
         IF @bank_account_number IS NULL AND @customer_id IS NULL
-            THROW 33000, 'At least one of bank_account_number or customer_id must be provided.', 1;
+            THROW 330000, 'At least one of bank_account_number or customer_id must be provided.', 1;
 
         -- Validate account_type
         IF @account_type IS NOT NULL AND dbo.fn_bank_account_validate_type(@account_type) = 0
-            THROW 33001, 'Invalid account type.', 1;
+            THROW 330010, 'Invalid account type.', 1;
 
         -- Validate status
         IF @status IS NOT NULL AND dbo.fn_bank_account_validate_status(@status) = 0
-            THROW 33002, 'Invalid status.', 1;
+            THROW 330020, 'Invalid status.', 1;
 
         SELECT S.*
         FROM vw_BankAccountSummary S
