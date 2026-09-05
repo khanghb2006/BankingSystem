@@ -22,6 +22,7 @@ GO
 INSERT INTO AccountStatus
     (status_name , description)
 VALUES
+    ('Pending', 'Account is pending OTP verification'),
     ('Active', 'Account is active'),
     ('Disabled', 'Account is disabled'),
     ('Locked', 'Account is locked');

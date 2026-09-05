@@ -1,140 +1,112 @@
-USE BankingSystem
+USE BankingSystem;
 GO
 
-/*
-======================================================
-    Seed Data (via stored procedures)
-    Author : Huynh Bao Khang
-    Description : Sample data for demo and testing.
-        Calls the sp_* procedures directly instead of
-        raw INSERT, so running this script also acts as
-        a smoke test for them.
-======================================================
-*/
-
-SET NOCOUNT ON;
-
-------------------------------------------------------
--- 1. Branch
-------------------------------------------------------
-EXEC sp_branch_create
-    @branch_name = N'Chi nhánh Quận 1',
-    @address = N'123 Nguyễn Huệ, Quận 1, TP.HCM',
+-- ============================================================
+-- 1. BRANCH — test sp_branch_create
+-- ============================================================
+EXEC dbo.sp_branch_create
+    @branch_name  = N'Chi nhanh Quan 1',
+    @address      = N'123 Nguyen Hue, Q1, TP.HCM',
     @phone_number = '0281234567';
 
 DECLARE @branch_id NCHAR(10);
-SELECT @branch_id = branch_id FROM Branch WHERE branch_name = N'Chi nhánh Quận 1';
+SELECT @branch_id = branch_id FROM Branch WHERE branch_name = N'Chi nhanh Quan 1';
 
-------------------------------------------------------
--- 2. Account + Customer profile — Customer A
-------------------------------------------------------
-EXEC sp_account_register
-    @username = 'khang_a',
-    @email = 'khang_a@example.com',
-    @phone_number = '0900000001',
-    @password = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Password123'), 2);
+-- ============================================================
+-- 2. CUSTOMER ALICE — test sp_account_register, otp, activate, create_customer_profile
+-- ============================================================
+EXEC dbo.sp_account_register
+    @username = 'alice', @email = N'alice@test.local',
+    @phone_number = '0900000001', @password = 'hashed_password_1';
 
-DECLARE @account_id_a BIGINT;
-SELECT @account_id_a = account_id FROM Account WHERE username = 'khang_a';
+DECLARE @alice_acc BIGINT;
+SELECT @alice_acc = account_id FROM Account WHERE username = 'alice';
 
--- Seed-only shortcut: skip the real OTP flow
--- (sp_otp_generate_otpcode -> sp_otp_verify -> sp_account_activate)
-UPDATE Account SET status = 'Active' WHERE account_id = @account_id_a;
+EXEC dbo.sp_otp_generate_otpcode @account_id = @alice_acc, @purpose = 'Register';
 
-EXEC sp_create_customer_profile
-    @account_id = @account_id_a,
-    @branch_id = @branch_id,
-    @full_name = N'Nguyễn Văn A',
-    @dob = '1995-05-20',
-    @gender = 'Male',
-    @citizen_id = '079095000001',
-    @address = N'12 Lê Lợi, Quận 1, TP.HCM';
+DECLARE @alice_otp NCHAR(6);
+SELECT @alice_otp = otp_code FROM OTP WHERE account_id = @alice_acc AND purpose = 'Register' AND verified = 0;
 
-DECLARE @customer_id_a NCHAR(10);
-SELECT @customer_id_a = customer_id FROM Customer WHERE account_id = @account_id_a;
+EXEC dbo.sp_otp_verify @account_id = @alice_acc, @otp_code = @alice_otp, @purpose = 'Register';
+EXEC dbo.sp_account_activate @account_id = @alice_acc;
 
-------------------------------------------------------
--- 3. Account + Customer profile — Customer B
-------------------------------------------------------
-EXEC sp_account_register
-    @username = 'khang_b',
-    @email = 'khang_b@example.com',
-    @phone_number = '0900000002',
-    @password = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Password123'), 2);
+EXEC dbo.sp_create_customer_profile
+    @account_id = @alice_acc, @branch_id = @branch_id,
+    @full_name = N'Nguyen Thi Alice', @dob = '1995-05-20',
+    @gender = 'Female', @citizen_id = '079095000001', @address = N'12 Le Loi, Q1';
 
-DECLARE @account_id_b BIGINT;
-SELECT @account_id_b = account_id FROM Account WHERE username = 'khang_b';
+DECLARE @alice_cus NCHAR(10);
+SELECT @alice_cus = customer_id FROM Customer WHERE account_id = @alice_acc;
 
-UPDATE Account SET status = 'Active' WHERE account_id = @account_id_b;
+-- ============================================================
+-- 3. CUSTOMER BOB — lặp lại luồng trên
+-- ============================================================
+EXEC dbo.sp_account_register
+    @username = 'bob', @email = N'bob@test.local',
+    @phone_number = '0900000002', @password = 'hashed_password_2';
 
-EXEC sp_create_customer_profile
-    @account_id = @account_id_b,
-    @branch_id = @branch_id,
-    @full_name = N'Trần Thị B',
-    @dob = '1998-11-02',
-    @gender = 'Female',
-    @citizen_id = '079098000002',
-    @address = N'45 Hai Bà Trưng, Quận 1, TP.HCM';
+DECLARE @bob_acc BIGINT;
+SELECT @bob_acc = account_id FROM Account WHERE username = 'bob';
 
-DECLARE @customer_id_b NCHAR(10);
-SELECT @customer_id_b = customer_id FROM Customer WHERE account_id = @account_id_b;
+EXEC dbo.sp_otp_generate_otpcode @account_id = @bob_acc, @purpose = 'Register';
 
-------------------------------------------------------
--- 4. Banking accounts
-------------------------------------------------------
-EXEC sp_bank_account_create
-    @customer_id = @customer_id_a,
-    @account_type = 'Checking',
-    @currency = 'VND';
+DECLARE @bob_otp NCHAR(6);
+SELECT @bob_otp = otp_code FROM OTP WHERE account_id = @bob_acc AND purpose = 'Register' AND verified = 0;
 
-DECLARE @bank_account_id_a BIGINT;
-SELECT @bank_account_id_a = bank_account_id 
-FROM BankingAccount WHERE customer_id = @customer_id_a;
+EXEC dbo.sp_otp_verify @account_id = @bob_acc, @otp_code = @bob_otp, @purpose = 'Register';
+EXEC dbo.sp_account_activate @account_id = @bob_acc;
 
-EXEC sp_bank_account_create
-    @customer_id = @customer_id_b,
-    @account_type = 'Checking',
-    @currency = 'VND';
+EXEC dbo.sp_create_customer_profile
+    @account_id = @bob_acc, @branch_id = @branch_id,
+    @full_name = N'Tran Van Bob', @dob = '1993-03-15',
+    @gender = 'Male', @citizen_id = '079093000002', @address = N'34 Hai Ba Trung, Q1';
 
-DECLARE @bank_account_id_b BIGINT;
-SELECT @bank_account_id_b = bank_account_id 
-FROM BankingAccount WHERE customer_id = @customer_id_b;
+DECLARE @bob_cus NCHAR(10);
+SELECT @bob_cus = customer_id FROM Customer WHERE account_id = @bob_acc;
 
-------------------------------------------------------
--- 5. Card for Customer A
-------------------------------------------------------
-EXEC sp_card_create
-    @bank_account_id = @bank_account_id_a,
-    @card_type = 'Debit';
+-- ============================================================
+-- 4. EMPLOYEE — chưa có proc tự đăng ký, insert thẳng (admin tạo)
+--    test sp_employee_create_profile
+-- ============================================================
+INSERT INTO Account (username, email, phone_number, password_hash, role, created_at, status)
+VALUES ('teller01', N'teller01@bank.local', '0900000099', 'hashed_password_3', 'Employee', GETDATE(), 'Active');
 
-------------------------------------------------------
--- 6. Beneficiary — A saves B
-------------------------------------------------------
-EXEC sp_beneficiary_create
-    @customer_id = @customer_id_a,
-    @beneficiary_name = N'Trần Thị B - bạn thân',
-    @bank_account_id = @bank_account_id_b,
-    @bank_name = N'BankingSystem';
+DECLARE @emp_acc BIGINT = SCOPE_IDENTITY();
 
-------------------------------------------------------
--- 7. Transactions — deposit then transfer
-------------------------------------------------------
-EXEC sp_bank_transaction_deposit
-    @bank_account_id = @bank_account_id_a,
-    @amount = 5000000,
-    @description = N'Nạp tiền mặt ban đầu';
+EXEC dbo.sp_employee_create_profile
+    @account_id = @emp_acc, @branch_id = @branch_id,
+    @full_name = N'Le Thi Teller', @dob = '1998-07-01',
+    @gender = 'Female', @citizen_id = '079098000099',
+    @address = N'56 Dong Khoi, Q1', @position = 'Teller';
 
-EXEC sp_bank_transaction_transfer
-    @from_bank_account_id = @bank_account_id_a,
-    @to_bank_account_id = @bank_account_id_b,
-    @amount = 1000000,
-    @fee = 5000,
-    @description = N'Chuyển tiền cho B';
+-- ============================================================
+-- 5. BANK ACCOUNT — test sp_bank_account_create + sp_bank_transaction_deposit
+-- ============================================================
+EXEC dbo.sp_bank_account_create @customer_id = @alice_cus, @account_type = 'Checking', @currency = 'VND';
 
-------------------------------------------------------
--- 8. Sanity check
-------------------------------------------------------
-SELECT * FROM vw_Account;
-SELECT * FROM vw_CardDetails;
-SELECT * FROM vw_BeneficiaryDetails;
-SELECT * FROM vw_TransactionSummary;
+DECLARE @alice_ba BIGINT;
+SELECT @alice_ba = bank_account_id FROM BankingAccount WHERE customer_id = @alice_cus;
+
+EXEC dbo.sp_bank_transaction_deposit @bank_account_id = @alice_ba, @amount = 5000000, @description = N'Nap tien ban dau';
+
+EXEC dbo.sp_bank_account_create @customer_id = @bob_cus, @account_type = 'Checking', @currency = 'VND';
+
+DECLARE @bob_ba BIGINT;
+SELECT @bob_ba = bank_account_id FROM BankingAccount WHERE customer_id = @bob_cus;
+-- Bob co y de 0d, dung de test "insufficient balance"
+
+-- ============================================================
+-- 6. CARD — test sp_card_create
+-- ============================================================
+EXEC dbo.sp_card_create @bank_account_id = @alice_ba, @card_type = 'Debit';
+
+-- ============================================================
+-- TỔNG KẾT — nhìn lại toàn bộ data vừa tạo
+-- ============================================================
+PRINT '=== KET QUA ===';
+SELECT 'Branch' t, branch_id id, branch_name name FROM Branch
+UNION ALL SELECT 'Customer', customer_id, full_name FROM Customer
+UNION ALL SELECT 'Employee', employee_id, full_name FROM Employee;
+
+SELECT bank_account_id, customer_id, balance, available_balance, status FROM BankingAccount;
+SELECT card_id, bank_account_id, card_type, status FROM Card;
