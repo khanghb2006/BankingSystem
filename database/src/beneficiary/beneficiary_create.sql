@@ -62,7 +62,7 @@ BEGIN
 
         SELECT *,
             'Beneficiary created successfully.' AS message
-        FROM BeneficiaryDetails
+        FROM vw_BeneficiaryDetails
         WHERE beneficiary_id = @beneficiary_id;
         
     END TRY
