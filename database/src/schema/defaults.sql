@@ -10,11 +10,13 @@ USE BankingSystem;
 GO
 
 -- Account
+-- status mac dinh 'Pending': tai khoan chi dung duoc sau khi xac thuc OTP.
+-- Nguoi tao truc tiep (admin tao nhan vien / seed) phai ghi ro status = 'Active'.
 ALTER TABLE  Account ADD
     CONSTRAINT DF_Account_CreatedAt
         DEFAULT GETDATE() for created_at,
     CONSTRAINT DF_Account_Status
-        DEFAULT 'Active' for status,
+        DEFAULT 'Pending' for status,
     CONSTRAINT DF_Account_UpdatedAt
         DEFAULT GETDATE() for updated_at;
 GO

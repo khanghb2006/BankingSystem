@@ -2,7 +2,7 @@ USE BankingSystem
 GO
 
 /**
-    Function : sp_account_change_image
+    Procedure : sp_account_change_image
     Description : Allows a user to change the image associated with their account. Validates account ID and status, then updates the image URL in the Account table.
 
     Input:
@@ -20,7 +20,7 @@ GO
         + This procedure only updates the image URL in the Account table.
         + Image storage will be handled by the backend
 */
-CREATE OR ALTER PROCEDURE dbo.ChangeAccountImage
+CREATE OR ALTER PROCEDURE dbo.sp_account_change_image
     @account_id BIGINT,
     @image_url VARCHAR(2048)
 AS
@@ -33,11 +33,11 @@ BEGIN
 
             -- Validate account
             IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 50030, 'Invalid account ID.', 1;
-            
+                THROW 160000, 'Invalid account ID.', 1;
+
             -- Validate account status
             IF dbo.fn_account_validate_status(@account_id, 'Active') = 0
-                THROW 50031, 'Account status must be Active.', 1;
+                THROW 160010, 'Account status must be Active.', 1;
 
             -- Update image URL in Account table
             UPDATE Account
@@ -46,7 +46,7 @@ BEGIN
             WHERE account_id = @account_id;
 
             IF @@ROWCOUNT = 0
-                THROW 50032, 'Failed to update account image.', 1;
+                THROW 160020, 'Failed to update account image.', 1;
 
         COMMIT TRANSACTION;
 

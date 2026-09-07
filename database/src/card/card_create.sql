@@ -39,6 +39,13 @@ BEGIN
             IF dbo.fn_card_validate_type(@card_type) = 0
                 THROW 61001, 'Invalid card type.', 1;
 
+            -- Bank account must be Active to issue a card
+            IF NOT EXISTS (
+                SELECT 1 FROM BankingAccount
+                WHERE bank_account_id = @bank_account_id AND status = 'Active'
+            )
+                THROW 61003, 'Bank account is not active.', 1;
+
             -- BIN prefix 
             DECLARE @bin_prefix VARCHAR(6) = 
                 dbo.fn_card_get_bin_prefix(@card_type);
@@ -51,8 +58,9 @@ BEGIN
 
             WHILE @is_unique = 0
             BEGIN
+                -- CONVERT BIGINT truoc khi ABS: ABS(-2147483648) se tran
                 SET @body = RIGHT('000000000' +
-                    CAST(ABS(CHECKSUM(NEWID())) % 1000000000 AS VARCHAR(9)), 9);
+                    CAST(ABS(CONVERT(BIGINT, CHECKSUM(NEWID()))) % 1000000000 AS VARCHAR(9)), 9);
 
                 SET @check_digit = dbo.fn_luhn_check_digit(@bin_prefix + @body);
                 SET @card_number = @bin_prefix + @body + @check_digit;
@@ -62,8 +70,8 @@ BEGIN
             END
 
             -- Generate and hash a cvv
-            DECLARE @cvv VARCHAR(3) = RIGHT('000' + 
-                CAST(ABS(CHECKSUM(NEWID())) % 1000 AS VARCHAR(3)), 3);
+            DECLARE @cvv VARCHAR(3) = RIGHT('000' +
+                CAST(ABS(CONVERT(BIGINT, CHECKSUM(NEWID()))) % 1000 AS VARCHAR(3)), 3);
             DECLARE @cvv_hash VARCHAR(255) = 
                 CONVERT(VARCHAR(255) , HASHBYTES('SHA2_256', @cvv), 2);
 
@@ -79,13 +87,16 @@ BEGIN
                 THROW 61002, 'Failed to create card.', 1;
                 
         COMMIT TRANSACTION;
-        -- Return message
+        -- Return message. Tra so the DAY DU (full_card_number) DUY NHAT o day —
+        -- moi endpoint khac chi thay masked_card_number qua vw_CardDetails.
         DECLARE @card_id BIGINT = SCOPE_IDENTITY();
 
-        SELECT *,
+        SELECT v.*,
+            c.card_number AS full_card_number,
             'Card created successfully.' AS message
-        FROM vw_CardDetails
-        WHERE card_id = @card_id;      
+        FROM vw_CardDetails v
+        JOIN Card c ON c.card_id = v.card_id
+        WHERE v.card_id = @card_id;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0

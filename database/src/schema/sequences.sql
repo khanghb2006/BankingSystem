@@ -37,12 +37,12 @@ CREATE SEQUENCE seq_EmployeeID
     increment by 1
 GO
 
-/* 
+/*
 ------------------------------------------------------
     BranchID Sequences
-    Format : 
-        BR000001
-        BR000002
+    Format :
+        BR00000001
+        BR00000002
 ------------------------------------------------------
 */
 CREATE SEQUENCE seq_BranchID

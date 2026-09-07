@@ -70,14 +70,14 @@ BEGIN
 
             IF @@ROWCOUNT = 0
                 THROW 140030, 'Failed to create account.', 1;
-            
-            -- Return created account information
-            SELECT *,
-                'Registration successful. Please verify your account via OTP.' AS message
-            FROM vw_Account
-            WHERE username = @username;
 
         COMMIT TRANSACTION;
+
+        -- Return created account information (sau COMMIT)
+        SELECT *,
+            'Registration successful. Please verify your account via OTP.' AS message
+        FROM vw_Account
+        WHERE username = @username;
 
     END TRY
     BEGIN CATCH

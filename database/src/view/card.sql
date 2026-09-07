@@ -7,9 +7,9 @@ GO
 */
 CREATE OR ALTER VIEW vw_CardDetails
 AS
-    SELECT 
+    SELECT
         C.card_id,
-        C.card_number,
+        dbo.fn_mask_bank_account_number(C.card_number) AS masked_card_number,
         C.bank_account_id,
         BA.customer_id,
         dbo.fn_mask_email(A.email) AS masked_email,

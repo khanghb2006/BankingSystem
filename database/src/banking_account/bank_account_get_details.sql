@@ -15,6 +15,8 @@ CREATE OR ALTER PROCEDURE dbo.sp_bank_account_get_details
     @bank_account_id BIGINT
 AS
 BEGIN
+    SET NOCOUNT ON;
+
     BEGIN TRY
         -- Validate the bank account id
         IF dbo.fn_bank_account_validate_id(@bank_account_id) = 0
@@ -23,8 +25,8 @@ BEGIN
         -- Retrieve the bank account details
         SELECT * ,
             'Bank account retrieved successfully.' AS message
-        FROM vw_BankingAccountDetails 
-        WHERE bank_account_id = @bank_account_id
+        FROM vw_BankAccountDetails
+        WHERE bank_account_id = @bank_account_id;
     END TRY
     BEGIN CATCH
         THROW;

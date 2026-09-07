@@ -17,7 +17,7 @@ GO
         + The new status must be a valid status as defined in the system.
 */
 CREATE OR ALTER PROCEDURE dbo.sp_bank_account_update_status
-    @bank_account_id INT,
+    @bank_account_id BIGINT,
     @new_status NVARCHAR(20)
 AS
 BEGIN

@@ -59,17 +59,19 @@ CREATE INDEX IX_BankTransaction_Status      ON BankTransaction(status);
 GO
 
 -- Loan
-CREATE INDEX IX_Loan_Customer   ON Loan(customer_id);
-CREATE INDEX IX_Loan_ApprovedBy ON Loan(approved_by);
-CREATE INDEX IX_Loan_Type       ON Loan(loan_type);
-CREATE INDEX IX_Loan_Status     ON Loan(status);
-CREATE INDEX IX_Loan_StartDate  ON Loan(start_date);
+CREATE INDEX IX_Loan_Customer        ON Loan(customer_id);
+CREATE INDEX IX_Loan_ApprovedBy      ON Loan(approved_by);
+CREATE INDEX IX_Loan_Type            ON Loan(loan_type);
+CREATE INDEX IX_Loan_Status          ON Loan(status);
+CREATE INDEX IX_Loan_StartDate       ON Loan(start_date);
+CREATE INDEX IX_Loan_Customer_Status ON Loan(customer_id, status);   -- fn_loan_validate_pending_apply
 GO
 
 -- Saving Account
 CREATE INDEX IX_SavingAccount_Source    ON SavingAccount(source_bank_account_id);
 CREATE INDEX IX_SavingAccount_Status    ON SavingAccount(status);
 CREATE INDEX IX_SavingAccount_StartDate ON SavingAccount(start_date);
+CREATE INDEX IX_SavingAccount_Maturity  ON SavingAccount(status, maturity_date);  -- sp_saving_account_settle_matured
 GO
 
 -- Beneficiary
@@ -83,7 +85,8 @@ CREATE INDEX IX_Notification_Title   ON Notification(title);
 GO
 
 -- OTP
-CREATE INDEX IX_OTP_Account ON OTP(account_id);
+CREATE INDEX IX_OTP_Account         ON OTP(account_id);
+CREATE INDEX IX_OTP_Account_Purpose ON OTP(account_id, purpose);   -- fn_otp_validate_purpose / _verify
 GO
 
 -- Login History

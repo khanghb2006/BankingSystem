@@ -60,13 +60,13 @@ BEGIN
             IF @@ROWCOUNT = 0
                 THROW 122002, 'Failed to verify OTP.', 1;
 
-            -- Return verification result
-            SELECT *,
-                'OTP verification successful' AS message
-            FROM vw_Account
-            WHERE account_id = @account_id
-
         COMMIT TRANSACTION;
+
+        -- Return verification result (sau COMMIT)
+        SELECT *,
+            'OTP verification successful' AS message
+        FROM vw_Account
+        WHERE account_id = @account_id;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0

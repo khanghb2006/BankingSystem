@@ -31,33 +31,30 @@ BEGIN
     SET XACT_ABORT ON;
 
     BEGIN TRY
-        BEGIN TRANSACTION;
-            DECLARE
-                @account_id BIGINT,
-                @status VARCHAR(20)
+        DECLARE
+            @account_id BIGINT,
+            @status VARCHAR(20)
 
-            -- Validate username
-            IF dbo.fn_account_validate_username(@username) = 0
-                THROW 130000, 'Username does not exist', 1;
+        -- Validate username
+        IF dbo.fn_account_validate_username(@username) = 0
+            THROW 130000, 'Username does not exist', 1;
 
-            -- Get account_id for the username
-            SET @account_id = dbo.fn_get_account_id_by_username(@username);
+        -- Get account_id for the username
+        SET @account_id = dbo.fn_get_account_id_by_username(@username);
 
-            -- Validate password
-            IF dbo.fn_account_validate_password(@account_id, @password) = 0
-                THROW 130010, 'Incorrect password', 1;
+        -- Validate password
+        IF dbo.fn_account_validate_password(@account_id, @password) = 0
+            THROW 130010, 'Incorrect password', 1;
 
-            -- Validate account is Active
-            IF dbo.fn_account_validate_status(@account_id, 'Active') = 0
-                THROW 130020, 'Account is not active', 1;
+        -- Validate account is Active
+        IF dbo.fn_account_validate_status(@account_id, 'Active') = 0
+            THROW 130020, 'Account is not active', 1;
 
-            -- Get account information
-            SELECT *,
-                'Login successful' AS message
-            FROM vw_Account
-            WHERE username = @username;
-
-        COMMIT TRANSACTION;
+        -- Get account information (proc chi doc, khong can transaction)
+        SELECT *,
+            'Login successful' AS message
+        FROM vw_Account
+        WHERE username = @username;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0

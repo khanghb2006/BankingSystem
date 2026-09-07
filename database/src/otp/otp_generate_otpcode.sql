@@ -39,17 +39,20 @@ BEGIN
                 THROW 121001, 'Invalid OTP purpose.', 1;
 
             -- Generate random 6-digit OTP code
-            DECLARE @otp_code NCHAR(6) = 
-                RIGHT('000000' + CAST(ABS(CHECKSUM(NEWID())) % 1000000 AS NVARCHAR(6)), 6);
-            
+            -- CONVERT BIGINT truoc khi ABS: CHECKSUM tra int, ABS(-2147483648) se tran
+            DECLARE @otp_code NCHAR(6) =
+                RIGHT('000000' + CAST(ABS(CONVERT(BIGINT, CHECKSUM(NEWID()))) % 1000000 AS NVARCHAR(6)), 6);
+
             -- Set expiration time (5 minutes from now)
             DECLARE @expired_at DATETIME = DATEADD(MINUTE, 5, GETDATE());
 
-            -- Invalidate previous OTPs for the same account and purpose
+            -- Vo hieu hoa OTP cu cung (account, purpose): cho HET HAN, KHONG cham 'verified'.
+            -- (Neu set verified = 1 o day thi fn_otp_validate_verify se hieu nham la
+            --  nguoi dung da nhap dung ma -> bo qua buoc nhap OTP.)
             UPDATE OTP
-            SET verified = 1
-            WHERE account_id = @account_id 
-                AND purpose = @purpose 
+            SET expired_at = GETDATE()
+            WHERE account_id = @account_id
+                AND purpose = @purpose
                 AND verified = 0
                 AND expired_at > GETDATE();
 

@@ -51,8 +51,8 @@ BEGIN
                 OR to_bank_account_id = @bank_account_id)
             AND (@transaction_type IS NULL OR transaction_type = @transaction_type)
             AND (@status IS NULL OR status = @status)
-            AND (@from_date IS NULL OR created_at >=  DATEDIFF(DAY, 0, @from_date))  -- Ensure from_date is inclusive
-            AND (@to_date IS NULL OR created_at <  DATEADD(DAY, 1, @to_date));  -- Ensure to_date is inclusive
+            AND (@from_date IS NULL OR created_at >= @from_date)                  -- inclusive tu 00:00 ngay from_date
+            AND (@to_date   IS NULL OR created_at <  DATEADD(DAY, 1, @to_date));  -- inclusive het ngay to_date
 
     END TRY
     BEGIN CATCH

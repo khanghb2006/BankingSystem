@@ -114,14 +114,16 @@ ALTER TABLE Account ADD
     CONSTRAINT UQ_Account_PhoneNumber UNIQUE(phone_number);
 GO
 
--- Customer
+-- Customer  (1 Account <-> dung 1 ho so khach hang)
 ALTER TABLE Customer ADD
-    CONSTRAINT UQ_Customer_CitizenID UNIQUE(citizen_id);
+    CONSTRAINT UQ_Customer_CitizenID UNIQUE(citizen_id),
+    CONSTRAINT UQ_Customer_Account   UNIQUE(account_id);
 GO
 
--- Employee
+-- Employee  (1 Account <-> dung 1 ho so nhan vien)
 ALTER TABLE Employee ADD
-    CONSTRAINT UQ_Employee_CitizenID UNIQUE(citizen_id);
+    CONSTRAINT UQ_Employee_CitizenID UNIQUE(citizen_id),
+    CONSTRAINT UQ_Employee_Account   UNIQUE(account_id);
 GO
 
 -- BankingAccount
@@ -129,9 +131,14 @@ ALTER TABLE BankingAccount ADD
     CONSTRAINT UQ_BankingAccount_AccountNumber UNIQUE(bank_account_number);
 GO
 
--- Card 
+-- Card
 ALTER TABLE Card ADD
     CONSTRAINT UQ_Card_CardNumber UNIQUE(card_number);
+GO
+
+-- Beneficiary  (khong luu trung cung 1 tai khoan thu huong cho 1 khach)
+ALTER TABLE Beneficiary ADD
+    CONSTRAINT UQ_Beneficiary_Customer_BankAccount UNIQUE(customer_id, bank_account_id);
 GO
 
 /* 

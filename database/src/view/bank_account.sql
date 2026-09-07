@@ -7,16 +7,19 @@ Go
 */
 CREATE OR ALTER VIEW vw_BankAccountDetails
 AS
-    SELECT 
+    SELECT
         BA.bank_account_id,
         BA.bank_account_number,
         BA.customer_id,
         C.full_name,
         BA.account_type,
+        BA.currency,
         BA.balance,
+        BA.available_balance,
         B.branch_id,
         B.branch_name,
         BA.opened_at,
+        BA.closed_at,
         BA.status
     from BankingAccount BA
     JOIN Customer C ON BA.customer_id = C.customer_id

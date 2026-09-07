@@ -48,11 +48,12 @@ BEGIN
 
             WHILE @is_unique = 0
             BEGIN
-                SET @bank_account_number = 
-                    RIGHT('0000000000' + 
-                        CAST(ABS(CHECKSUM(NEWID())) AS VARCHAR(10)), 10) + 
-                    RIGHT('0000000000' + 
-                        CAST(ABS(CHECKSUM(NEWID())) AS VARCHAR(10)), 10);
+                -- CONVERT BIGINT truoc khi ABS: CHECKSUM tra int, ABS(-2147483648) se tran
+                SET @bank_account_number =
+                    RIGHT('0000000000' +
+                        CAST(ABS(CONVERT(BIGINT, CHECKSUM(NEWID()))) AS VARCHAR(19)), 10) +
+                    RIGHT('0000000000' +
+                        CAST(ABS(CONVERT(BIGINT, CHECKSUM(NEWID()))) AS VARCHAR(19)), 10);
 
                     IF NOT EXISTS (
                         SELECT 1

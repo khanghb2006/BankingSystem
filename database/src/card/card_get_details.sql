@@ -25,10 +25,11 @@ BEGIN
             IF dbo.fn_card_validate_number(@card_number) = 0
                 THROW 62000, 'Invalid card number.', 1;
 
-            -- Retrieve card details
+            -- Retrieve card details (vw_CardDetails khong con cot card_number tho,
+            -- doi chieu card_id qua bang Card)
             SELECT *
             FROM vw_CardDetails
-            WHERE card_number = @card_number;
+            WHERE card_id = (SELECT card_id FROM Card WHERE card_number = @card_number);
 
     END TRY
     BEGIN CATCH

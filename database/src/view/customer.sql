@@ -49,16 +49,27 @@ GO
 */
 CREATE OR ALTER VIEW vw_CustomerStatistics
 AS
-    SELECT 
+    -- Subquery cho tung chi so: khong loai khach chua co tai khoan/the,
+    -- va khong nhan doi total_balance khi 1 tai khoan co nhieu the.
+    SELECT
         C.customer_id,
         C.full_name,
         C.branch_id,
-
-        COUNT(DISTINCT BA.bank_account_id) AS total_bank_accounts,
-        COUNT(DISTINCT CD.card_id) AS total_cards,
-        ISNULL(SUM(BA.balance), 0) AS total_balance
-    FROM Customer C
-    JOIN BankingAccount BA ON C.customer_id = BA.customer_id
-    JOIN Card CD ON CD.bank_account_id = BA.bank_account_id
-    GROUP BY C.customer_id, C.full_name, C.branch_id;
+        (
+            SELECT COUNT(*)
+            FROM BankingAccount BA
+            WHERE BA.customer_id = C.customer_id
+        ) AS total_bank_accounts,
+        (
+            SELECT COUNT(*)
+            FROM Card CD
+            JOIN BankingAccount BA ON CD.bank_account_id = BA.bank_account_id
+            WHERE BA.customer_id = C.customer_id
+        ) AS total_cards,
+        (
+            SELECT ISNULL(SUM(BA.balance), 0)
+            FROM BankingAccount BA
+            WHERE BA.customer_id = C.customer_id
+        ) AS total_balance
+    FROM Customer C;
 GO

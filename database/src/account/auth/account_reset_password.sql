@@ -44,6 +44,10 @@ BEGIN
             IF dbo.fn_otp_validate_verify(@account_id, 'PasswordReset') = 0
                 THROW 150010, 'OTP is not verified.', 1;
 
+            -- Tai khoan bi vo hieu hoa (Disabled) khong duoc reset mat khau
+            IF dbo.fn_account_validate_status(@account_id, 'Disabled') = 1
+                THROW 150015, 'Account is disabled.', 1;
+
             -- Update password
             UPDATE Account
             SET
