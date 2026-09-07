@@ -52,7 +52,7 @@ BEGIN
             AND (@transaction_type IS NULL OR transaction_type = @transaction_type)
             AND (@status IS NULL OR status = @status)
             AND (@from_date IS NULL OR created_at >=  DATEDIFF(DAY, 0, @from_date))  -- Ensure from_date is inclusive
-            AND (@to_date IS NULL OR created_at <  DATEDIFF(DAY, 1, @to_date))  -- Ensure to_date is inclusive
+            AND (@to_date IS NULL OR created_at <  DATEADD(DAY, 1, @to_date));  -- Ensure to_date is inclusive
 
     END TRY
     BEGIN CATCH
