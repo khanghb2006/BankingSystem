@@ -21,9 +21,10 @@ BEGIN
             THROW 320000, 'Bank account id does not exist.', 1;
 
         -- Retrieve the bank account details
-        SELECT * 
+        SELECT * ,
+            'Bank account retrieved successfully.' AS message
         FROM vw_BankingAccountDetails 
-        WHERE BankAccountId = @bank_account_id
+        WHERE bank_account_id = @bank_account_id
     END TRY
     BEGIN CATCH
         THROW;
