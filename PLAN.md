@@ -404,13 +404,13 @@ CREATE INDEX IX_Loan_Customer_Status   ON Loan(customer_id, status);
 
 **#9, #12–#17 + fix INT→BIGINT** — đã áp dụng hết (xem bảng §2.1).
 
-### 2.3 Procedure bổ sung (chưa làm — Phase 3/11)
+### 2.3 Procedure bổ sung
 
-| Proc | Chữ ký | Mục đích | Mã lỗi |
-|---|---|---|---|
-| `dbo.sp_admin_create_employee_account` | `@username, @email, @phone_number, @password_hash` | Admin tạo `Account` role `Employee`, status `Active` (nay seed INSERT thẳng) | `170000`–`170030` |
-| `dbo.sp_admin_update_account_status` | `@account_id BIGINT, @new_status VARCHAR(20)` | Lock / Disable / Enable account | `171000`–`171020` |
-| `dbo.sp_notification_list` | `@account_id BIGINT, @only_unread BIT = 0` | List thông báo theo account (Spring lo phân trang) | `172000` |
+| Proc | File | Chữ ký | Mục đích | Mã lỗi | Trạng thái |
+|---|---|---|---|---|---|
+| `dbo.sp_admin_create_employee_account` | `account/admin_create_employee_account.sql` | `@username, @email, @phone_number, @password` | Admin tạo `Account` role `Employee` status `Active` (thay INSERT thẳng trong seed) | `170000`–`170030` | ✅ đã tạo + test |
+| `dbo.sp_admin_update_account_status` | `account/admin_update_account_status.sql` | `@account_id BIGINT, @new_status VARCHAR(20)` | Lock / Disable / Enable account | `171000`–`171020` | ✅ đã tạo + test |
+| ~~`dbo.sp_notification_list`~~ | — | — | **Bỏ** — `sp_notification_search(@account_id, NULL, 0, NULL, NULL)` đã làm "unread only", `(@account_id, NULL, NULL, NULL, NULL)` là "tất cả". YAGNI. | — | — |
 
 > Bỏ `sp_loan_get_schedule` + bảng `LoanRepaymentSchedule` — để C++ `AmortizationSchedule` / Spring tính runtime từ `amount`, `interest_rate`, `duration_months`, `start_date`. YAGNI.
 
@@ -1723,13 +1723,12 @@ int main() {
 
 ## 7. Kiểm thử (Verification)
 
-**Database**
+**Database** — ✅ đã chạy 2026-09-07
 ```bash
-pwsh -File database/deploy.ps1
-# kỳ vọng: bảng đếm tables/views/procedures/functions (ghi lại làm mốc) + DEPLOY OK
 pwsh -File database/deploy.ps1 -Seed
-# kỳ vọng: DEPLOY OK + SEED OK; có 1 branch, 2 customer active, 2 employee, 2 banking account, 1 card, 1 loan Disbursed
+# DEPLOY OK + SEED OK; 1 branch, 2 customer, 2 employee, 2 bank account, 1 card, 1 loan Disbursed, 1 saving, 1 notification
 ```
+Smoke test 30 case (search/get toàn bộ module + 2 proc admin mới): **30/30 PASS**, mã lỗi 170000/171010 đúng band.
 
 **Backend (Spring)**
 ```bash
