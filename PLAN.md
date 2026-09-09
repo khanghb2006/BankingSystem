@@ -1,6 +1,6 @@
 # PLAN.md — Kế hoạch triển khai Banking System
 
-> Tài liệu này là hợp đồng làm việc chung cho 3 tầng: **SQL Server (đã có)** → **Spring Boot API** → **React + TypeScript**, cộng thêm **C++ core** (mô hình nghiệp vụ OOP + đồng bộ DB).
+> Tài liệu này là hợp đồng làm việc chung cho 3 tầng: **SQL Server (đã có)** → **Spring Boot API** → **React + TypeScript**.
 > Mọi con số / định dạng / tên gọi phải theo đúng **§1 Hợp đồng chuẩn dùng chung** để frontend và backend không xung đột.
 
 ---
@@ -12,9 +12,8 @@
 - [2. Tầng Database — sửa lỗi & bổ sung](#2-tầng-database--sửa-lỗi--bổ-sung)
 - [3. Backend — Spring Boot](#3-backend--spring-boot)
 - [4. Frontend — React + TypeScript](#4-frontend--react--typescript)
-- [5. C++ Core — code OOP nghiệp vụ ngân hàng](#5-c-core--code-oop-nghiệp-vụ-ngân-hàng)
-- [6. Thứ tự thực hiện (Roadmap)](#6-thứ-tự-thực-hiện-roadmap)
-- [7. Kiểm thử (Verification)](#7-kiểm-thử-verification)
+- [5. Thứ tự thực hiện (Roadmap)](#5-thứ-tự-thực-hiện-roadmap)
+- [6. Kiểm thử (Verification)](#6-kiểm-thử-verification)
 - [Phụ lục A — Bảng endpoint đầy đủ](#phụ-lục-a--bảng-endpoint-đầy-đủ)
 - [Phụ lục B — Bảng mã lỗi theo procedure](#phụ-lục-b--bảng-mã-lỗi-theo-procedure)
 - [Phụ lục C — Màn hình frontend → API](#phụ-lục-c--màn-hình-frontend--api)
@@ -30,7 +29,6 @@
 | Database (SQL Server, `BankingSystem`) | **Đã có**: 14 bảng + 18 lookup + 14 view + 63 `dbo.sp_*` + 54 `dbo.fn_*`, deploy bằng `database/deploy.ps1` lên `localhost\SQLEXPRESS01` |
 | Backend API | **Chưa có** — sẽ dựng Spring Boot |
 | Frontend | **Chưa có** — sẽ dựng React + TypeScript (Vite) |
-| C++ core | **Chưa có** — greenfield, CMake + nanodbc |
 
 ### 0.2 Quyết định stack (đã chốt)
 
@@ -39,25 +37,22 @@
 | Database | **Giữ SQL Server**, không migrate | 63 proc + deploy.ps1 đã chạy được, migrate PostgreSQL là làm lại từ đầu |
 | Nơi chứa business logic | **Stored procedures** là nguồn sự thật | Đã cài đặt xong, có chống-đua (guarded UPDATE) |
 | API cho React | **Spring Boot (Java 17+)** gọi `sp_*` qua JDBC `CallableStatement` | Không ORM, mapper mỏng, hợp SQL Server |
-| C++ | **Core domain OOP + đồng bộ DB** — CLI + unit test + batch job; **ghi qua `sp_*`**; tự chạy SQL cho job chưa có proc | Thoả yêu cầu "C++ cho phần core", giữ 1 bản cài đặt quy tắc |
 | Frontend | **React + TypeScript** | Cả 2 tài liệu định hướng đều nhắc React |
+| ~~C++ core~~ | **Bỏ** (2026-09-09) | Proc đã là nguồn sự thật; core C++ chỉ là bản sao thứ 2 của quy tắc, phải tự đồng bộ tay, thêm 1 toolchain. Business thật chạy 1 backend. Domain OOP + tính toán → tầng service Spring (§3.5) |
 
-### 0.3 Kiến trúc 4 tầng
+### 0.3 Kiến trúc 3 tầng
 
 ```
 ┌────────────────┐   HTTP/JSON    ┌────────────────────┐  JDBC {call dbo.sp_*}  ┌──────────────────────┐
 │  React + TS    │ ─────────────▶ │  Spring Boot API   │ ─────────────────────▶ │ SQL Server           │
 │  (Vite SPA)    │ ◀───────────── │  (envelope, JWT)   │ ◀───────────────────── │ BankingSystem        │
 └────────────────┘  ApiResponse   └────────────────────┘   result set + THROW   │  - 63 sp_*  (ghi)    │
-                                                                                │  - 14 vw_*  (đọc)    │
-┌────────────────────────────────────────────────┐  ODBC {call dbo.sp_*}         │  - 54 fn_*  (validate)│
-│  C++ core                                      │ ────────────────────────────▶ │                      │
-│  - domain model OOP (Money, Loan, Saving, ...) │  guarded UPDATE (job mới)     └──────────────────────┘
-│  - CLI + batch jobs + unit tests              │
-└────────────────────────────────────────────────┘
+                                   - domain/tính toán (§3.5)                     │  - 14 vw_*  (đọc)    │
+                                   - @Scheduled job đáo hạn tiết kiệm            │  - 54 fn_*  (validate)│
+                                                                                └──────────────────────┘
 ```
 
-**Vì sao không xung đột:** Spring Boot và C++ đều **đi qua `sp_*`** cho mọi thao tác ghi ⇒ chỉ một bản cài đặt quy tắc nghiệp vụ. Cả hai tuân theo cùng §1 cho định dạng dữ liệu. C++ chỉ viết SQL trực tiếp (theo đúng pattern *guarded UPDATE*) cho batch job chưa có proc (đáo hạn tiết kiệm, đánh dấu vay quá hạn).
+**Vì sao 1 backend:** mọi thao tác ghi đi qua `sp_*` ⇒ một bản cài đặt quy tắc nghiệp vụ duy nhất. Spring chỉ: validate input (Bean Validation) → gọi proc → map result (§3.3). Phần Java tự tính (không có trong proc) chỉ còn **lịch trả góp** (§3.5). Job nền (đáo hạn tiết kiệm) là một method `@Scheduled` gọi proc — không cần tiến trình riêng.
 
 ### 0.4 Bug DB — ✅ đã sửa hết (17 + 1, verify bằng `deploy.ps1 -Seed` ngày 2026-09-07)
 
@@ -73,7 +68,7 @@ Chi tiết từng mục + SQL ở §2.1 / §2.2. Đáng chú ý nhất:
 
 ## 1. Hợp đồng chuẩn dùng chung (Shared Contract)
 
-> **Cả FE, BE, C++ phải code theo đúng phần này.** Đây là chống-xung-đột số 1.
+> **Cả FE và BE phải code theo đúng phần này.** Đây là chống-xung-đột số 1.
 
 ### 1.1 Định danh (ID)
 
@@ -92,11 +87,10 @@ Chi tiết từng mục + SQL ở §2.1 / §2.2. Đáng chú ý nhất:
 |---|---|
 | Kiểu DB | `DECIMAL(18, 2)` cho **tất cả** cột tiền |
 | JSON | **string** `"1000000.00"` — luôn đúng 2 chữ số lẻ. **Không** dùng `number` (mất chính xác float) |
-| Backend (Java) | `BigDecimal` `setScale(2, HALF_UP)` |
-| C++ | `class Money` giữ `int64_t` **đơn vị xu** (minor units), gắn `Currency` |
+| Backend (Java) | `BigDecimal` `setScale(2, HALF_UP)` khắp nơi. Không cần class `Money` bọc lại — chỉ tính trong 1 currency (lịch trả góp §3.5); chuyển tiền do proc lo |
 | Currency | Field **riêng**, mã từ lookup `Currency`: `USD | EUR | GBP | JPY | VND`. **Không có FX / quy đổi.** Mỗi transaction/loan/saving kế thừa currency của banking account nguồn |
 | Làm tròn | **half-up** về 2 chữ số (khớp `CAST(... AS DECIMAL(18,2))` của T-SQL) |
-| Cộng/trừ khác currency | **Cấm** — ném lỗi ở mọi tầng |
+| Cộng/trừ khác currency | **Cấm** — proc chặn; Spring không bao giờ cộng tiền 2 currency |
 
 ### 1.3 Lãi suất
 
@@ -201,7 +195,6 @@ Stored proc trả về: **1..N dòng từ một `vw_*`** + cột `message` (ho�
 - Các `vw_*Details` / `vw_*Summary` đã mask sẵn: email, phone, citizen_id, số tài khoản (`fn_mask_*`).
 - ⚠️ **`card_number` KHÔNG được mask trong `vw_CardDetails`.** Contract:
   - API **phải mask thêm** `card_number` (`400000******1234`) ở mọi response, **trừ** response của `POST /api/cards` (phát hành) — hiện đầy đủ **đúng 1 lần**.
-  - C++ port lại `fn_mask_bank_account_number` cho nhất quán.
 - **Không bao giờ** trả ra client: `password_hash`, `cvv_hash`, `otp_code` (xem 1.10).
 
 ### 1.9 Phân trang & tìm kiếm
@@ -236,8 +229,7 @@ Stored proc trả về: **1..N dòng từ một `vw_*`** + cột `message` (ho�
   IF @@ROWCOUNT = 0 THROW <code>, '...', 1;
   ```
 - **Cấm** `SELECT balance` rồi `UPDATE` (race condition).
-- Spring: **luôn** qua `sp_*`, không tự viết SQL số dư.
-- C++: `{call dbo.sp_*}` cho nghiệp vụ có proc; batch job chưa có proc thì viết guarded UPDATE y hệt và kiểm số dòng bị ảnh hưởng.
+- Spring: **luôn** qua `sp_*`, không tự viết SQL số dư. Job nền cũng gọi proc (§3.5).
 
 ### 1.12 Mã lỗi — hai hệ đang tồn tại
 
@@ -412,7 +404,9 @@ CREATE INDEX IX_Loan_Customer_Status   ON Loan(customer_id, status);
 | `dbo.sp_admin_update_account_status` | `account/admin_update_account_status.sql` | `@account_id BIGINT, @new_status VARCHAR(20)` | Lock / Disable / Enable account | `171000`–`171020` | ✅ đã tạo + test |
 | ~~`dbo.sp_notification_list`~~ | — | — | **Bỏ** — `sp_notification_search(@account_id, NULL, 0, NULL, NULL)` đã làm "unread only", `(@account_id, NULL, NULL, NULL, NULL)` là "tất cả". YAGNI. | — | — |
 
-> Bỏ `sp_loan_get_schedule` + bảng `LoanRepaymentSchedule` — để C++ `AmortizationSchedule` / Spring tính runtime từ `amount`, `interest_rate`, `duration_months`, `start_date`. YAGNI.
+> Bỏ `sp_loan_get_schedule` + bảng `LoanRepaymentSchedule` — Spring tính runtime (§3.5 `AmortizationSchedule`) từ `amount`, `interest_rate`, `duration_months`, `start_date`. YAGNI.
+>
+> `sp_saving_account_settle_matured` (đáo hạn sổ tiết kiệm) — nếu chưa có proc thì thêm 1 proc tối giản: `UPDATE SavingAccount SET status='Matured' WHERE status='Active' AND maturity_date <= CAST(GETDATE() AS DATE)`. Spring gọi qua `@Scheduled` (§3.5). **Không** có job "vay quá hạn" — `LoanStatus` không có giá trị `Overdue`, YAGNI.
 
 ### 2.4 `deploy.ps1` — đã viết lại
 
@@ -450,10 +444,13 @@ customer/     CustomerController, CustomerService
 employee/     ...
 branch/  bankingaccount/  card/  transaction/  loan/  saving/  beneficiary/  notification/
           loginhistory/  admin/
+loan/         + AmortizationSchedule.java (§3.5 — tính toán duy nhất không có trong proc)
+saving/       + MaturedSavingsJob.java   (§3.5 — @Scheduled gọi sp_saving_account_settle_matured)
 dto/          request/*  (record + Bean Validation)   response/*  (record camelCase mirror view)
 ```
 
 **Không** có `@Entity` / JPA / repository interface — chỉ `StoredProcedureExecutor` + mapper.
+**Không** có tầng "domain object" song song (Loan/SavingAccount/BankingAccount class với state machine) — proc đã ép mọi state + invariant, class Java lặp lại chỉ tạo gánh nặng đồng bộ. Service = validate → gọi proc → map (§3.3).
 
 ### 3.2 Thành phần cốt lõi
 
@@ -635,6 +632,72 @@ record TransferRequest(
 - Ownership: `OwnershipGuard` — customer chỉ thao tác trên banking account / loan / saving / beneficiary của chính mình (query nhẹ qua `fn_*_validate_owner` hoặc view).
 - Danh sách endpoint đầy đủ: **Phụ lục A**.
 
+### 3.5 Domain / tính toán + job nền
+
+> Đây là **toàn bộ** phần Java "tự làm logic". Mọi thứ khác đi qua proc. Nếu chỗ này thấy trống thì đúng — kiến trúc "proc là nguồn sự thật" khiến tầng app mỏng theo thiết kế.
+
+**`loan/AmortizationSchedule.java`** — lịch trả góp cho `GET /loans/{id}/schedule`. Khớp công thức `sp_loan_apply` (§1.3): `r = annual/12/100` ; `M = P·r·(1+r)^n / ((1+r)^n − 1)` ; `r == 0` → `M = P/n`. Kỳ cuối nuốt phần lẻ để dư nợ về 0.
+
+```java
+public record AmortRow(int period, BigDecimal payment, BigDecimal principal,
+                       BigDecimal interest, BigDecimal balance) {}
+
+public final class AmortizationSchedule {
+    private static final int SC = 2;               // DECIMAL(18,2)
+    private static final RoundingMode RM = RoundingMode.HALF_UP;
+
+    public static BigDecimal monthlyPayment(BigDecimal principal, BigDecimal annualPct, int months) {
+        if (months <= 0) throw new IllegalArgumentException("Duration must be greater than zero.");
+        double r = annualPct.doubleValue() / 12.0 / 100.0;
+        if (r == 0.0) return principal.divide(BigDecimal.valueOf(months), SC, RM);
+        double p  = principal.doubleValue();
+        double pw = Math.pow(1.0 + r, months);
+        return BigDecimal.valueOf(p * r * pw / (pw - 1.0)).setScale(SC, RM);
+    }
+
+    public static List<AmortRow> build(BigDecimal principal, BigDecimal annualPct, int months) {
+        BigDecimal pay = monthlyPayment(principal, annualPct, months);
+        double r = annualPct.doubleValue() / 12.0 / 100.0;
+        BigDecimal bal = principal.setScale(SC, RM);
+        List<AmortRow> rows = new ArrayList<>(months);
+        for (int k = 1; k <= months; k++) {
+            BigDecimal interest  = bal.multiply(BigDecimal.valueOf(r)).setScale(SC, RM);
+            BigDecimal principalPart = pay.subtract(interest);
+            BigDecimal thisPay = pay;
+            if (k == months) { principalPart = bal; thisPay = principalPart.add(interest); }
+            bal = bal.subtract(principalPart);
+            rows.add(new AmortRow(k, thisPay, principalPart, interest, bal));
+        }
+        return rows;
+    }
+}
+```
+
+Test (`AmortizationScheduleTest`): `build(12_000_000, 12.00, 12)` → 12 dòng; `Σ principal == principal`; `rows.getLast().balance()` == 0.
+
+**`saving/MaturedSavingsJob.java`** — thay batch job riêng bằng một method `@Scheduled`:
+
+```java
+@Component
+class MaturedSavingsJob {
+    private final StoredProcedureExecutor sp;
+    MaturedSavingsJob(StoredProcedureExecutor sp) { this.sp = sp; }
+
+    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Ho_Chi_Minh")   // 00:05 mỗi ngày
+    void settleMatured() {
+        var rows = sp.call("sp_saving_account_settle_matured");
+        log.info("Settled {} matured saving account(s)", rows.size());
+    }
+}
+```
+
+Bật bằng `@EnableScheduling` trên class config. Không cần thư viện ngoài, không tiến trình riêng.
+
+**Bỏ qua có chủ đích:**
+- Class `Money` bọc `BigDecimal` — `setScale(2, HALF_UP)` + serializer §3.2 đã đủ; chỉ thêm khi phải cộng tiền nhiều currency trong Java (hiện không).
+- `Luhn` trong Java — `sp_card_create` sinh + check digit trong SQL; FE muốn validate số thẻ gõ tay thì tự làm ở `validation.ts`.
+- Domain state machine (Loan/Saving) trong Java — proc đã ép; xem §3.1.
+
 ---
 
 ## 4. Frontend — React + TypeScript
@@ -793,935 +856,26 @@ export const transactionApi = {
 
 ---
 
-## 5. C++ Core — code OOP nghiệp vụ ngân hàng
-
-> Namespace `banking`. Build **CMake** (C++17). Kết nối SQL Server qua **nanodbc** (wrapper ODBC gọn, MIT). Test: `assert` thuần (không framework).
-> Vai trò: mô hình domain OOP giàu (Money, Loan, Saving, Card, state machine) + đồng bộ DB. **Ghi qua `sp_*`**; batch job chưa có proc thì tự chạy guarded UPDATE.
-
-### 5.1 Cấu trúc thư mục
-
-```
-cpp/
-  CMakeLists.txt
-  include/banking/
-    currency.hpp  money.hpp  enums.hpp  exceptions.hpp  masking.hpp
-    banking_account.hpp  card.hpp  luhn.hpp  loan.hpp  saving_account.hpp  otp.hpp
-    infra/db.hpp  infra/banking_account_repository.hpp
-    app/transfer_service.hpp
-  src/
-    domain/  money.cpp  card.cpp  masking.cpp
-    infra/   db.cpp  banking_account_repository.cpp
-    app/     transfer_service.cpp
-    jobs/    settle_matured_savings.cpp  mark_overdue_loans.cpp
-    cli/     main.cpp
-  tests/     run_tests.cpp
-```
-
-### 5.2 `include/banking/currency.hpp`
-
-```cpp
-#pragma once
-#include <string>
-#include <stdexcept>
-
-namespace banking {
-
-enum class Currency { USD, EUR, GBP, JPY, VND };
-
-inline std::string to_code(Currency c) {
-    switch (c) {
-        case Currency::USD: return "USD"; case Currency::EUR: return "EUR";
-        case Currency::GBP: return "GBP"; case Currency::JPY: return "JPY";
-        case Currency::VND: return "VND";
-    }
-    throw std::logic_error("bad Currency");
-}
-
-inline Currency currency_from_code(const std::string& s) {
-    if (s == "USD") return Currency::USD;
-    if (s == "EUR") return Currency::EUR;
-    if (s == "GBP") return Currency::GBP;
-    if (s == "JPY") return Currency::JPY;
-    if (s == "VND") return Currency::VND;
-    throw std::invalid_argument("Unknown currency code: " + s);
-}
-
-} // namespace banking
-```
-
-### 5.3 `include/banking/exceptions.hpp`
-
-```cpp
-#pragma once
-#include <stdexcept>
-#include <string>
-
-namespace banking {
-
-// Base cho mọi lỗi nghiệp vụ. code khớp band THROW của stored procedure (§1.12 + Phụ lục B),
-// để tầng trên map sang HTTP / thông báo GIỐNG HỆT Spring Boot.
-class DomainException : public std::runtime_error {
-public:
-    DomainException(int code, const std::string& msg) : std::runtime_error(msg), code_(code) {}
-    int code() const noexcept { return code_; }
-private:
-    int code_;
-};
-
-struct ValidationException     : DomainException { using DomainException::DomainException; };
-struct NotFoundException       : DomainException { using DomainException::DomainException; };
-struct IllegalStateTransition  : DomainException { using DomainException::DomainException; };
-
-struct InsufficientFundsException : DomainException {
-    InsufficientFundsException()
-        : DomainException(250040, "Insufficient balance or source account is not active.") {}
-};
-struct AccountNotActiveException : DomainException {
-    explicit AccountNotActiveException(int code = 250050)
-        : DomainException(code, "Account is not active.") {}
-};
-
-} // namespace banking
-```
-
-### 5.4 `include/banking/money.hpp` + `src/domain/money.cpp`
-
-```cpp
-// money.hpp
-#pragma once
-#include <cstdint>
-#include <string>
-#include "banking/currency.hpp"
-#include "banking/exceptions.hpp"
-
-namespace banking {
-
-// Giá trị tiền cố định 2 chữ số thập phân (khớp DECIMAL(18,2)), lưu theo "xu".
-// Bất biến: luôn gắn 1 Currency; toán tử giữa 2 Money khác currency -> ném ValidationException.
-class Money {
-public:
-    Money() = default;
-    Money(std::int64_t minor, Currency ccy) : minor_(minor), ccy_(ccy) {}
-    static Money zero(Currency ccy) { return Money(0, ccy); }
-
-    static Money parse(const std::string& s, Currency ccy);   // "1000000" | "1000000.00"
-    std::string  to_string() const;                            // luôn "…​.dd"
-
-    std::int64_t minor() const { return minor_; }
-    Currency currency() const { return ccy_; }
-    bool is_zero() const { return minor_ == 0; }
-    bool is_negative() const { return minor_ < 0; }
-
-    Money operator+(const Money& o) const { same(o); return {minor_ + o.minor_, ccy_}; }
-    Money operator-(const Money& o) const { same(o); return {minor_ - o.minor_, ccy_}; }
-    Money operator-() const { return {-minor_, ccy_}; }
-
-    bool operator==(const Money& o) const { return ccy_ == o.ccy_ && minor_ == o.minor_; }
-    bool operator!=(const Money& o) const { return !(*this == o); }
-    bool operator<(const Money& o)  const { same(o); return minor_ <  o.minor_; }
-    bool operator<=(const Money& o) const { same(o); return minor_ <= o.minor_; }
-    bool operator>(const Money& o)  const { same(o); return minor_ >  o.minor_; }
-    bool operator>=(const Money& o) const { same(o); return minor_ >= o.minor_; }
-
-    // Nhân hệ số thực (lãi suất), làm tròn half-up về xu.
-    Money scaled(double factor) const;
-
-private:
-    void same(const Money& o) const {
-        if (ccy_ != o.ccy_) throw ValidationException(900001, "Currency mismatch in Money operation");
-    }
-    std::int64_t minor_ = 0;
-    Currency ccy_ = Currency::VND;
-};
-
-} // namespace banking
-```
-
-```cpp
-// src/domain/money.cpp
-#include "banking/money.hpp"
-#include <cmath>
-
-namespace banking {
-
-Money Money::parse(const std::string& s, Currency ccy) {
-    if (s.empty()) throw ValidationException(900002, "Empty money string");
-    std::size_t i = 0;
-    bool neg = (s[i] == '-');
-    if (neg) ++i;
-    std::int64_t whole = 0; bool anyDigit = false;
-    for (; i < s.size() && s[i] != '.'; ++i) {
-        if (s[i] < '0' || s[i] > '9') throw ValidationException(900002, "Invalid money: " + s);
-        whole = whole * 10 + (s[i] - '0'); anyDigit = true;
-    }
-    std::int64_t frac = 0; int fd = 0;
-    if (i < s.size() && s[i] == '.') {
-        for (++i; i < s.size(); ++i) {
-            if (s[i] < '0' || s[i] > '9') throw ValidationException(900002, "Invalid money: " + s);
-            if (fd == 2) throw ValidationException(900003, "Money supports at most 2 decimals: " + s);
-            frac = frac * 10 + (s[i] - '0'); ++fd;
-        }
-    }
-    if (!anyDigit) throw ValidationException(900002, "Invalid money: " + s);
-    while (fd < 2) { frac *= 10; ++fd; }
-    std::int64_t minor = whole * 100 + frac;
-    return Money(neg ? -minor : minor, ccy);
-}
-
-std::string Money::to_string() const {
-    std::int64_t v = minor_ < 0 ? -minor_ : minor_;
-    std::string out = (minor_ < 0 ? "-" : "");
-    out += std::to_string(v / 100) + ".";
-    std::int64_t f = v % 100;
-    if (f < 10) out += "0";
-    out += std::to_string(f);
-    return out;
-}
-
-Money Money::scaled(double factor) const {
-    double raw = static_cast<double>(minor_) * factor;
-    std::int64_t r = static_cast<std::int64_t>(raw >= 0 ? std::floor(raw + 0.5) : std::ceil(raw - 0.5));
-    return Money(r, ccy_);
-}
-
-} // namespace banking
-```
-
-### 5.5 `include/banking/enums.hpp`
-
-```cpp
-#pragma once
-#include <string>
-#include <stdexcept>
-
-namespace banking {
-
-enum class AccountRole          { Admin, Customer, Employee };
-enum class AccountStatus        { Pending, Active, Disabled, Locked };
-enum class EmployeePosition     { Manager, Teller, LoanOfficer, CustomerService };
-enum class BankingAccountType   { Savings, Checking, Business };
-enum class BankingAccountStatus { Active, Frozen, Closed };
-enum class CardType             { Debit, Credit };
-enum class CardStatus           { Active, Blocked, Expired };
-enum class TransactionType      { Deposit, Withdrawal, Transfer, Payment,
-                                  LoanDisbursement, LoanRepayment, SavingDeposit, SavingWithdrawal };
-enum class TransactionStatus    { Pending, Successful, Canceled, Failed };
-enum class LoanType             { Personal, Home, Auto, Education };
-enum class LoanStatus           { Pending, Approved, Rejected, Disbursed, Closed };
-enum class SavingStatus         { Active, Matured, Closed };
-enum class OtpPurpose           { Login, Register, Transaction, VerifyEmail, PasswordReset };
-
-// --- chuỗi để nói chuyện với DB/API: PHẢI khớp lookup seed (§1.5) ---
-inline const char* db_str(BankingAccountStatus s) {
-    switch (s) { case BankingAccountStatus::Active: return "Active";
-                 case BankingAccountStatus::Frozen: return "Frozen";
-                 case BankingAccountStatus::Closed: return "Closed"; }
-    throw std::logic_error("bad BankingAccountStatus");
-}
-inline const char* db_str(TransactionType t) {
-    switch (t) {
-        case TransactionType::Deposit:          return "Deposit";
-        case TransactionType::Withdrawal:       return "Withdrawal";
-        case TransactionType::Transfer:         return "Transfer";
-        case TransactionType::Payment:          return "Payment";
-        case TransactionType::LoanDisbursement: return "LoanDisbursement";
-        case TransactionType::LoanRepayment:    return "LoanRepayment";
-        case TransactionType::SavingDeposit:    return "SavingDeposit";
-        case TransactionType::SavingWithdrawal: return "SavingWithdrawal";
-    }
-    throw std::logic_error("bad TransactionType");
-}
-inline const char* db_str(EmployeePosition p) {
-    switch (p) {
-        case EmployeePosition::Manager:         return "Manager";
-        case EmployeePosition::Teller:          return "Teller";
-        case EmployeePosition::LoanOfficer:     return "Loan Officer";      // dấu cách!
-        case EmployeePosition::CustomerService: return "Customer Service";  // dấu cách!
-    }
-    throw std::logic_error("bad EmployeePosition");
-}
-inline const char* db_str(OtpPurpose p) {
-    switch (p) {
-        case OtpPurpose::Login:         return "Login";
-        case OtpPurpose::Register:      return "Register";
-        case OtpPurpose::Transaction:   return "Transaction";
-        case OtpPurpose::VerifyEmail:   return "Verify Email";              // dấu cách!
-        case OtpPurpose::PasswordReset: return "PasswordReset";
-    }
-    throw std::logic_error("bad OtpPurpose");
-}
-
-} // namespace banking
-```
-
-### 5.6 `include/banking/banking_account.hpp`
-
-```cpp
-#pragma once
-#include <string>
-#include "banking/money.hpp"
-#include "banking/enums.hpp"
-#include "banking/exceptions.hpp"
-
-namespace banking {
-
-// Bản sao trong RAM của một dòng BankingAccount. Các method dưới đây ép ĐÚNG bất biến
-// mà CK_BankingAccount_Balance + guarded UPDATE của DB áp:
-//   0 <= available_balance <= balance   và chỉ thao tác khi status == Active.
-// Đây là nơi C++ "sở hữu" quy tắc; khi PERSIST vẫn gọi sp_* (xem repository).
-class BankingAccount {
-public:
-    BankingAccount(long long id, std::string customerId, std::string number,
-                   Money balance, Money available,
-                   BankingAccountType type, BankingAccountStatus status)
-        : id_(id), customerId_(std::move(customerId)), number_(std::move(number)),
-          balance_(balance), available_(available), type_(type), status_(status) {
-        enforce_invariant(310099);
-    }
-
-    long long id() const { return id_; }
-    const std::string& customer_id() const { return customerId_; }
-    const std::string& number() const { return number_; }
-    Money balance() const { return balance_; }
-    Money available_balance() const { return available_; }
-    BankingAccountStatus status() const { return status_; }
-
-    void require_active(int code) const {
-        if (status_ != BankingAccountStatus::Active) throw AccountNotActiveException(code);
-    }
-
-    void deposit(const Money& amount) {                 // khớp sp_bank_transaction_deposit
-        require_positive(amount, 210010);
-        require_active(210020);
-        balance_   = balance_   + amount;
-        available_ = available_ + amount;
-        enforce_invariant(210099);
-    }
-
-    void debit_for(const Money& amount, const Money& fee) {   // khớp guarded debit của transfer
-        require_positive(amount, 250030);
-        require_active(250050);
-        Money total = amount + fee;
-        if (available_ < total) throw InsufficientFundsException();
-        balance_   = balance_   - total;
-        available_ = available_ - total;
-        enforce_invariant(250099);
-    }
-
-    void credit(const Money& amount) {                  // khớp guarded credit
-        require_positive(amount, 250030);
-        require_active(250050);
-        balance_   = balance_   + amount;
-        available_ = available_ + amount;
-        enforce_invariant(250099);
-    }
-
-private:
-    static void require_positive(const Money& m, int code) {
-        if (m.is_zero() || m.is_negative())
-            throw ValidationException(code, "Amount must be greater than 0.");
-    }
-    void enforce_invariant(int code) const {
-        if (balance_.is_negative() || available_.is_negative() || available_ > balance_)
-            throw DomainException(code, "BankingAccount balance invariant violated");
-    }
-
-    long long id_;
-    std::string customerId_, number_;
-    Money balance_, available_;
-    BankingAccountType type_;
-    BankingAccountStatus status_;
-};
-
-} // namespace banking
-```
-
-### 5.7 `include/banking/luhn.hpp` + `include/banking/card.hpp`
-
-```cpp
-// luhn.hpp — khớp dbo.fn_luhn_check_digit (nhân đôi từ phải sang)
-#pragma once
-#include <string>
-#include <stdexcept>
-
-namespace banking {
-
-struct Luhn {
-    static char check_digit(const std::string& partial) {   // partial = số CHƯA có check digit
-        int sum = 0; bool dbl = true;
-        for (auto it = partial.rbegin(); it != partial.rend(); ++it) {
-            if (*it < '0' || *it > '9') throw std::invalid_argument("Luhn: non-digit");
-            int d = *it - '0';
-            if (dbl) { d *= 2; if (d > 9) d -= 9; }
-            sum += d; dbl = !dbl;
-        }
-        return static_cast<char>('0' + (10 - sum % 10) % 10);
-    }
-    static bool validate(const std::string& full) {
-        return full.size() >= 2 &&
-               check_digit(full.substr(0, full.size() - 1)) == full.back();
-    }
-};
-
-} // namespace banking
-```
-
-```cpp
-// card.hpp — khớp sp_card_create: 16 số = BIN(6) + 9 random + Luhn(1); BIN Debit=400000 / Credit=520000
-#pragma once
-#include <string>
-#include <random>
-#include "banking/enums.hpp"
-#include "banking/luhn.hpp"
-
-namespace banking {
-
-class Card {
-public:
-    static Card issue(long long bankAccountId, CardType type) {
-        std::string bin  = (type == CardType::Debit) ? "400000" : "520000";
-        std::string body = bin + random_digits(9);
-        std::string number = body + std::string(1, Luhn::check_digit(body));
-        return Card(bankAccountId, number, type, sha256_hex(random_digits(3)));
-    }
-    const std::string& number()   const { return number_; }
-    const std::string& cvv_hash() const { return cvvHash_; }
-    CardType type() const { return type_; }
-
-private:
-    Card(long long acc, std::string num, CardType t, std::string cvvHash)
-        : bankAccountId_(acc), number_(std::move(num)), type_(t), cvvHash_(std::move(cvvHash)) {}
-
-    static std::string random_digits(int n) {
-        static std::mt19937_64 rng{std::random_device{}()};
-        std::uniform_int_distribution<int> d(0, 9);
-        std::string s; s.reserve(n);
-        for (int i = 0; i < n; ++i) s += static_cast<char>('0' + d(rng));
-        return s;
-    }
-    static std::string sha256_hex(const std::string& in);  // dùng picosha2.h (header-only), src/domain/card.cpp
-
-    long long bankAccountId_;
-    std::string number_;
-    CardType type_;
-    std::string cvvHash_;
-};
-
-} // namespace banking
-```
-
-### 5.8 `include/banking/loan.hpp` (+ AmortizationSchedule)
-
-```cpp
-#pragma once
-#include <vector>
-#include <cmath>
-#include "banking/money.hpp"
-#include "banking/enums.hpp"
-#include "banking/exceptions.hpp"
-
-namespace banking {
-
-struct AmortRow {
-    int   period;
-    Money payment, principal, interest, balance;   // balance = dư nợ sau kỳ này
-};
-
-class AmortizationSchedule {
-public:
-    // KHỚP sp_loan_apply: r = annual_pct/12/100 ; M = P·r·(1+r)^n / ((1+r)^n − 1) ; r==0 → P/n
-    static Money monthly_payment(const Money& principal, double annual_pct, int months) {
-        if (months <= 0) throw ValidationException(91003, "Duration must be greater than zero.");
-        double r = annual_pct / 12.0 / 100.0;
-        if (r == 0.0) return Money(principal.minor() / months, principal.currency());
-        double p  = static_cast<double>(principal.minor());
-        double pw = std::pow(1.0 + r, months);
-        double m  = p * r * pw / (pw - 1.0);
-        return Money(static_cast<long long>(std::floor(m + 0.5)), principal.currency());
-    }
-
-    static std::vector<AmortRow> build(const Money& principal, double annual_pct, int months) {
-        std::vector<AmortRow> rows;
-        Money pay = monthly_payment(principal, annual_pct, months);
-        double r  = annual_pct / 12.0 / 100.0;
-        Money bal = principal;
-        for (int k = 1; k <= months; ++k) {
-            Money interest      = bal.scaled(r);
-            Money principalPart = pay - interest;
-            if (k == months) {                       // kỳ cuối nuốt phần lẻ -> dư nợ về 0
-                principalPart = bal;
-                pay = principalPart + interest;
-            }
-            bal = bal - principalPart;
-            rows.push_back({k, pay, principalPart, interest, bal});
-        }
-        return rows;
-    }
-};
-
-// State machine khớp Loan: Pending → Approved/Rejected → Disbursed → Closed
-class Loan {
-public:
-    Loan(long long id, std::string customerId, LoanType type, Money amount,
-         double annualPct, int months, Money remaining, LoanStatus status)
-        : id_(id), customerId_(std::move(customerId)), type_(type), amount_(amount),
-          annualPct_(annualPct), months_(months), remaining_(remaining), status_(status) {}
-
-    Money monthly_payment() const { return AmortizationSchedule::monthly_payment(amount_, annualPct_, months_); }
-    std::vector<AmortRow> schedule() const { return AmortizationSchedule::build(amount_, annualPct_, months_); }
-
-    void review(bool approved, const std::string& officerId) {
-        if (status_ != LoanStatus::Pending)
-            throw IllegalStateTransition(95004, "Loan is not pending review.");
-        status_ = approved ? LoanStatus::Approved : LoanStatus::Rejected;
-        approvedBy_ = officerId;
-    }
-    void mark_disbursed() {
-        if (status_ != LoanStatus::Approved)
-            throw IllegalStateTransition(92004, "Loan is not approved.");
-        status_ = LoanStatus::Disbursed;
-        remaining_ = amount_;
-    }
-    // Trả nợ: kẹp theo dư nợ, tự Closed khi về 0 (khớp sp_loan_repay)
-    Money apply_repayment(const Money& amount) {
-        if (status_ != LoanStatus::Disbursed)
-            throw IllegalStateTransition(94005, "Loan is not in disbursed state.");
-        Money pay = (amount < remaining_) ? amount : remaining_;
-        remaining_ = remaining_ - pay;
-        if (remaining_.is_zero()) status_ = LoanStatus::Closed;
-        return pay;
-    }
-
-    long long id() const { return id_; }
-    LoanStatus status() const { return status_; }
-    Money remaining_balance() const { return remaining_; }
-
-private:
-    long long id_;
-    std::string customerId_, approvedBy_;
-    LoanType type_;
-    Money amount_, remaining_;
-    double annualPct_;
-    int months_;
-    LoanStatus status_;
-};
-
-} // namespace banking
-```
-
-### 5.9 `include/banking/saving_account.hpp`
-
-```cpp
-#pragma once
-#include "banking/money.hpp"
-#include "banking/enums.hpp"
-
-namespace banking {
-
-// Khớp vw_SavingAccountDetails + sp_saving_account_close:
-//   projected_interest = deposit · rate/100 · term_months/12   (lãi ĐƠN)
-//   maturity_amount    = deposit + projected_interest
-//   Tất toán TRƯỚC hạn -> lãi = 0, chỉ trả gốc.
-class SavingAccount {
-public:
-    SavingAccount(long long id, long long sourceBankAccountId, Money deposit,
-                  double annualRatePct, int termMonths, SavingStatus status)
-        : id_(id), source_(sourceBankAccountId), deposit_(deposit),
-          ratePct_(annualRatePct), term_(termMonths), status_(status) {}
-
-    Money projected_interest() const {
-        return deposit_.scaled(ratePct_ / 100.0 * static_cast<double>(term_) / 12.0);
-    }
-    Money maturity_amount() const { return deposit_ + projected_interest(); }
-    Money settlement_amount(bool matured) const { return matured ? maturity_amount() : deposit_; }
-
-    long long id() const { return id_; }
-    long long source_bank_account_id() const { return source_; }
-    Money deposit_amount() const { return deposit_; }
-    SavingStatus status() const { return status_; }
-
-private:
-    long long id_, source_;
-    Money deposit_;
-    double ratePct_;
-    int term_;
-    SavingStatus status_;
-};
-
-} // namespace banking
-```
-
-### 5.10 `include/banking/infra/db.hpp` (nanodbc RAII)
-
-```cpp
-#pragma once
-#include <string>
-#include <nanodbc/nanodbc.h>
-#include "banking/exceptions.hpp"
-
-namespace banking {
-
-// RAII: một kết nối ODBC tới BankingSystem. Chuỗi kết nối Windows-auth:
-//   "Driver={ODBC Driver 17 for SQL Server};Server=localhost\\SQLEXPRESS01;
-//    Database=BankingSystem;Trusted_Connection=yes;"
-class Db {
-public:
-    explicit Db(const std::string& connStr) : conn_(NANODBC_TEXT(connStr)) {}
-    nanodbc::connection& raw() { return conn_; }
-
-    // Trích mã THROW của SQL Server từ database_error (chuỗi "... (NNNNNN) (SQLExecute)").
-    static int extract_sql_code(const nanodbc::database_error& e);
-private:
-    nanodbc::connection conn_;
-};
-
-// RAII transaction: commit khi gọi commit(); rollback tự động nếu hủy trước khi commit.
-class Transaction {
-public:
-    explicit Transaction(Db& db) : tx_(db.raw()) {}
-    void commit() { tx_.commit(); }
-private:
-    nanodbc::transaction tx_;
-};
-
-} // namespace banking
-```
-
-### 5.11 `include/banking/infra/banking_account_repository.hpp` + `.cpp`
-
-```cpp
-// banking_account_repository.hpp
-#pragma once
-#include <optional>
-#include "banking/infra/db.hpp"
-#include "banking/banking_account.hpp"
-#include "banking/money.hpp"
-
-namespace banking {
-
-class BankingAccountRepository {
-public:
-    explicit BankingAccountRepository(Db& db) : db_(db) {}
-
-    std::optional<BankingAccount> find_by_id(long long id);
-
-    // GHI luôn qua stored procedure => cùng một bản cài đặt quy tắc với Spring Boot.
-    long long transfer(long long fromId, long long toId,
-                       const Money& amount, const Money& fee, const std::string& description);
-private:
-    Db& db_;
-};
-
-} // namespace banking
-```
-
-```cpp
-// src/infra/banking_account_repository.cpp
-#include "banking/infra/banking_account_repository.hpp"
-
-namespace banking {
-
-std::optional<BankingAccount> BankingAccountRepository::find_by_id(long long id) {
-    nanodbc::statement st(db_.raw());
-    nanodbc::prepare(st, NANODBC_TEXT(
-        "SELECT bank_account_id, customer_id, bank_account_number, balance, available_balance, "
-        "       account_type, currency, status "
-        "FROM BankingAccount WHERE bank_account_id = ?"));
-    st.bind(0, &id);
-    auto r = nanodbc::execute(st);
-    if (!r.next()) return std::nullopt;
-
-    Currency ccy = currency_from_code(trim(r.get<std::string>("currency")));
-    auto money = [&](const char* col) {
-        return Money::parse(r.get<std::string>(col), ccy);   // ODBC trả DECIMAL dạng chuỗi
-    };
-    BankingAccountStatus status = parse_bank_status(trim(r.get<std::string>("status")));
-    return BankingAccount(
-        r.get<long long>("bank_account_id"),
-        trim(r.get<std::string>("customer_id")),          // NCHAR(10) -> trim
-        trim(r.get<std::string>("bank_account_number")),
-        money("balance"), money("available_balance"),
-        parse_bank_type(trim(r.get<std::string>("account_type"))),
-        status);
-}
-
-long long BankingAccountRepository::transfer(long long fromId, long long toId,
-        const Money& amount, const Money& fee, const std::string& description) {
-    try {
-        nanodbc::statement st(db_.raw());
-        nanodbc::prepare(st, NANODBC_TEXT(
-            "{call dbo.sp_bank_transaction_transfer(?, ?, ?, ?, ?)}"));
-        std::string a = amount.to_string(), f = fee.to_string();
-        st.bind(0, &fromId);
-        st.bind(1, &toId);
-        st.bind(2, a.c_str());
-        st.bind(3, f.c_str());
-        if (description.empty()) st.bind_null(4); else st.bind(4, description.c_str());
-        auto r = nanodbc::execute(st);
-        if (r.next()) return r.get<long long>("transaction_id");
-        throw DomainException(250090, "Transfer returned no row");
-    } catch (const nanodbc::database_error& e) {
-        int code = Db::extract_sql_code(e);
-        throw DomainException(code ? code : 250000, e.what());  // giữ nguyên mã THROW của proc
-    }
-}
-
-} // namespace banking
-```
-
-### 5.12 `include/banking/app/transfer_service.hpp`
-
-```cpp
-#pragma once
-#include "banking/infra/banking_account_repository.hpp"
-
-namespace banking {
-
-// Use-case chuyển tiền. Kiểm tra sơ bộ bằng domain object cho thông báo thân thiện + fail-fast,
-// rồi ủy quyền cho sp_bank_transaction_transfer (nguồn sự thật + chống đua).
-class TransferService {
-public:
-    explicit TransferService(Db& db) : repo_(db) {}
-    struct Result { long long transactionId; };
-
-    Result execute(long long fromId, long long toId,
-                   const Money& amount, const Money& fee, const std::string& description) {
-        if (fromId == toId)
-            throw ValidationException(250020, "Source and destination accounts must be different.");
-        if (amount.is_zero() || amount.is_negative())
-            throw ValidationException(250030, "Amount must be greater than 0.");
-
-        auto from = repo_.find_by_id(fromId);
-        if (!from) throw NotFoundException(250000, "Source bank account does not exist.");
-        auto to = repo_.find_by_id(toId);
-        if (!to)   throw NotFoundException(250010, "Destination bank account does not exist.");
-
-        from->debit_for(amount, fee);   // mô phỏng cục bộ -> bắt lỗi sớm; DB vẫn quyết định cuối
-        to->credit(amount);
-
-        return { repo_.transfer(fromId, toId, amount, fee, description) };
-    }
-private:
-    BankingAccountRepository repo_;
-};
-
-} // namespace banking
-```
-
-### 5.13 `src/jobs/settle_matured_savings.cpp` (job — C++ tự sở hữu logic)
-
-```cpp
-#include "banking/infra/db.hpp"
-
-namespace banking::jobs {
-
-// Tương đương dbo.sp_saving_account_settle_matured — chạy theo lịch (cron/Task Scheduler).
-// Đây là chỗ C++ "làm logic" trực tiếp: guarded UPDATE, kiểm số dòng.
-int settle_matured_savings(Db& db) {
-    nanodbc::statement st(db.raw());
-    nanodbc::prepare(st, NANODBC_TEXT(
-        "UPDATE SavingAccount SET status = 'Matured' "
-        "WHERE status = 'Active' AND maturity_date <= CAST(GETDATE() AS DATE)"));
-    nanodbc::execute(st);
-    return static_cast<int>(st.affected_rows());
-}
-
-} // namespace banking::jobs
-```
-
-### 5.14 `tests/run_tests.cpp`
-
-```cpp
-#include <cassert>
-#include <iostream>
-#include "banking/money.hpp"
-#include "banking/luhn.hpp"
-#include "banking/loan.hpp"
-#include "banking/saving_account.hpp"
-#include "banking/banking_account.hpp"
-using namespace banking;
-
-static void test_money() {
-    auto a = Money::parse("1000000.00", Currency::VND);
-    auto b = Money::parse("250000.50",  Currency::VND);
-    assert((a + b).to_string() == "1250000.50");
-    assert((a - b).to_string() == "749999.50");
-    assert(a > b);
-    bool threw = false;
-    try { (void)(a + Money::parse("1.00", Currency::USD)); } catch (const ValidationException&) { threw = true; }
-    assert(threw);
-    threw = false;
-    try { (void)Money::parse("1.234", Currency::VND); } catch (const ValidationException&) { threw = true; }
-    assert(threw);
-}
-
-static void test_luhn() {
-    assert(Luhn::validate("4000000000000002"));
-    std::string body = "400000123456789";
-    assert(Luhn::validate(body + std::string(1, Luhn::check_digit(body))));
-}
-
-static void test_amortization() {
-    auto principal = Money::parse("12000000.00", Currency::VND);
-    auto rows = AmortizationSchedule::build(principal, 12.0, 12);
-    assert(rows.size() == 12);
-    Money sum = Money::zero(Currency::VND);
-    for (auto& r : rows) sum = sum + r.principal;
-    assert(sum == principal);              // tổng phần gốc == vốn vay
-    assert(rows.back().balance.is_zero()); // dư nợ kỳ cuối == 0
-}
-
-static void test_saving() {
-    auto dep = Money::parse("10000000.00", Currency::VND);
-    SavingAccount s(1, 1, dep, 6.0, 12, SavingStatus::Active);
-    assert(s.projected_interest().to_string() == "600000.00");
-    assert(s.settlement_amount(false) == dep);
-    assert(s.settlement_amount(true).to_string() == "10600000.00");
-}
-
-static void test_banking_account() {
-    auto z = Money::zero(Currency::VND);
-    BankingAccount acc(1, "CIF0000001", "0001", z, z,
-                       BankingAccountType::Checking, BankingAccountStatus::Active);
-    acc.deposit(Money::parse("1000000.00", Currency::VND));
-    assert(acc.available_balance().to_string() == "1000000.00");
-    bool threw = false;
-    try { acc.debit_for(Money::parse("2000000.00", Currency::VND), z); }
-    catch (const InsufficientFundsException&) { threw = true; }
-    assert(threw);
-}
-
-static void test_loan_state_machine() {
-    Loan l(1, "CIF0000001", LoanType::Personal, Money::parse("20000000.00", Currency::VND),
-           12.0, 12, Money::zero(Currency::VND), LoanStatus::Pending);
-    l.review(true, "EMP0000001");
-    l.mark_disbursed();
-    auto paid = l.apply_repayment(Money::parse("25000000.00", Currency::VND));  // trả dư
-    assert(paid.to_string() == "20000000.00");
-    assert(l.status() == LoanStatus::Closed);
-}
-
-int main() {
-    test_money();
-    test_luhn();
-    test_amortization();
-    test_saving();
-    test_banking_account();
-    test_loan_state_machine();
-    std::cout << "All C++ core tests passed\n";
-}
-```
-
-### 5.15 `CMakeLists.txt`
-
-```cmake
-cmake_minimum_required(VERSION 3.20)
-project(banking_core LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-include(FetchContent)
-FetchContent_Declare(nanodbc
-    GIT_REPOSITORY https://github.com/nanodbc/nanodbc.git
-    GIT_TAG        v2.14.0)
-set(NANODBC_DISABLE_TESTS ON  CACHE BOOL "" FORCE)
-set(NANODBC_DISABLE_EXAMPLES ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(nanodbc)
-
-add_library(banking_domain
-    src/domain/money.cpp
-    src/domain/card.cpp
-    src/domain/masking.cpp)
-target_include_directories(banking_domain PUBLIC include)
-
-add_library(banking_infra
-    src/infra/db.cpp
-    src/infra/banking_account_repository.cpp
-    src/app/transfer_service.cpp
-    src/jobs/settle_matured_savings.cpp
-    src/jobs/mark_overdue_loans.cpp)
-target_link_libraries(banking_infra PUBLIC banking_domain nanodbc)
-
-add_executable(banking_cli src/cli/main.cpp)
-target_link_libraries(banking_cli PRIVATE banking_infra)
-
-enable_testing()
-add_executable(core_tests tests/run_tests.cpp
-    src/domain/money.cpp src/domain/card.cpp src/domain/masking.cpp)
-target_include_directories(core_tests PRIVATE include)
-add_test(NAME core_tests COMMAND core_tests)
-```
-
-### 5.16 `src/cli/main.cpp` (rút gọn)
-
-```cpp
-#include <iostream>
-#include "banking/infra/db.hpp"
-#include "banking/app/transfer_service.hpp"
-namespace banking::jobs { int settle_matured_savings(Db&); }
-
-int main() {
-    using namespace banking;
-    const std::string conn =
-        "Driver={ODBC Driver 17 for SQL Server};"
-        "Server=localhost\\SQLEXPRESS01;Database=BankingSystem;Trusted_Connection=yes;";
-    try {
-        Db db(conn);
-        std::cout << "== Banking core CLI ==\n"
-                     " 1) Chuyen tien\n 2) Chay job dao han so tiet kiem\n 0) Thoat\n> ";
-        int c; std::cin >> c;
-        if (c == 1) {
-            long long from, to; std::string amt;
-            std::cout << "Tu TK id: ";  std::cin >> from;
-            std::cout << "Toi TK id: "; std::cin >> to;
-            std::cout << "So tien: ";   std::cin >> amt;
-            TransferService svc(db);
-            auto res = svc.execute(from, to, Money::parse(amt, Currency::VND),
-                                   Money::zero(Currency::VND), "CLI transfer");
-            std::cout << "OK, transaction_id = " << res.transactionId << "\n";
-        } else if (c == 2) {
-            std::cout << "Da dao han " << jobs::settle_matured_savings(db) << " so.\n";
-        }
-    } catch (const DomainException& e) {
-        std::cerr << "Loi [" << e.code() << "]: " << e.what() << "\n";
-        return 1;
-    }
-}
-```
-
-### 5.17 Ràng buộc "không xung đột" cho C++ (checklist)
-
-- [ ] `Money` luôn 2 chữ số + half-up; toán tử khác currency → ném.
-- [ ] `enums.hpp::db_str` copy **đúng** chuỗi §1.5 (chú ý `"Loan Officer"`, `"Customer Service"`, `"On Leave"`, `"Verify Email"`).
-- [ ] Mọi ghi số dư qua `sp_*`; job chưa có proc → guarded UPDATE + kiểm `affected_rows()`.
-- [ ] `DomainException::code()` khớp band DB (Phụ lục B) — để CLI/tầng trên map lỗi giống Spring.
-- [ ] Đọc `NCHAR(10)` (`customer_id`, `employee_id`, `branch_id`) phải `trim()`.
-- [ ] Đọc `DECIMAL` từ ODBC dưới dạng chuỗi rồi `Money::parse` (tránh double).
-
----
-
-## 6. Thứ tự thực hiện (Roadmap)
+## 5. Thứ tự thực hiện (Roadmap)
 
 | Phase | Nội dung | Xong khi |
 |---|---|---|
-| **0** | ✅ Xong: 17 bug DB + `deploy.ps1` (`DEPLOY OK` + `SEED OK`). Còn lại: 3 proc bổ sung §2.3 (`sp_admin_*`, `sp_notification_list`) — làm ở Phase 3/11 | — |
-| **1** | Chốt §1 (contract) với cả nhóm. Tạo repo `backend/`, `frontend/`, `cpp/` | Contract được review, 3 skeleton build rỗng chạy được |
+| **0** | ✅ Xong: 17 bug DB + `deploy.ps1` (`DEPLOY OK` + `SEED OK`). Còn lại: proc bổ sung §2.3 (`sp_admin_*`, và `sp_saving_account_settle_matured` nếu chưa có) — làm ở Phase 3/8/10 | — |
+| **1** | Chốt §1 (contract) với cả nhóm. Tạo repo `backend/`, `frontend/` | Contract được review, 2 skeleton build rỗng chạy được |
 | **2** | Spring skeleton: `DataSourceConfig`, `StoredProcedureExecutor`, `ApiResponse`, `GlobalExceptionHandler`, `SqlErrorCatalog`, `JacksonConfig`; 1 lát cắt dọc `sp_branch_create` → `POST /api/branches` + integration test | 1 endpoint end-to-end xanh |
 | **3** | Auth: register → OTP → activate → login (JWT) → `/me`; BCrypt; Spring ghi `LoginHistory`. FE: trang Login/Register/OtpVerify + `AuthContext` + `ProtectedRoute` | Đăng ký + đăng nhập thật, token hoạt động |
-| **4** | C++ nền: CMake + nanodbc, `Money`, `Currency`, `exceptions`, `enums`, `Db`/`Transaction`, `BankingAccountRepository::find_by_id`, `run_tests.cpp` | `ctest` xanh; CLI kết nối DB + in số dư 1 TK |
-| **5** | Customer / Employee / Branch CRUD: Spring endpoints + React pages + C++ entity/repo | 3 module CRUD đủ trên cả 3 tầng |
-| **6** | BankingAccount + Card: mở/đóng/freeze TK, phát hành/khoá thẻ. C++ `BankingAccount` invariant + `Card::issue` + `Luhn` test. FE: OpenAccount, Cards, IssueCard | Mở TK + phát thẻ (số thẻ pass Luhn) |
-| **7** | **Transactions** (trọng yếu về đồng thời): deposit/withdraw/transfer/payment. C++ `TransferService` + `BankingAccountRepository::transfer`. FE: Transfer + TransactionHistory | Test 20 lệnh chuyển song song vượt số dư → đúng phần được phép thành công, `available_balance ≥ 0` |
-| **8** | Loan: apply/review/disburse/repay. C++ `Loan` + `AmortizationSchedule` + test. FE: LoanApply, LoanDetail (bảng trả góp), Employee `LoanReviewQueue` | Vòng đời khoản vay đủ; lịch trả góp FE = C++ = công thức proc |
-| **9** | Saving: open/close/settle-matured. C++ `SavingAccount` + `settle_matured_savings` job. FE: Savings, OpenSaving | Mở + tất toán (đúng hạn & trước hạn); job đổi status `Matured` |
-| **10** | Beneficiary + Notification. Spring bắn `sp_notification_create` sau khi transfer/loan thành công (best-effort, không rollback nghiệp vụ nếu notify lỗi) | Chuyển tiền xong nhận thông báo |
-| **11** | Admin + Dashboard: `sp_admin_update_account_status`, `vw_CustomerStatistics` (đã sửa), trang Stats | Admin khoá/mở account; dashboard hiện số liệu |
-| **12** | Hardening: gửi OTP qua email thật, rate-limit + khoá đăng nhập, `/security-review`, load test transfer, CI (`deploy.ps1` + `mvn test` + `ctest` + `npm run build && npm test`) | CI xanh toàn bộ |
+| **4** | Customer / Employee / Branch CRUD: Spring endpoints + React pages | 3 module CRUD đủ trên cả 2 tầng |
+| **5** | BankingAccount + Card: mở/đóng/freeze TK, phát hành/khoá thẻ. FE: OpenAccount, Cards, IssueCard | Mở TK + phát thẻ (số thẻ pass Luhn — do proc sinh) |
+| **6** | **Transactions** (trọng yếu về đồng thời): deposit/withdraw/transfer/payment. FE: Transfer + TransactionHistory | Test 20 lệnh chuyển song song vượt số dư → đúng phần được phép thành công, `available_balance ≥ 0` |
+| **7** | Loan: apply/review/disburse/repay. Spring `AmortizationSchedule` + test (§3.5). FE: LoanApply, LoanDetail (bảng trả góp), Employee `LoanReviewQueue` | Vòng đời khoản vay đủ; lịch trả góp FE = Java = công thức proc |
+| **8** | Saving: open/close/settle-matured. Spring `MaturedSavingsJob` `@Scheduled` (§3.5). FE: Savings, OpenSaving | Mở + tất toán (đúng hạn & trước hạn); job đổi status `Matured` |
+| **9** | Beneficiary + Notification. Spring bắn `sp_notification_create` sau khi transfer/loan thành công (best-effort, không rollback nghiệp vụ nếu notify lỗi) | Chuyển tiền xong nhận thông báo |
+| **10** | Admin + Dashboard: `sp_admin_update_account_status`, `vw_CustomerStatistics` (đã sửa), trang Stats | Admin khoá/mở account; dashboard hiện số liệu |
+| **11** | Hardening: gửi OTP qua email thật, rate-limit + khoá đăng nhập, `/security-review`, load test transfer, CI (`deploy.ps1` + `mvn test` + `npm run build && npm test`) | CI xanh toàn bộ |
 
 ---
 
-## 7. Kiểm thử (Verification)
+## 6. Kiểm thử (Verification)
 
 **Database** — ✅ đã chạy 2026-09-07
 ```bash
@@ -1735,13 +889,7 @@ Smoke test 30 case (search/get toàn bộ module + 2 proc admin mới): **30/30 
 cd backend && mvn test
 # integration test trỏ DB test (dựng bằng chính deploy.ps1 trong @BeforeAll hoặc Testcontainers mssql)
 ```
-Kịch bản tối thiểu: `POST /api/branches` (201 + envelope) · register→otp→activate→login (JWT hợp lệ) · transfer thiếu số dư → 409 + `error.code = 250040`.
-
-**C++ core**
-```bash
-cd cpp && cmake -B build && cmake --build build && ctest --test-dir build --output-on-failure
-# kỳ vọng: "All C++ core tests passed"
-```
+Kịch bản tối thiểu: `POST /api/branches` (201 + envelope) · register→otp→activate→login (JWT hợp lệ) · transfer thiếu số dư → 409 + `error.code = 250040` · `AmortizationScheduleTest` (§3.5): Σ principal == principal, dư nợ kỳ cuối == 0.
 
 **Frontend**
 ```bash
@@ -1823,7 +971,7 @@ tổng credit vào các TK đích = 1.000.000.
 
 ## Phụ lục B — Bảng mã lỗi theo procedure
 
-> Dùng để nạp `SqlErrorCatalog` và `DomainException` (C++). Mã đầu dải thường = "id không tồn tại" → map HTTP **404**; mã cuối dải = "UPDATE/INSERT ảnh hưởng 0 dòng" (vi phạm quy tắc) → **409**.
+> Dùng để nạp `SqlErrorCatalog`. Mã đầu dải thường = "id không tồn tại" → map HTTP **404**; mã cuối dải = "UPDATE/INSERT ảnh hưởng 0 dòng" (vi phạm quy tắc) → **409**.
 
 | Procedure | Dải mã | Domain |
 |---|---|---|
@@ -1849,7 +997,6 @@ tổng credit vào các TK đích = 1.000.000.
 | `sp_customer_assign_branch/create_profile/get_profile/get_summary/search/update_profile` | 71000–71004 / 72000–72006 / 73000–73001 / 74000 / 75000 / 76000–76005 | customer |
 | `sp_employee_assign_branch/create_profile/get_profile/search/update_position/update_profile/update_status` | 81000–81004 / 82000–82007 / 83000–83001 / 84000 / 85000–85003 / 86000–86003 / 87000–87003 | employee |
 | `sp_loan_apply/disburse/get_details/repay/review/search` | 91000–91006 / 92000–92006 / 93000–93001 / 94000–94007 / 95000–95004 / 96000–96005 | loan |
-| C++ nội bộ (không từ DB) | 900001–900003 (Money) | system |
 
 ---
 
@@ -1885,7 +1032,7 @@ tổng credit vào các TK đích = 1.000.000.
 
 ## Ghi chú kết
 
-- File C++ trong §5 sẵn sàng tách thành cây thư mục ở §5.1. `masking.cpp`, `db.cpp` (hàm `extract_sql_code`, `trim`, `parse_*`), `card.cpp` (`sha256_hex` dùng `picosha2.h`), `mark_overdue_loans.cpp` viết theo cùng khuôn mẫu đã cho.
+- C++ core đã bỏ (2026-09-09) — xem §0.2. Domain OOP + tính toán ở tầng service Spring (§3.5); job nền là `@Scheduled`.
 - SQL sửa DB (§2) là **snippet để chép tay** vào file `.sql` tương ứng, không ghi đè tự động.
 - Không viết sẵn cả 60 controller — dùng 2 mẫu §3.3 nhân bản theo Phụ lục A.
 - Mọi thay đổi phải giữ `database/deploy.ps1` chạy ra `DEPLOY OK` (xem memory *Clean deploy workflow*).
