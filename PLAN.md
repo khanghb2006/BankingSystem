@@ -9,7 +9,7 @@
 
 - [0. Tổng quan & kiến trúc](#0-tổng-quan--kiến-trúc)
 - [1. Hợp đồng chuẩn dùng chung (Shared Contract)](#1-hợp-đồng-chuẩn-dùng-chung-shared-contract)
-- [2. Tầng Database — sửa lỗi & bổ sung](#2-tầng-database--sửa-lỗi--bổ-sung)
+- [2. Tầng Database — bổ sung](#2-tầng-database--bổ-sung)
 - [3. Backend — Spring Boot](#3-backend--spring-boot)
 - [4. Frontend — React + TypeScript](#4-frontend--react--typescript)
 - [5. Thứ tự thực hiện (Roadmap)](#5-thứ-tự-thực-hiện-roadmap)
@@ -54,15 +54,9 @@
 
 **Vì sao 1 backend:** mọi thao tác ghi đi qua `sp_*` ⇒ một bản cài đặt quy tắc nghiệp vụ duy nhất. Spring chỉ: validate input (Bean Validation) → gọi proc → map result (§3.3). Phần Java tự tính (không có trong proc) chỉ còn **lịch trả góp** (§3.5). Job nền (đáo hạn tiết kiệm) là một method `@Scheduled` gọi proc — không cần tiến trình riêng.
 
-### 0.4 Bug DB — ✅ đã sửa hết (17 + 1, verify bằng `deploy.ps1 -Seed` ngày 2026-09-07)
+### 0.4 Bug DB — ✅ đã sửa hết & verify
 
-Chi tiết từng mục + SQL ở §2.1 / §2.2. Đáng chú ý nhất:
-- **#1** `sp_bank_account_get_details` trỏ view sai tên → EXEC lỗi (nay `vw_BankAccountDetails`).
-- **#2** `sp_otp_generate_otpcode` cho bỏ qua nhập OTP (replay) → nguy cơ chiếm tài khoản qua `PasswordReset`. Nay vô hiệu OTP cũ bằng `expired_at` thay vì `verified`.
-- **#3** `ABS(CHECKSUM(NEWID()))` tràn số INT.MIN trong 5 chỗ sinh số TK/thẻ/OTP → bọc `CONVERT(BIGINT, …)`.
-- **#4** `vw_CardDetails` lộ nguyên PAN → `masked_card_number`; số đầy đủ chỉ trả 1 lần ở `sp_card_create`.
-- **#5** `vw_CustomerStatistics` nhân đôi `SUM(balance)` + loại khách → viết lại bằng subquery.
-- **#6/#15** thêm `UNIQUE` cho `Customer.account_id`, `Employee.account_id`, `Beneficiary(customer_id, bank_account_id)`.
+17 bug (+1) đã vá và verify bằng `deploy.ps1 -Seed` → `DEPLOY OK` + `SEED OK` (2026-09-07, re-check 2026-09-09: cả 17 fix đều có trong file `.sql`). Nhóm nặng nhất: auth-bypass OTP replay, `ABS(CHECKSUM(NEWID()))` tràn INT.MIN, `vw_CardDetails` lộ PAN, view sai tên. Chi tiết nằm trong git history (commit `d9bdc7c`, `7d748e9`).
 
 ---
 
@@ -217,7 +211,7 @@ Stored proc trả về: **1..N dòng từ một `vw_*`** + cột `message` (ho�
 | Khoá đăng nhập | Đếm số lần sai **phía Spring** (Redis hoặc bảng phụ) — DB không có cột. Sai ≥ 5 lần / 15 phút → `sp_admin_update_account_status` set `Locked` hoặc chặn tạm ở Spring. |
 | OTP | `sp_otp_generate_otpcode` **trả `otp_code` plaintext trong result set**. Spring **KHÔNG** forward cho client. Gửi qua email/SMS (dev: ghi log). Response chỉ có `{ "otpId": ..., "expiresAt": ... }`. |
 
-**Bug OTP replay (bắt buộc vá — §2.1 #2):** hiện `sp_otp_generate_otpcode` đánh dấu OTP cũ là `verified = 1`, và `fn_otp_validate_verify` chỉ kiểm "có 1 dòng `verified = 1` chưa hết hạn". ⇒ Sinh OTP lần 2 khiến `sp_account_activate` / `sp_account_reset_password` **qua được mà người dùng chưa nhập mã nào**.
+**OTP replay (đã vá — 2026-09-07):** trước đây `sp_otp_generate_otpcode` đánh dấu OTP cũ là `verified = 1`, khiến sinh OTP lần 2 là `sp_account_activate` / `sp_account_reset_password` qua được dù chưa nhập mã. Nay OTP cũ bị cho **hết hạn** (`SET expired_at = GETDATE()`), chỉ `sp_otp_verify` mới set `verified = 1`. Khi làm OTP xác thực chuyển tiền (Phase 6) cần thêm cột `consumed` + `sp_otp_consume` — xem ghi chú trong `sp_otp_generate_otpcode.sql`.
 
 ### 1.11 Hợp đồng đồng thời (concurrency)
 
@@ -245,158 +239,13 @@ T-SQL `THROW` yêu cầu số ≥ 50000. Hiện có 2 hệ:
 
 ---
 
-## 2. Tầng Database — sửa lỗi & bổ sung
+## 2. Tầng Database — bổ sung
 
-> ✅ **17/17 bug đã sửa và verify** bằng `pwsh database/deploy.ps1 -Seed` (2026-09-07) → `DEPLOY OK` + `SEED OK`, và test tay 3 proc seed không chạm (`sp_bank_account_get_details`, `sp_card_get_details`, `sp_bank_transaction_search` với date range) + test OTP replay (`fn_otp_validate_verify` trả `0` sau khi sinh OTP 2 lần).
-> `database/deploy.ps1` cũng đã viết lại (§2.4).
+> Schema + 63 proc đã có và chạy được. 17 bug cũ đã vá (xem §0.4 + git history). Phần dưới chỉ còn **việc chưa làm**: proc bổ sung (§2.1) và deploy script (§2.2).
 >
 > ⚠️ Stored procedure có **deferred name resolution** → bug tham chiếu sai tên vẫn CREATE được lúc deploy, chỉ nổ khi EXEC. `DEPLOY OK` một mình **không** đủ — phải chạy `-Seed` + integration test.
 
-### 2.1 Bug đã sửa
-
-| # | Mức | File | Vấn đề → cách sửa |
-|---|---|---|---|
-| 1 | 🔴 Cao | `banking_account/bank_account_get_details.sql` | `FROM vw_BankingAccountDetails` (không tồn tại) → `vw_BankAccountDetails`; thêm `SET NOCOUNT ON`. |
-| 2 | 🔴 Cao | `otp/otp_generate_otpcode.sql` | Vô hiệu OTP cũ bằng `SET verified = 1` (auth bypass) → đổi thành `SET expired_at = GETDATE()`. Chỉ `sp_otp_verify` mới được set `verified = 1`. |
-| 3 | 🟠 TB | `bank_account_create.sql` ×2, `card_create.sql` ×2, `otp_generate_otpcode.sql` ×1 | `ABS(CHECKSUM(NEWID()))` tràn khi gặp INT.MIN → `ABS(CONVERT(BIGINT, CHECKSUM(NEWID())))` (5 chỗ). |
-| 4 | 🟠 TB | `view/card.sql` + `card_get_details.sql` + `card_create.sql` | `vw_CardDetails.card_number` (PAN thô) → `masked_card_number`. `sp_card_get_details` đối chiếu qua `card_id`. `sp_card_create` trả `full_card_number` từ bảng `Card` — lộ đúng 1 lần. |
-| 5 | 🟠 TB | `view/customer.sql` (`vw_CustomerStatistics`) | INNER JOIN + `SUM(balance)` nhân đôi → viết lại bằng 3 subquery, `FROM Customer C` không JOIN. |
-| 6 | 🟠 TB | `schema/constraints.sql` | Thêm `UQ_Customer_Account UNIQUE(account_id)` + `UQ_Employee_Account UNIQUE(account_id)`. |
-| 7 | 🟢 Thấp | `bank_transaction_search.sql` | `created_at >= DATEDIFF(DAY, 0, @from_date)` → `created_at >= @from_date` (rút gọn, cùng kết quả). |
-| 8 | 🟢 Thấp | `view/bank_account.sql` (`vw_BankAccountDetails`) | Thêm `currency`, `available_balance`, `closed_at`. |
-| 9 | 🟢 Thấp | `schema/defaults.sql` | `DF_Account_Status` `'Active'` → **`'Pending'`** (an toàn hơn cho luồng OTP). `DF_Account_UpdatedAt` giữ nguyên — chỉ là cosmetic và nhất quán 4 bảng. |
-| 10 | 🟢 Thấp | `account/account_change_image.sql` | `dbo.ChangeAccountImage` → `dbo.sp_account_change_image`; mã lỗi `50030`→`160000`, `50031`→`160010`, `50032`→`160020`. |
-| 11 | 🟢 Thấp | `schema/seeds/seed.sql` | (bạn đã sửa trước) phone phân biệt + mục Loan/Saving/Notification hoàn chỉnh. |
-| 12 | 🟢 Thấp | `account_register.sql`, `account_login.sql`, `otp_verify.sql` | `SELECT` kết quả đưa ra **sau `COMMIT`**. `account_login` bỏ luôn `BEGIN/COMMIT TRANSACTION` (proc chỉ đọc). |
-| 13 | 🟢 Thấp | `card/card_create.sql` | Thêm check `EXISTS(... AND status = 'Active')` → `THROW 61003` nếu TK không active. |
-| 14 | 🟢 Thấp | `account/auth/account_reset_password.sql` | Thêm `IF fn_account_validate_status(@account_id,'Disabled') = 1 THROW 150015`. |
-| 15 | 🟢 Thấp | `schema/constraints.sql` | Thêm `UQ_Beneficiary_Customer_BankAccount UNIQUE(customer_id, bank_account_id)`. |
-| 16 | 🔵 Perf | `schema/indexes.sql` | Thêm `IX_OTP_Account_Purpose`, `IX_SavingAccount_Maturity(status, maturity_date)`, `IX_Loan_Customer_Status`. |
-| 17 | ⚪ Vặt | `schema/sequences.sql` | Comment `BR000001` → `BR00000001`. |
-| + | 🟢 Thấp | `banking_account/bank_account_update_status.sql` | `@bank_account_id INT` → `BIGINT` (nhất quán với mọi proc khác). |
-
-### 2.2 SQL đã áp dụng (giữ lại làm bản ghi thay đổi)
-
-**#1 — `bank_account_get_details.sql`** (sửa SELECT cuối proc):
-```sql
-SELECT *, 'Bank account retrieved successfully.' AS message
-FROM vw_BankAccountDetails
-WHERE bank_account_id = @bank_account_id;
-```
-
-**#2 — OTP replay (bản tối giản, KHÔNG thêm cột).** Chỉ sửa 1 chỗ trong `sp_otp_generate_otpcode` — cho OTP cũ **hết hạn** thay vì `verified = 1`:
-```sql
--- Vô hiệu hoá OTP cũ cùng (account, purpose): cho HẾT HẠN, KHÔNG chạm 'verified'
-UPDATE OTP
-SET expired_at = GETDATE()
-WHERE account_id = @account_id
-    AND purpose = @purpose
-    AND verified = 0
-    AND expired_at > GETDATE();
-```
-Sau sửa: chỉ `sp_otp_verify` (người dùng nhập mã) mới set `verified = 1`, nên `fn_otp_validate_verify` thấy `verified = 1` là thật. `sp_account_activate` / `sp_account_reset_password` giữ nguyên `DELETE` OTP sau khi dùng → vẫn dùng-một-lần.
-> Cột `consumed` chỉ cần khi làm **OTP xác thực chuyển tiền** ở Phase 7: lúc đó Spring gọi `sp_otp_verify` rồi mới gọi transfer — có cửa sổ 5 phút mà nếu Spring quên xoá OTP thì replay được. Khi tới đó: `ALTER TABLE OTP ADD consumed BIT NOT NULL DEFAULT 0`, thêm `AND consumed = 0` vào `fn_otp_validate_verify`, và một proc `sp_otp_consume(@account_id, @purpose)` cho Spring gọi sau giao dịch.
-
-**#3 — tràn số `ABS(CHECKSUM(NEWID()))`** — trong `sp_bank_account_create`, `sp_card_create`, `sp_otp_generate_otpcode`, đổi **mọi** `ABS(CHECKSUM(NEWID()))` thành:
-```sql
-ABS(CONVERT(BIGINT, CHECKSUM(NEWID())))
-```
-`CHECKSUM` trả `int`; ép `bigint` **trước** rồi `ABS` thì không tràn khi gặp `-2147483648`.
-
-**#4 — `vw_CardDetails`** đổi `C.card_number` thành:
-```sql
-dbo.fn_mask_bank_account_number(C.card_number) AS masked_card_number,
-```
-`sp_card_create` trả số thẻ đầy đủ **1 lần** bằng cách SELECT từ bảng `Card` trực tiếp (không qua view). `sp_card_get_details` đổi tham số nhận `@card_id BIGINT` (hoặc match 4 số cuối).
-
-**#5 — `vw_CustomerStatistics`** viết lại bằng subquery (tránh nhân đôi + không loại khách):
-```sql
-CREATE OR ALTER VIEW vw_CustomerStatistics AS
-SELECT
-    C.customer_id, C.full_name, C.branch_id,
-    (SELECT COUNT(*) FROM BankingAccount BA WHERE BA.customer_id = C.customer_id) AS total_bank_accounts,
-    (SELECT COUNT(*) FROM Card CD
-        JOIN BankingAccount BA ON CD.bank_account_id = BA.bank_account_id
-        WHERE BA.customer_id = C.customer_id) AS total_cards,
-    (SELECT ISNULL(SUM(BA.balance), 0) FROM BankingAccount BA WHERE BA.customer_id = C.customer_id) AS total_balance
-FROM Customer C;
-```
-
-**#6 — UNIQUE "1 Account ↔ 1 hồ sơ"** (`schema/constraints.sql`, thêm vào phần UNIQUE):
-```sql
-ALTER TABLE Customer ADD CONSTRAINT UQ_Customer_Account UNIQUE(account_id);
-ALTER TABLE Employee ADD CONSTRAINT UQ_Employee_Account UNIQUE(account_id);
-```
-
-**#7 — `bank_transaction_search.sql`** (rút gọn, cùng kết quả):
-```sql
-AND (@from_date IS NULL OR created_at >= @from_date)
-AND (@to_date   IS NULL OR created_at <  DATEADD(DAY, 1, @to_date))
-```
-
-**#8 — `vw_BankAccountDetails`** thêm cột:
-```sql
-BA.available_balance,
-BA.currency,
-BA.closed_at,
-```
-
-**#10 — `account_change_image.sql`** (đổi tên proc + band mã lỗi):
-```sql
-DROP PROCEDURE IF EXISTS dbo.ChangeAccountImage;
-GO
-CREATE OR ALTER PROCEDURE dbo.sp_account_change_image
-    @account_id BIGINT,
-    @image_url  VARCHAR(2048)
-AS
-BEGIN
-    SET NOCOUNT ON; SET XACT_ABORT ON;
-    BEGIN TRY
-        BEGIN TRANSACTION;
-            IF dbo.fn_account_validate_id(@account_id) = 0
-                THROW 160000, 'Invalid account ID.', 1;
-            IF dbo.fn_account_validate_status(@account_id, 'Active') = 0
-                THROW 160010, 'Account is not active.', 1;
-            UPDATE Account SET image_url = @image_url, updated_at = GETDATE()
-            WHERE account_id = @account_id;
-            IF @@ROWCOUNT = 0 THROW 160020, 'Failed to update account image.', 1;
-        COMMIT TRANSACTION;
-        SELECT account_id, image_url, GETDATE() AS updated_at,
-               'Account image updated.' AS message
-        FROM Account WHERE account_id = @account_id;
-    END TRY
-    BEGIN CATCH
-        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        THROW;
-    END CATCH
-END
-GO
-```
-`deploy.ps1` bước 5 quét `-Recurse` nên vẫn bắt được file này.
-
-**#11 — `seed.sql`**: phone phân biệt (`0900000001`…`0900000004`); ghi chú `@password` là hash demo; viết nốt mục Loan:
-```sql
-DECLARE @khang_cif NCHAR(10) = (SELECT customer_id FROM Customer WHERE full_name = N'Huynh Bao Khang');
-DECLARE @hao_emp   NCHAR(10) = (SELECT employee_id FROM Employee WHERE full_name = N'Vuong Nhat Hao');
-DECLARE @khang_acc BIGINT   = (SELECT MIN(bank_account_id) FROM BankingAccount WHERE customer_id = @khang_cif);
-EXEC dbo.sp_loan_apply    @customer_id=@khang_cif, @loan_type='Personal',
-                          @loan_amount=20000000, @duration_months=12, @annual_interest_rate=12;
-DECLARE @loan_id BIGINT = (SELECT MAX(loan_id) FROM Loan WHERE customer_id = @khang_cif);
-EXEC dbo.sp_loan_review   @loan_id=@loan_id, @reviewer_id=@hao_emp, @decision='Approved';
-EXEC dbo.sp_loan_disburse @customer_id=@khang_cif, @loan_id=@loan_id,
-                          @bank_account_id=@khang_acc, @description=N'Disbursement';
-```
-
-**#16 — index tổ hợp** (`schema/indexes.sql`):
-```sql
-CREATE INDEX IX_OTP_Account_Purpose    ON OTP(account_id, purpose);
-CREATE INDEX IX_SavingAccount_Maturity ON SavingAccount(status, maturity_date);
-CREATE INDEX IX_Loan_Customer_Status   ON Loan(customer_id, status);
-```
-
-**#9, #12–#17 + fix INT→BIGINT** — đã áp dụng hết (xem bảng §2.1).
-
-### 2.3 Procedure bổ sung
+### 2.1 Procedure bổ sung
 
 | Proc | File | Chữ ký | Mục đích | Mã lỗi | Trạng thái |
 |---|---|---|---|---|---|
@@ -408,7 +257,7 @@ CREATE INDEX IX_Loan_Customer_Status   ON Loan(customer_id, status);
 >
 > `sp_saving_account_settle_matured` (đáo hạn sổ tiết kiệm) — nếu chưa có proc thì thêm 1 proc tối giản: `UPDATE SavingAccount SET status='Matured' WHERE status='Active' AND maturity_date <= CAST(GETDATE() AS DATE)`. Spring gọi qua `@Scheduled` (§3.5). **Không** có job "vay quá hạn" — `LoanStatus` không có giá trị `Overdue`, YAGNI.
 
-### 2.4 `deploy.ps1` — đã viết lại
+### 2.2 `deploy.ps1` — đã viết lại
 
 `database/deploy.ps1` được tổ chức lại thành các khối rõ ràng, giữ mọi tính năng (`-Server`, `-User/-Password`, `-Docker`, `-Seed`) + thêm:
 - **Preflight**: dừng ngay nếu không có `sqlcmd` trên PATH.
@@ -860,7 +709,7 @@ export const transactionApi = {
 
 | Phase | Nội dung | Xong khi |
 |---|---|---|
-| **0** | ✅ Xong: 17 bug DB + `deploy.ps1` (`DEPLOY OK` + `SEED OK`). Còn lại: proc bổ sung §2.3 (`sp_admin_*`, và `sp_saving_account_settle_matured` nếu chưa có) — làm ở Phase 3/8/10 | — |
+| **0** | ✅ Xong: schema + 63 proc + 17 bug DB đã vá + `deploy.ps1` (`DEPLOY OK` + `SEED OK`). Còn lại: proc bổ sung §2.1 (`sp_admin_*`, và `sp_saving_account_settle_matured` nếu chưa có) — làm ở Phase 3/8/10 | — |
 | **1** | Chốt §1 (contract) với cả nhóm. Tạo repo `backend/`, `frontend/` | Contract được review, 2 skeleton build rỗng chạy được |
 | **2** | Spring skeleton: `DataSourceConfig`, `StoredProcedureExecutor`, `ApiResponse`, `GlobalExceptionHandler`, `SqlErrorCatalog`, `JacksonConfig`; 1 lát cắt dọc `sp_branch_create` → `POST /api/branches` + integration test | 1 endpoint end-to-end xanh |
 | **3** | Auth: register → OTP → activate → login (JWT) → `/me`; BCrypt; Spring ghi `LoginHistory`. FE: trang Login/Register/OtpVerify + `AuthContext` + `ProtectedRoute` | Đăng ký + đăng nhập thật, token hoạt động |
