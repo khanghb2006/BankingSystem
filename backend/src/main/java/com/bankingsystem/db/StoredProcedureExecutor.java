@@ -4,11 +4,13 @@ import java.util.*;
 import java.sql.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ConnectionCallback;
+import org.springframework.stereotype.Component;
 
 @Component
 public class StoredProcedureExecutor {
+
     private final JdbcTemplate jdbc;
-    public StoredProcedureExecutor (JbdcTemplate jdbc) {
+    public StoredProcedureExecutor (JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
@@ -35,7 +37,7 @@ public class StoredProcedureExecutor {
                 for (int i = 0; i < args.length; i++)
                     cs.setObject(i + 1, args[i]);
                 if (!cs.execute()) return List.of();
-                try (ResultSet rs = cs.executeQuery()) {
+                try (ResultSet rs = cs.getResultSet()) {
                     return Rows.toMaps(rs);
                 }
             }
@@ -44,12 +46,12 @@ public class StoredProcedureExecutor {
 
     public Map<String , Object> one (String proc , Object... args) {
         List<Map<String , Object>> rows = call(proc , args);
-        if (rows.isEmpty()) return new IllegalStateException("No rows returned from stored procedure: " + proc);
+        if (rows.isEmpty()) throw new IllegalStateException("No rows returned from stored procedure: " + proc);
         return rows.get(0);
     }
 
     public String message (Map<String , Object> row) {
-        Object m = row.containtsKey("message") ? row.get("message") : row.get("result_message");
+        Object m = row.containsKey("message") ? row.get("message") : row.get("result_message");
         return m == null ? null : m.toString();
     }
 }

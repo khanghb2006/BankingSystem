@@ -45,6 +45,6 @@ public final class Rows {
     }
     public static LocalDate date(Map<String , Object> m , String k) {
         Object v = m.get(k);
-        return v == null ? null : ((Date) v).toLocalDate();
+        return v == null ? null : ((java.sql.Date) v).toLocalDate();
     }
 }
