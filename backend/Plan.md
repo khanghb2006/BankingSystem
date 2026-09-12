@@ -1,32 +1,34 @@
-# backend/Plan.md — Hướng dẫn dựng Spring Boot API
+# backend/Plan.md — Hướng dẫn dựng ASP.NET Core Web API
 
 > **File này khác `PLAN.md` ở gốc repo.**
 > - `../PLAN.md` = **hợp đồng / spec**: định dạng ID–tiền–enum–ngày–lỗi (§1), danh sách endpoint đầy đủ (Phụ lục A), bảng mã lỗi (Phụ lục B). Là **nguồn sự thật**, không chép lại vào đây.
 > - `backend/Plan.md` (file này) = **cầm tay chỉ việc**: tạo project, cây thư mục, từng file làm gì, viết theo thứ tự nào, chạy & test ra sao.
 >
-> Trước khi code: đọc `../PLAN.md` §1 (contract), §3 (backend), Phụ lục A + B. Roadmap tổng ở `../PLAN.md` §5 — file này chi tiết hoá **Phase 2** (skeleton + 1 lát cắt dọc `sp_branch_create`).
+> ⚠️ **2026-09-12: đổi từ Spring Boot (Java) sang ASP.NET Core (C#).** `../PLAN.md` §3 vẫn còn nhắc "Spring/Java" ở vài chỗ — đó là tài liệu cũ chưa cập nhật theo stack mới, cứ đọc như đang nói về ASP.NET Core (kiến trúc — proc là nguồn sự thật, thin service, không ORM — giữ nguyên, chỉ đổi ngôn ngữ/framework). Không có code C# nào tồn tại trước đây trong repo này — bắt đầu từ đầu.
+>
+> Trước khi code: đọc `../PLAN.md` §1 (contract), §3 (backend — bỏ qua chi tiết Java, giữ nguyên tắc), Phụ lục A + B. Roadmap tổng ở `../PLAN.md` §5 — file này chi tiết hoá **Phase 2** (skeleton + 1 lát cắt dọc `sp_branch_create`).
 
 ---
 
 ## Mục lục
 
 - [0. Nguyên tắc kiến trúc (đọc 1 lần)](#0-nguyên-tắc-kiến-trúc-đọc-1-lần)
-  - [0.1 Spring Boot 4 — khác gì tài liệu 3.x](#01-spring-boot-4--khác-gì-tài-liệututorial-3x)
+  - [0.1 Vì sao ASP.NET Core, không ORM](#01-vì-sao-aspnet-core-không-orm)
 - [1. Chuẩn bị máy](#1-chuẩn-bị-máy)
-- [2. Tạo project + `pom.xml`](#2-tạo-project--pomxml)
+- [2. Tạo project + gói NuGet](#2-tạo-project--gói-nuget)
 - [3. Cây thư mục đầy đủ](#3-cây-thư-mục-đầy-đủ)
-- [4. `application.yml` + kết nối DB](#4-applicationyml--kết-nối-db)
+- [4. `appsettings.json` + kết nối DB](#4-appsettingsjson--kết-nối-db)
 - [5. Giải thích từng component](#5-giải-thích-từng-component)
-  - [5.1 `BackendApplication`](#51-backendapplication)
-  - [5.2 `db/` — nói chuyện với stored procedure](#52-db--nói-chuyện-với-stored-procedure)
-  - [5.3 `common/` — envelope + xử lý lỗi](#53-common--envelope--xử-lý-lỗi)
-  - [5.4 `config/` — Jackson, CORS, OpenAPI](#54-config--jackson-cors-openapi)
-  - [5.5 `security/` — JWT + phân quyền (Phase 3)](#55-security--jwt--phân-quyền-phase-3)
-  - [5.6 Một feature = Controller + Service + dto](#56-một-feature--controller--service--dto)
-  - [5.7 `loan/AmortizationSchedule` + `saving/MaturedSavingsJob`](#57-loanamortizationschedule--savingmaturedsavingsjob)
+  - [5.1 `Program.cs`](#51-programcs)
+  - [5.2 `Db/` — nói chuyện với stored procedure](#52-db--nói-chuyện-với-stored-procedure)
+  - [5.3 `Common/` — envelope + xử lý lỗi](#53-common--envelope--xử-lý-lỗi)
+  - [5.4 JSON, CORS, Swagger](#54-json-cors-swagger)
+  - [5.5 `Security/` — JWT + phân quyền (Phase 3)](#55-security--jwt--phân-quyền-phase-3)
+  - [5.6 Một feature = Controller + Service + Dto](#56-một-feature--controller--service--dto)
+  - [5.7 `Loan/AmortizationSchedule` + `Saving/MaturedSavingsJob`](#57-loanamortizationschedule--savingmaturedsavingsjob)
 - [6. Thứ tự viết code cho Phase 2](#6-thứ-tự-viết-code-cho-phase-2)
 - [7. Chạy & test](#7-chạy--test)
-- [8. Bảng tra: kiểu DB → Java → JSON](#8-bảng-tra-kiểu-db--java--json)
+- [8. Bảng tra: kiểu DB → C# → JSON](#8-bảng-tra-kiểu-db--c--json)
 - [9. Checklist "Phase 2 xong"](#9-checklist-phase-2-xong)
 - [10. Sau Phase 2](#10-sau-phase-2)
 
@@ -36,31 +38,23 @@
 
 | Nguyên tắc | Nghĩa là |
 |---|---|
-| **Proc là nguồn sự thật** | Mọi thao tác ghi đi qua `dbo.sp_*`. Spring **không** tự viết SQL số dư, không JPA, không `@Entity`, không repository. |
-| **Service mỏng** | Mỗi service method = `validate input` → `sp.call("sp_xxx", ...)` → `map result` → `ApiResponse`. Thường 3–8 dòng. |
-| **1 request = 1 proc call** | Không `@Transactional` ở Spring — proc tự `BEGIN/COMMIT/ROLLBACK`. |
-| **Chỉ 1 chỗ chạm JDBC** | `StoredProcedureExecutor`. Không class nào khác `import java.sql.*`. |
-| **Feature-based packaging** | Gom theo nghiệp vụ (`branch/`, `loan/`…), không theo tầng (`controllers/`, `services/`). Sửa 1 tính năng chỉ mở 1 folder. |
-| **Java tự tính đúng 1 thứ** | Lịch trả góp (`AmortizationSchedule`). Còn lại proc lo hết. |
+| **Proc là nguồn sự thật** | Mọi thao tác ghi đi qua `dbo.sp_*`. ASP.NET Core **không** tự viết SQL số dư, không EF Core, không `DbContext`, không entity. |
+| **Service mỏng** | Mỗi service method = `validate input` → `sp.CallAsync("sp_xxx", ...)` → `map result` → `ApiResponse`. Thường 3–8 dòng. |
+| **1 request = 1 proc call** | Không `TransactionScope` ở app — proc tự `BEGIN/COMMIT/ROLLBACK`. |
+| **Chỉ 1 chỗ chạm ADO.NET** | `StoredProcedureExecutor`. Không class nào khác `using Microsoft.Data.SqlClient`. |
+| **Feature-based packaging** | Gom theo nghiệp vụ (`Branch/`, `Loan/`…), không theo tầng (`Controllers/`, `Services/`). Sửa 1 tính năng chỉ mở 1 folder. |
+| **C# tự tính đúng 1 thứ** | Lịch trả góp (`AmortizationSchedule`). Còn lại proc lo hết. |
 | **Không viết sẵn 60 controller** | Có 2 mẫu (Branch = CRUD, Transfer = có ownership). Nhân bản theo Phụ lục A khi tới phase tương ứng. |
 
-Vì sao mỏng vậy: DB đã có 63 proc + 54 function validate + guarded-UPDATE chống đua. Viết lại quy tắc trong Java = 2 bản phải đồng bộ tay. Spring chỉ làm phần DB **không** làm được: HTTP/JSON, BCrypt, JWT, phân trang, đọc IP request, `@Scheduled`.
+Vì sao mỏng vậy: DB đã có 63 proc + 54 function validate + guarded-UPDATE chống đua. Viết lại quy tắc trong C# = 2 bản phải đồng bộ tay. ASP.NET Core chỉ làm phần DB **không** làm được: HTTP/JSON, hash mật khẩu, JWT, phân trang, đọc IP request, job nền định kỳ.
 
-### 0.1 Spring Boot 4 — khác gì tài liệu/tutorial 3.x
+### 0.1 Vì sao ASP.NET Core, không ORM
 
-Đa số tutorial ngoài kia viết cho Boot 3. Chốt dùng **Boot 4.1.1** (Initializr đã bỏ 3.x). Những chỗ sẽ lệch khi làm theo:
+Mặc định `dotnet new webapi` không kéo theo EF Core — chọn đúng, **đừng** thêm `Microsoft.EntityFrameworkCore.SqlServer`. Lý do giống hệt bản Java cũ: proc đã ép hết invariant + state machine, thêm `DbContext`/entity là một bản sao thứ 2 của quy tắc phải đồng bộ tay.
 
-| Chỗ | Boot 3 (tutorial) | Boot 4 (làm theo cái này) |
-|---|---|---|
-| Starter web | `spring-boot-starter-web` | `spring-boot-starter-webmvc` (tên cũ còn chạy nhưng đã deprecated) |
-| Starter test | 1 cục `spring-boot-starter-test` | tách nhỏ: `spring-boot-starter-webmvc-test`, `-jdbc-test`, `-security-test`, `-validation-test` |
-| `spring-security-test` | `org.springframework.security:spring-security-test` | gộp trong `spring-boot-starter-security-test` |
-| Swagger | springdoc-openapi **2.x** | springdoc-openapi **3.x** (`3.1.1`) — 2.x không chạy Boot 4 |
-| Jackson | Jackson 2 (`com.fasterxml.jackson.*`) | **Jackson 3** (`tools.jackson.*`). `JacksonConfig` §5.4: `Jackson2ObjectMapperBuilderCustomizer` → `JsonMapperBuilderCustomizer` (bean cũ còn nhưng deprecated, bỏ ở 4.3). Chi tiết §5.4. |
-| Java | thường 17 | 17 vẫn OK (baseline Boot 4); khuyến nghị 21 |
-| `application.properties` | — | Initializr sinh `.properties` — xoá, tạo `application.yml` (§4) |
+Gọi proc bằng ADO.NET thuần (`Microsoft.Data.SqlClient`) qua `SqlCommand` + `CommandType.StoredProcedure`. Khác một chỗ quan trọng so với JDBC: **ADO.NET bind theo TÊN tham số, không theo vị trí.** JDBC `{call sp(?, ?, ?)}` positional rất dễ gõ sai thứ tự; ADO.NET buộc bạn khai `("@branch_name", value)` — chậm gõ hơn vài ký tự nhưng **an toàn hơn**, không còn phải mở file `.sql` đối chiếu thứ tự tham số như bản Java. Xem `StoredProcedureExecutor` ở §5.2.
 
-Còn lại (JdbcTemplate, `@RestController`, Bean Validation, Security lambda DSL `http.csrf(...).authorizeHttpRequests(...)`, `@Scheduled`) **giống hệt 3.x** — chép tutorial thoải mái.
+**Bỏ qua có chủ đích:** EF Core / Dapper (không ORM, giống lý do trên), AutoMapper (mapper viết tay theo view — §5.6 — 5-7 dòng, thư viện chỉ thêm phép màu khó debug), FluentValidation (DataAnnotations built-in đã đủ cho input đơn giản của đồ án).
 
 ---
 
@@ -68,9 +62,8 @@ Còn lại (JdbcTemplate, `@RestController`, Bean Validation, Security lambda DS
 
 | Cần | Kiểm tra |
 |---|---|
-| JDK 17+ | `java -version` |
-| Maven (hoặc dùng `./mvnw` mà Initializr tạo sẵn) | `mvn -version` |
-| IntelliJ IDEA (Community đủ) | — |
+| .NET SDK (LTS mới nhất — 8 hoặc 10 tuỳ bản đang hỗ trợ khi cài) | `dotnet --version` |
+| Visual Studio 2022+ hoặc Rider hoặc VS Code + C# Dev Kit | — |
 | SQL Server đang chạy + đã deploy `BankingSystem` | xem dưới |
 
 **DB cho backend dev — dùng Docker cho nhẹ đầu:**
@@ -82,643 +75,498 @@ pwsh -File database/deploy.ps1 -Docker -Seed
 
 → SQL Server ở `localhost:1433`, user `sa`, password `BankSys_2026!` (trong `docker-compose.yml`), có sẵn demo data (1 branch, 2 customer…).
 
-> Vì sao không dùng `localhost\SQLEXPRESS01` như `deploy.ps1` mặc định: named instance + Windows auth qua JDBC cần file `mssql-jdbc_auth-*.dll` trên `java.library.path` — lằng nhằng. Docker = SQL auth, cắm phát chạy. Muốn dùng SQLEXPRESS01 thật thì phải bật Mixed Mode auth + tạo 1 login SQL, rồi đổi URL ở §4.
+> Vì sao không dùng `localhost\SQLEXPRESS01` như `deploy.ps1` mặc định: named instance cần dịch vụ SQL Server Browser bật + Windows auth hoặc 1 login SQL riêng — lằng nhằng hơn Docker (SQL auth, cắm phát chạy).
 
 ---
 
-## 2. Tạo project + `pom.xml`
+## 2. Tạo project + gói NuGet
 
-**Spring Initializr** (https://start.spring.io hoặc IntelliJ → New Project → Spring Boot):
-
-| Mục | Chọn |
-|---|---|
-| Project | Maven |
-| Language | Java |
-| Spring Boot | **4.1.1** — Initializr đã bỏ 3.x (3.5 sắp hết OSS support). Xem §0.1 để biết Boot 4 khác gì tutorial 3.x. |
-| Group | `com.bankingsystem` |
-| Artifact | `backend` |
-| Packaging | Jar |
-| Java | 17 (Boot 4 baseline vẫn là 17; khuyến nghị 21 nhưng 17 chạy tốt) |
-| Dependencies | **Spring Web** · **JDBC API** · **Validation** · **Spring Security** · **MS SQL Server Driver** |
-
-> "JDBC API" = `spring-boot-starter-jdbc` (JdbcTemplate thuần). **Không** chọn "Spring Data JDBC".
-
-Initializr sinh ra `pom.xml` gần đủ. Thêm tay **springdoc** + **jjwt**, thành:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.1</version>
-        <relativePath/>
-    </parent>
-
-    <groupId>com.bankingsystem</groupId>
-    <artifactId>backend</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>backend</name>
-
-    <properties>
-        <java.version>17</java.version>
-    </properties>
-
-    <dependencies>
-        <!-- === Initializr sinh sẵn 5 cái này === -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc</artifactId>   <!-- Boot 4: thay cho spring-boot-starter-web -->
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jdbc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- === Thêm tay: Swagger UI (test tay Phase 2). Boot 4 cần springdoc 3.x === -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>3.1.1</version>   <!-- 2.x chỉ chạy Boot 3; check bản mới nhất khi build -->
-        </dependency>
-
-        <!-- === Thêm tay: JWT (Phase 3). Chưa dùng thì để đó. === -->
-        <!-- Lưu ý Boot 4 dùng Jackson 3 (tools.jackson.*); jjwt-jackson 0.12.6 kéo Jackson 2 về,
-             vẫn chạy nhưng có 2 Jackson trên classpath. Tới Phase 3 check jjwt có bản Jackson 3 chưa. -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>0.12.6</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- === Test — Boot 4 tách spring-boot-starter-test thành các starter con === -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jdbc-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+```bash
+cd backend
+dotnet new webapi -n Backend --use-controllers -o .
 ```
 
-**Bỏ qua có chủ đích:** Lombok (dùng `record`, class ngắn), MapStruct (mapper viết tay theo view — §5.6), Flyway/Liquibase (`deploy.ps1` lo schema), JPA/Hibernate (không có entity).
+`--use-controllers`: dùng `[ApiController]` + class Controller thay vì Minimal API — khớp cấu trúc "1 feature = 1 Controller class" ở §5.6, dễ đọc hơn khi có 13 module.
+
+Thêm gói (chỉ những gì thật sự cần, không thêm "cho chắc"):
+
+```bash
+dotnet add package Microsoft.Data.SqlClient
+dotnet add package Swashbuckle.AspNetCore
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer   # Phase 3, thêm khi tới lúc dùng
+dotnet add package Microsoft.AspNetCore.Identity                  # Phase 3, chỉ để lấy PasswordHasher<T> (PBKDF2) — khỏi cần BCrypt.Net ngoài
+```
+
+**Không cần thêm** cho Phase 2: JSON dùng `System.Text.Json` có sẵn trong SDK, validate dùng `System.ComponentModel.DataAnnotations` có sẵn, test dùng `Microsoft.AspNetCore.Mvc.Testing` (`dotnet new webapi` không kéo sẵn, thêm khi tới bước viết test ở §6 bước 10).
 
 ---
 
 ## 3. Cây thư mục đầy đủ
 
-Package gốc `com.bankingsystem`. `(P3)` = làm ở Phase 3, `(P7)`… = phase sau. Không có nhãn = Phase 2.
+Namespace gốc `Backend`. `(P3)` = làm ở Phase 3, `(P7)`… = phase sau. Không có nhãn = Phase 2.
 
 ```
 backend/
-├── pom.xml
-├── mvnw  mvnw.cmd  .mvn/                  ← Maven wrapper, Initializr tạo
-├── .gitignore                             ← Initializr có sẵn target/; thêm: application-local.yml
-├── Plan.md  HELP.md                       ← HELP.md của Initializr, xoá được
-└── src/
-    ├── main/
-    │   ├── java/com/bankingsystem/
-    │   │   ├── BackendApplication.java     Initializr sinh; thêm main() timezone + @EnableScheduling (§5.1)
-    │   │   │
-    │   │   ├── db/
-    │   │   │   ├── StoredProcedureExecutor.java   CHỖ DUY NHẤT gọi {call dbo.sp_*}
-    │   │   │   └── Rows.java                      ResultSet → List<Map>; trim NCHAR, parse tiền/ngày
-    │   │   │
-    │   │   ├── common/
-    │   │   │   ├── ApiResponse.java               envelope {success,message,data,error}
-    │   │   │   ├── ApiError.java                  {code, domain}
-    │   │   │   ├── SqlErrorCatalog.java           mã THROW → (domain, HTTP status)
-    │   │   │   ├── GlobalExceptionHandler.java    bắt SQLException + lỗi validate → envelope
-    │   │   │   └── PagedResponse.java             cắt trang trong bộ nhớ (§1.9)
-    │   │   │
-    │   │   ├── config/
-    │   │   │   ├── JacksonConfig.java             BigDecimal→string, ngày ISO không offset
-    │   │   │   ├── CorsConfig.java                cho Vite dev (localhost:5173)
-    │   │   │   └── OpenApiConfig.java             tiêu đề Swagger + nút Authorize (P3)
-    │   │   │
-    │   │   ├── security/                          (P3 — Phase 2 chỉ cần SecurityConfig mở hết)
-    │   │   │   ├── SecurityConfig.java
-    │   │   │   ├── JwtService.java                phát + verify token
-    │   │   │   ├── JwtAuthFilter.java             đọc header Authorization mỗi request
-    │   │   │   ├── AccountPrincipal.java          record: accountId, username, role
-    │   │   │   └── OwnershipGuard.java            "TK này có phải của người đăng nhập?"
-    │   │   │
-    │   │   ├── branch/                            ★ MẪU 1 — CRUD thuần
-    │   │   │   ├── BranchController.java
-    │   │   │   ├── BranchService.java
-    │   │   │   └── dto/
-    │   │   │       ├── CreateBranchRequest.java
-    │   │   │       ├── UpdateBranchRequest.java
-    │   │   │       └── BranchResponse.java
-    │   │   │
-    │   │   ├── auth/            (P3)  register→otp→activate→login, /me, đổi/quên mật khẩu
-    │   │   ├── customer/        (P4)
-    │   │   ├── employee/        (P4)
-    │   │   ├── bankingaccount/  (P5)
-    │   │   ├── card/            (P5)
-    │   │   ├── transaction/     (P6)  ★ MẪU 2 — có OwnershipGuard, phần đồng thời trọng yếu
-    │   │   ├── loan/            (P7)  + AmortizationSchedule.java  (Java tự tính)
-    │   │   ├── saving/          (P8)  + MaturedSavingsJob.java     (@Scheduled)
-    │   │   ├── beneficiary/     (P9)
-    │   │   ├── notification/    (P9)
-    │   │   ├── loginhistory/    (P3)
-    │   │   └── admin/           (P10)
-    │   │
-    │   └── resources/
-    │       ├── application.yml                    config chung (commit được)
-    │       └── application-local.yml              password thật — .gitignore, KHÔNG commit
-    │
-    └── test/java/com/bankingsystem/
-        ├── BackendApplicationTests.java           Initializr sinh (contextLoads) — giữ, nó check bean load OK
-        ├── branch/BranchApiIT.java                integration test lát cắt dọc
-        └── loan/AmortizationScheduleTest.java     (P7) Σ principal == principal, dư nợ cuối == 0
+├── Backend.csproj
+├── Program.cs                             ← thay cho Startup.cs kiểu cũ; đăng ký DI + middleware pipeline
+├── appsettings.json                       ← config chung (commit được)
+├── appsettings.Development.json           ← password thật — .gitignore, KHÔNG commit
+├── Plan.md
+└── (Controllers/ mặc định do template sinh — XOÁ, dùng feature-based bên dưới)
+├── Db/
+│   ├── StoredProcedureExecutor.cs         CHỖ DUY NHẤT gọi `dbo.sp_*`
+│   └── Rows.cs                            SqlDataReader → List<Dictionary>; trim NCHAR, ép tiền/ngày
+│
+├── Common/
+│   ├── ApiResponse.cs                     envelope {success,message,data,error}
+│   ├── ApiError.cs                        {code, domain}
+│   ├── SqlErrorCatalog.cs                 mã THROW → (domain, HTTP status)
+│   ├── ApiExceptionHandler.cs             IExceptionHandler — bắt SqlException → envelope
+│   └── PagedResponse.cs                   cắt trang trong bộ nhớ (§1.9)
+│
+├── Security/                              (P3 — Phase 2 chưa cần: không đăng ký Authentication)
+│   ├── JwtOptions.cs                      record bind từ appsettings app:jwt
+│   ├── JwtIssuer.cs                       phát token khi login OK
+│   └── OwnershipGuard.cs                  "TK này có phải của người đăng nhập?"
+│
+├── Branch/                                ★ MẪU 1 — CRUD thuần
+│   ├── BranchController.cs
+│   ├── BranchService.cs
+│   └── Dto/
+│       ├── CreateBranchRequest.cs
+│       ├── UpdateBranchRequest.cs
+│       └── BranchResponse.cs
+│
+├── Auth/            (P3)  register→otp→activate→login, /me, đổi/quên mật khẩu
+├── Customer/        (P4)
+├── Employee/        (P4)
+├── BankingAccount/  (P5)
+├── Card/            (P5)
+├── Transaction/     (P6)  ★ MẪU 2 — có OwnershipGuard, phần đồng thời trọng yếu
+├── Loan/            (P7)  + AmortizationSchedule.cs  (C# tự tính)
+├── Saving/          (P8)  + MaturedSavingsJob.cs      (BackgroundService, không thư viện ngoài)
+├── Beneficiary/     (P9)
+├── Notification/    (P9)
+├── LoginHistory/    (P3)
+└── Admin/           (P10)
+
+test/
+└── Backend.Tests/
+    ├── Backend.Tests.csproj
+    ├── BranchApiTests.cs                  integration test lát cắt dọc
+    └── Loan/AmortizationScheduleTests.cs  (P7) Σ principal == principal, dư nợ cuối == 0
 ```
 
-**Quy ước đặt tên trong 1 feature package** (giống hệt nhau cho cả 13 module):
+**Quy ước đặt tên trong 1 feature folder** (giống hệt nhau cho cả 13 module):
 
 | File | Vai trò | Chứa gì |
 |---|---|---|
-| `XxxController.java` | Nhận HTTP, không có logic | `@RestController`, `@RequestMapping("/api/xxx")`, mỗi method map 1 endpoint Phụ lục A, gọi thẳng service, trả `ApiResponse<T>` |
-| `XxxService.java` | Điều phối | Gọi `OwnershipGuard` (nếu cần) → `sp.call(...)` → `map(row)` → `ApiResponse.ok/…` |
-| `dto/CreateXxxRequest.java` | Input | `record` + Bean Validation (`@NotBlank`, `@DecimalMin`…). Field **camelCase**. |
-| `dto/XxxResponse.java` | Output | `record` mirror đúng cột của `vw_Xxx` tương ứng, đổi sang camelCase (§1.7). |
+| `XxxController.cs` | Nhận HTTP, không có logic | `[ApiController]`, `[Route("api/xxx")]`, mỗi method map 1 endpoint Phụ lục A, gọi thẳng service, trả `ApiResponse<T>` |
+| `XxxService.cs` | Điều phối | Gọi `OwnershipGuard` (nếu cần) → `sp.CallAsync(...)` → `Map(row)` → `ApiResponse.Ok/…` |
+| `Dto/CreateXxxRequest.cs` | Input | `record` + DataAnnotations (`[Required]`, `[Range]`…). Field **PascalCase** trong C#, JSON tự đổi camelCase (§5.4). |
+| `Dto/XxxResponse.cs` | Output | `record` mirror đúng cột của `vw_Xxx` tương ứng. |
 
 ---
 
-## 4. `application.yml` + kết nối DB
+## 4. `appsettings.json` + kết nối DB
 
-> Initializr sinh `src/main/resources/application.properties` (chỉ có 1 dòng `spring.application.name`). **Xoá nó**, tạo `application.yml` dưới đây.
+`appsettings.json` (commit được, không có password thật):
 
-`src/main/resources/application.yml`:
-
-```yaml
-spring:
-  application:
-    name: banking-system
-  datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=BankingSystem;encrypt=false;trustServerCertificate=true
-    username: sa
-    password: ${DB_PASSWORD:BankSys_2026!}     # override bằng biến môi trường khi cần
-    hikari:
-      pool-name: banking-pool
-      maximum-pool-size: 10
-  jackson:
-    default-property-inclusion: non_null       # ẩn field null trong JSON
-
-server:
-  port: 8080
-  error:
-    include-message: never                     # lỗi phải đi qua GlobalExceptionHandler, không lộ stacktrace
-    include-stacktrace: never
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-    operations-sorter: method
-
-app:
-  jwt:
-    secret: ${JWT_SECRET:dev-only-secret-please-change-min-32-bytes-long}
-    ttl-minutes: 60
+```json
+{
+  "Logging": {
+    "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning" }
+  },
+  "AllowedHosts": "*",
+  "Cors": { "AllowedOrigin": "http://localhost:5173" },
+  "Jwt": {
+    "TtlMinutes": 60
+  }
+}
 ```
 
-> **Timezone (§1.4):** cả JVM và SQL Server phải hiểu giờ `Asia/Ho_Chi_Minh`. Cách chắc ăn nhất: đặt trong `main()` **trước** `SpringApplication.run` (xem §5.1). Hoặc chạy với `-Duser.timezone=Asia/Ho_Chi_Minh`.
+`appsettings.Development.json` (thêm `.gitignore`, chứa password thật):
 
-> **URL cho named instance** (nếu không dùng Docker):
-> `jdbc:sqlserver://localhost;instanceName=SQLEXPRESS01;databaseName=BankingSystem;encrypt=false;trustServerCertificate=true`
-> — cần dịch vụ **SQL Server Browser** đang chạy + 1 login SQL (Windows auth qua JDBC phải kèm DLL).
+```json
+{
+  "ConnectionStrings": {
+    "BankingSystem": "Server=localhost,1433;Database=BankingSystem;User Id=sa;Password=BankSys_2026!;TrustServerCertificate=True;Encrypt=False"
+  },
+  "Jwt": { "Secret": "dev-only-secret-please-change-min-32-bytes-long" }
+}
+```
 
-**`encrypt=false;trustServerCertificate=true`** bắt buộc: driver mssql-jdbc 10+ mặc định `encrypt=true`, gặp self-signed cert của SQL Server local sẽ ném lỗi handshake.
+> **Thay thế khác nếu không muốn thêm file:** `dotnet user-secrets init` rồi `dotnet user-secrets set "ConnectionStrings:BankingSystem" "..."` — Secret Manager là tính năng có sẵn của SDK, không lưu trong repo, không cần nhớ thêm 1 file vào `.gitignore`. Chọn 1 trong 2 cách, không cần cả hai.
+
+**`TrustServerCertificate=True;Encrypt=False`** bắt buộc khi test local: driver mặc định `Encrypt=True` (bắt buộc từ các bản driver mới), gặp self-signed cert của SQL Server local sẽ ném lỗi handshake.
+
+> **Không có khái niệm "timezone mặc định của app" như JVM.** `DateTime` đọc từ cột `DATETIME` qua ADO.NET có `Kind = Unspecified` — cứ để nguyên, **đừng** gọi `.ToLocalTime()`/`.ToUniversalTime()` ở đâu cả, serialize thẳng ra JSON không offset (§1.4, §8). SQL Server và máy dev cùng hiểu là giờ `Asia/Ho_Chi_Minh` theo quy ước, không cần ép ở tầng C#.
+
+> **Named instance** (nếu không dùng Docker): `Server=localhost\SQLEXPRESS01;Database=BankingSystem;...` — cần dịch vụ **SQL Server Browser** đang chạy.
 
 ---
 
 ## 5. Giải thích từng component
 
-### 5.1 `BackendApplication`
+### 5.1 `Program.cs`
 
-Initializr sinh sẵn class này (tên `BackendApplication`, package `com.bankingsystem`). Chỉ thêm 2 dòng: set timezone (§1.4) + `@EnableScheduling`.
+`dotnet new webapi` sinh sẵn file này với top-level statements (không có `Startup.cs` — cách làm chuẩn từ .NET 6 trở đi, mọi tutorial cũ dùng `Startup.cs` đã lỗi thời). Đăng ký DI + middleware pipeline ở đây, Phase 2:
 
-```java
-package com.bankingsystem;
+```csharp
+using System.Text.Json;
+using Backend.Common;
+using Backend.Db;
 
-import java.util.TimeZone;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableScheduling;
+var builder = WebApplication.CreateBuilder(args);
 
-@SpringBootApplication
-@EnableScheduling                 // cho MaturedSavingsJob (Phase 8). Vô hại nếu chưa có job.
-public class BackendApplication {
-    public static void main(String[] args) {
-        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));   // §1.4
-        SpringApplication.run(BackendApplication.class, args);
-    }
-}
+builder.Services.AddControllers().AddJsonOptions(o =>
+{
+    o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    o.JsonSerializerOptions.Converters.Add(new DecimalAsStringConverter());
+    o.JsonSerializerOptions.Converters.Add(new DateTimeNoOffsetConverter());
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(o =>
+{
+    o.InvalidModelStateResponseFactory = ctx =>
+    {
+        var msg = string.Join("; ", ctx.ModelState
+            .Where(e => e.Value?.Errors.Count > 0)
+            .Select(e => $"{e.Key}: {e.Value!.Errors[0].ErrorMessage}"));
+        return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(
+            ApiResponse<object>.Fail(msg, new ApiError(400, "validation")));
+    };
+});
+
+builder.Services.AddScoped<StoredProcedureExecutor>();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+    .WithOrigins(builder.Configuration["Cors:AllowedOrigin"]!)
+    .WithMethods("GET", "POST", "PUT", "DELETE")
+    .WithExposedHeaders("X-Total-Count")));
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+app.UseExceptionHandler(_ => { });   // đăng ký ApiExceptionHandler ở trên
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseCors();
+app.MapControllers();
+
+app.Run();
+
+public partial class Program { }   // để WebApplicationFactory<Program> ở test (§6 bước 10) thấy được entry point
 ```
 
-- `@SpringBootApplication` = `@Configuration` + `@ComponentScan` (quét mọi class có `@Component/@Service/@RestController` trong `com.bankingsystem.**`) + `@EnableAutoConfiguration` (tự cấu hình Tomcat, DataSource, Jackson… từ `application.yml`).
-- Đặt file này ở **package gốc** để `@ComponentScan` thấy hết feature package con.
+- `AddControllers()` quét mọi class kế thừa `ControllerBase` trong assembly — tương đương `@ComponentScan`, không cần khai báo thủ công.
+- Dòng `public partial class Program { }` là gotcha quen thuộc với top-level statements: thiếu nó thì `WebApplicationFactory<Program>` ở integration test không compile được.
 
-### 5.2 `db/` — nói chuyện với stored procedure
+### 5.2 `Db/` — nói chuyện với stored procedure
 
-**`Rows.java`** — chuyển `ResultSet` sang `List<Map>` và ép kiểu đúng contract §1:
+**`Rows.cs`** — chuyển `SqlDataReader` sang `List<Dictionary>` và ép kiểu đúng contract §1:
 
-```java
-package com.bankingsystem.db;
+```csharp
+namespace Backend.Db;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.sql.*;
-import java.time.*;
-import java.util.*;
+using Microsoft.Data.SqlClient;
 
-public final class Rows {
-    private Rows() {}
-
-    public static List<Map<String, Object>> toMaps(ResultSet rs) throws SQLException {
-        ResultSetMetaData md = rs.getMetaData();
-        int n = md.getColumnCount();
-        List<Map<String, Object>> out = new ArrayList<>();
-        while (rs.next()) {
-            Map<String, Object> row = new LinkedHashMap<>();
-            for (int i = 1; i <= n; i++) row.put(md.getColumnLabel(i), rs.getObject(i));
-            out.add(row);
+public static class Rows
+{
+    public static async Task<List<Dictionary<string, object?>>> ToMapsAsync(SqlDataReader reader)
+    {
+        var result = new List<Dictionary<string, object?>>();
+        while (await reader.ReadAsync())
+        {
+            var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < reader.FieldCount; i++)
+                row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+            result.Add(row);
         }
-        return out;
+        return result;
     }
 
-    // NCHAR(10) pad khoảng trắng → luôn .trim() (§1.1)
-    public static String str(Map<String, Object> m, String k) {
-        Object v = m.get(k);
-        return v == null ? null : v.toString().trim();
-    }
-    public static Long lng(Map<String, Object> m, String k) {
-        Object v = m.get(k);
-        return v == null ? null : ((Number) v).longValue();
-    }
-    public static BigDecimal money(Map<String, Object> m, String k) {           // §1.2
-        Object v = m.get(k);
-        return v == null ? null : new BigDecimal(v.toString()).setScale(2, RoundingMode.HALF_UP);
-    }
-    public static LocalDateTime dt(Map<String, Object> m, String k) {           // DATETIME (§1.4)
-        Object v = m.get(k);
-        return v == null ? null : ((Timestamp) v).toLocalDateTime();
-    }
-    public static LocalDate date(Map<String, Object> m, String k) {             // DATE
-        Object v = m.get(k);
-        return v == null ? null : ((java.sql.Date) v).toLocalDate();
-    }
+    // NCHAR(10) pad khoảng trắng → luôn .Trim() (§1.1)
+    public static string? Str(Dictionary<string, object?> m, string key)
+        => m.GetValueOrDefault(key)?.ToString()?.Trim();
+
+    public static long? Lng(Dictionary<string, object?> m, string key)
+        => m.GetValueOrDefault(key) is { } v ? Convert.ToInt64(v) : null;
+
+    public static decimal? Money(Dictionary<string, object?> m, string key)          // §1.2
+        => m.GetValueOrDefault(key) is { } v ? Math.Round(Convert.ToDecimal(v), 2, MidpointRounding.AwayFromZero) : null;
+
+    public static DateTime? Dt(Dictionary<string, object?> m, string key)            // DATETIME (§1.4)
+        => m.GetValueOrDefault(key) as DateTime?;
+
+    public static DateOnly? Date(Dictionary<string, object?> m, string key)          // DATE
+        => m.GetValueOrDefault(key) is DateTime v ? DateOnly.FromDateTime(v) : null;
 }
 ```
 
-**`StoredProcedureExecutor.java`** — điểm tiếp xúc DUY NHẤT với `sp_*`:
+**`StoredProcedureExecutor.cs`** — điểm tiếp xúc DUY NHẤT với `sp_*`:
 
-```java
-package com.bankingsystem.db;
+```csharp
+namespace Backend.Db;
 
-import java.sql.*;
-import java.util.*;
-import org.springframework.jdbc.core.ConnectionCallback;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+using System.Data;
+using Microsoft.Data.SqlClient;
 
-@Component
-public class StoredProcedureExecutor {
+public sealed class StoredProcedureExecutor(IConfiguration config)
+{
+    private readonly string _connectionString = config.GetConnectionString("BankingSystem")
+        ?? throw new InvalidOperationException("Missing ConnectionStrings:BankingSystem");
 
-    private final JdbcTemplate jdbc;
-    public StoredProcedureExecutor(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+    /// Gọi dbo.<proc> với tham số CÓ TÊN (phải khớp tên khai báo trong file .sql); trả các dòng của result set đầu tiên.
+    public async Task<List<Dictionary<string, object?>>> CallAsync(string proc, params (string Name, object? Value)[] args)
+    {
+        await using var conn = new SqlConnection(_connectionString);
+        await using var cmd = new SqlCommand($"dbo.{proc}", conn) { CommandType = CommandType.StoredProcedure };
+        foreach (var (name, value) in args)
+            cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
 
-    /** Gọi {call dbo.<proc>(?, ?, …)}; trả các dòng của result set đầu tiên. */
-    public List<Map<String, Object>> call(String proc, Object... args) {
-        String ph = args.length == 0 ? "" :
-            String.join(", ", Collections.nCopies(args.length, "?"));
-        String sql = "{call dbo." + proc + "(" + ph + ")}";     // 'dbo.' bắt buộc — xem memory
-        return jdbc.execute((ConnectionCallback<List<Map<String, Object>>>) con -> {
-            try (CallableStatement cs = con.prepareCall(sql)) {
-                for (int i = 0; i < args.length; i++) cs.setObject(i + 1, args[i]);
-                if (!cs.execute()) return List.of();
-                try (ResultSet rs = cs.getResultSet()) { return Rows.toMaps(rs); }
-            }
-        });
+        await conn.OpenAsync();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        return await Rows.ToMapsAsync(reader);
     }
 
-    /** Dòng đầu; ném nếu proc không trả gì (proc thành công LUÔN SELECT ... 'message'). */
-    public Map<String, Object> one(String proc, Object... args) {
-        List<Map<String, Object>> rows = call(proc, args);
-        if (rows.isEmpty()) throw new IllegalStateException(proc + " trả về 0 dòng");
-        return rows.get(0);
+    /// Dòng đầu; ném nếu proc không trả gì (proc thành công LUÔN SELECT ... 'message').
+    public async Task<Dictionary<string, object?>> OneAsync(string proc, params (string, object?)[] args)
+    {
+        var rows = await CallAsync(proc, args);
+        if (rows.Count == 0) throw new InvalidOperationException($"{proc} trả về 0 dòng");
+        return rows[0];
     }
 
-    public String message(Map<String, Object> row) {
-        Object m = row.containsKey("message") ? row.get("message") : row.get("result_message");
-        return m == null ? null : m.toString();
-    }
+    public string? Message(Dictionary<string, object?> row)
+        => (row.GetValueOrDefault("message") ?? row.GetValueOrDefault("result_message"))?.ToString();
 }
 ```
 
-Vì sao `JdbcTemplate` + `ConnectionCallback` thô chứ không `SimpleJdbcCall`: proc trả **result set** (không dùng OUT param), và ta cần đọc `message` ở cột cuối. Cách này ngắn, rõ, 1 lần viết.
+Vì sao tham số **có tên** chứ không vị trí như bản JDBC cũ: ADO.NET gửi RPC theo tên tham số cho SQL Server, sai tên là proc báo lỗi "expects parameter which was not supplied" ngay lập tức — thực ra **an toàn hơn** bản positional, lỗi lộ ra sớm thay vì âm thầm gán nhầm cột.
 
-Vì sao **không** khai báo tên param (`@branch_name`…): `cs.setObject(i+1, ...)` truyền **theo thứ tự**. Nên khi gọi phải xếp `args` **đúng thứ tự tham số trong file `.sql`**. Luôn mở file proc ra đối chiếu.
+Vì sao dùng `SqlDataReader` thô chứ không Dapper: proc trả **result set** kèm cột `message` ở cuối, không map thẳng 1-1 vào 1 class được — đọc thô rồi `Rows.Str/Lng/Money/...` map tay ngắn gọn hơn học thêm 1 thư viện.
 
-### 5.3 `common/` — envelope + xử lý lỗi
+### 5.3 `Common/` — envelope + xử lý lỗi
 
 **`ApiResponse` / `ApiError`** — mọi endpoint trả kiểu này (§1.6):
 
-```java
-package com.bankingsystem.common;
+```csharp
+namespace Backend.Common;
 
-public record ApiResponse<T>(boolean success, String message, T data, ApiError error) {
-    public static <T> ApiResponse<T> ok(String message, T data)  { return new ApiResponse<>(true, message, data, null); }
-    public static <T> ApiResponse<T> fail(String message, ApiError e) { return new ApiResponse<>(false, message, null, e); }
+public record ApiResponse<T>(bool Success, string? Message, T? Data, ApiError? Error)
+{
+    public static ApiResponse<T> Ok(string? message, T? data) => new(true, message, data, null);
+    public static ApiResponse<T> Fail(string? message, ApiError error) => new(false, message, default, error);
 }
 ```
-```java
-package com.bankingsystem.common;
-public record ApiError(int code, String domain) {}
+```csharp
+namespace Backend.Common;
+public record ApiError(int Code, string Domain);
 ```
 
 **`SqlErrorCatalog`** — map số `THROW` của proc → domain + HTTP status. **Dải mã đầy đủ ở `../PLAN.md` §3.2 + Phụ lục B** — chép nguyên bảng `BANDS` từ đó. Ý tưởng:
 
-```java
-public static Entry lookup(int code) {
-    if (code < 50000) return new Entry("system", HttpStatus.INTERNAL_SERVER_ERROR);
-    // first-match trong danh sách dải [lo, hi] → (domain, status). Xem PLAN.md §3.2.
-    // mã kết thúc ...000 + message chứa "does not exist"/"Invalid" → handler override thành 404.
+```csharp
+namespace Backend.Common;
+
+public static class SqlErrorCatalog
+{
+    public record Entry(string Domain, int Status);
+
+    public static Entry Lookup(int code)
+    {
+        if (code < 50000) return new Entry("system", StatusCodes.Status500InternalServerError);
+        // first-match trong danh sách dải [lo, hi] → (domain, status). Xem PLAN.md §3.2.
+        // mã kết thúc ...000 + message chứa "does not exist"/"Invalid" → handler override thành 404.
+        return new Entry("unknown", StatusCodes.Status500InternalServerError);
+    }
 }
 ```
 Có 2 hệ mã (5 chữ số cũ cho branch/card/customer/employee/loan; 6 chữ số cho phần còn lại) — catalog xử lý cả hai. Proc **mới** phải ≥ 50000 (xem memory *THROW error number range*).
 
-**`GlobalExceptionHandler`** — 1 chỗ biến exception thành envelope:
+**`ApiExceptionHandler`** — 1 chỗ biến exception thành envelope, dùng `IExceptionHandler` (interface có sẵn từ .NET 8, thay cho middleware tự viết tay của các bản cũ):
 
-```java
-package com.bankingsystem.common;
+```csharp
+namespace Backend.Common;
 
-import java.sql.SQLException;
-import org.springframework.core.NestedExceptionUtils;
-import org.springframework.dao.DataAccessException;
-import org.springframework.http.*;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Data.SqlClient;
 
-@RestControllerAdvice
-public class GlobalExceptionHandler {
+public sealed class ApiExceptionHandler : IExceptionHandler
+{
+    public async ValueTask<bool> TryHandleAsync(HttpContext ctx, Exception ex, CancellationToken ct)
+    {
+        if (ex is not SqlException sql) return false;   // lỗi lạ → để ProblemDetails mặc định xử lý
 
-    @ExceptionHandler(DataAccessException.class)     // mọi lỗi từ proc (THROW) rơi vào đây
-    public ResponseEntity<ApiResponse<Void>> onSql(DataAccessException ex) {
-        Throwable cause = NestedExceptionUtils.getMostSpecificCause(ex);
-        int code = (cause instanceof SQLException se) ? se.getErrorCode() : 0;
-        var entry = SqlErrorCatalog.lookup(code);
-        String msg = cleanMessage(cause.getMessage());   // bỏ "... Line 42" của T-SQL
-        HttpStatus http = looksLikeNotFound(msg) ? HttpStatus.NOT_FOUND : entry.status();
-        return ResponseEntity.status(http)
-            .body(ApiResponse.fail(msg, new ApiError(code, entry.domain())));
+        var entry = SqlErrorCatalog.Lookup(sql.Number);
+        var msg = CleanMessage(sql.Message);             // bỏ "... Line 42" của T-SQL
+        var status = LooksLikeNotFound(msg) ? StatusCodes.Status404NotFound : entry.Status;
+
+        ctx.Response.StatusCode = status;
+        await ctx.Response.WriteAsJsonAsync(
+            ApiResponse<object>.Fail(msg, new ApiError(sql.Number, entry.Domain)), cancellationToken: ct);
+        return true;
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)   // Bean Validation fail → 400
-    public ResponseEntity<ApiResponse<Void>> onInvalid(MethodArgumentNotValidException ex) {
-        String msg = ex.getBindingResult().getFieldErrors().stream()
-            .map(f -> f.getField() + ": " + f.getDefaultMessage())
-            .reduce((a, b) -> a + "; " + b).orElse("Invalid request");
-        return ResponseEntity.badRequest()
-            .body(ApiResponse.fail(msg, new ApiError(400, "validation")));
-    }
+    private static string CleanMessage(string raw) => raw.Split('\n')[0];
+    private static bool LooksLikeNotFound(string msg) =>
+        msg.Contains("does not exist", StringComparison.OrdinalIgnoreCase) ||
+        msg.Contains("Invalid", StringComparison.OrdinalIgnoreCase);
 }
 ```
-Nhờ handler này, service **không cần try/catch** — cứ gọi proc, lỗi tự thành JSON đúng format.
+Nhờ handler này, service **không cần try/catch** — cứ gọi proc, lỗi tự thành JSON đúng format. Lỗi validate (`[Required]`… fail) được `InvalidModelStateResponseFactory` ở §5.1 xử lý riêng, không đi qua đây.
 
-**`PagedResponse`** — proc `*_search` trả hết dòng; Spring cắt trang trong RAM (§1.9): nhận `?page=0&size=20&sort=createdAt,desc`, trả `data` = array trang hiện tại + header `X-Total-Count`. Chưa cần cho Phase 2.
+**`PagedResponse`** — proc `*_search` trả hết dòng; app cắt trang trong RAM (§1.9): nhận `?page=0&size=20&sort=createdAt,desc`, trả `data` = mảng trang hiện tại + header `X-Total-Count`. Chưa cần cho Phase 2.
 
-### 5.4 `config/` — Jackson, CORS, OpenAPI
+### 5.4 JSON, CORS, Swagger
 
-**`JacksonConfig`** — ép JSON theo §1.2/§1.4.
+**Ép JSON theo §1.2/§1.4** bằng 2 converter nhỏ (đăng ký ở §5.1, không cần class `Config` riêng):
 
-> ⚠️ **Boot 4 = Jackson 3.** Code dưới viết cho Jackson 2 (`Jackson2ObjectMapperBuilderCustomizer`, `com.fasterxml.jackson.*`). Bean cũ vẫn chạy trên Boot 4 nhưng deprecated (bỏ ở 4.3). Cách chuẩn Boot 4:
-> - Đổi `Jackson2ObjectMapperBuilderCustomizer` → **`JsonMapperBuilderCustomizer`**, import `tools.jackson.databind.*` thay `com.fasterxml.jackson.databind.*`.
-> - **Đơn giản & bền hơn:** bỏ luôn serializer BigDecimal ở đây, chỉ gắn `@JsonFormat(shape = JsonFormat.Shape.STRING)` lên từng field `BigDecimal` trong `*Response` record (annotation này giống nhau ở Jackson 2 lẫn 3). Ngày tháng: `@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")` hoặc để `DateTimeFormatter` mặc định ISO (đã không offset sẵn với `LocalDateTime`).
-> - Chốt lại lúc viết Phase 2 bước 5 — build thử rồi khoá cách làm.
+```csharp
+namespace Backend.Common;
 
-```java
-// Jackson 2 style (chạy được nhưng deprecated trên Boot 4):
-@Bean
-Jackson2ObjectMapperBuilderCustomizer json() {
-    return b -> {
-        b.serializerByType(BigDecimal.class, ToStringSerializer.instance);   // tiền → "1000000.00"
-        b.serializers(new LocalDateTimeSerializer(
-            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));          // không offset
-        b.serializers(new LocalDateSerializer(DateTimeFormatter.ISO_LOCAL_DATE));
-    };
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+public sealed class DecimalAsStringConverter : JsonConverter<decimal>
+{
+    public override decimal Read(ref Utf8JsonReader r, Type t, JsonSerializerOptions o) => decimal.Parse(r.GetString()!);
+    public override void Write(Utf8JsonWriter w, decimal v, JsonSerializerOptions o) => w.WriteStringValue(v.ToString("F2"));
 }
-```
 
-**`CorsConfig`** — cho React Vite gọi khi dev:
-
-```java
-@Bean
-WebMvcConfigurer cors() {
-    return new WebMvcConfigurer() {
-        public void addCorsMappings(CorsRegistry r) {
-            r.addMapping("/api/**").allowedOrigins("http://localhost:5173")
-             .allowedMethods("GET","POST","PUT","DELETE").exposedHeaders("X-Total-Count");
-        }
-    };
+public sealed class DateTimeNoOffsetConverter : JsonConverter<DateTime>
+{
+    private const string Fmt = "yyyy-MM-dd'T'HH:mm:ss";
+    public override DateTime Read(ref Utf8JsonReader r, Type t, JsonSerializerOptions o) => DateTime.Parse(r.GetString()!);
+    public override void Write(Utf8JsonWriter w, DateTime v, JsonSerializerOptions o) => w.WriteStringValue(v.ToString(Fmt));
 }
 ```
 
-**`OpenApiConfig`** — đặt tiêu đề + (P3) nút Authorize để dán JWT vào Swagger. Phase 2 để trống cũng được, springdoc tự sinh `/swagger-ui.html`.
+`PropertyNamingPolicy = JsonNamingPolicy.CamelCase` (§5.1) tự đổi `BranchName` (C# PascalCase) ↔ `"branchName"` (JSON) cả 2 chiều — không cần `[JsonPropertyName]` trên từng field.
 
-### 5.5 `security/` — JWT + phân quyền (Phase 3)
+**CORS** — đã đăng ký ở §5.1 (`AddCors` + `UseCors`), cho React Vite gọi khi dev.
 
-**Phase 2**: chỉ cần `SecurityConfig` mở hết để test `/api/branches` không cần token:
+**Swagger** — `Swashbuckle.AspNetCore` tự sinh `/swagger` (UI) từ `[ApiController]` + XML doc; không cần cấu hình thêm cho Phase 2.
 
-```java
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig {
-    @Bean
-    SecurityFilterChain chain(HttpSecurity http) throws Exception {
-        http.csrf(c -> c.disable())
-            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(a -> a
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .anyRequest().permitAll());          // Phase 2: mở hết. Phase 3 siết lại.
-        return http.build();
-    }
-}
-```
+### 5.5 `Security/` — JWT + phân quyền (Phase 3)
+
+**Phase 2**: **không đăng ký gì cả** — không `AddAuthentication`, không `UseAuthorization`. Không route nào yêu cầu token, đúng theo YAGNI (Phase 2 chỉ cần test `/api/branches` chạy được).
 
 **Phase 3** thêm (chi tiết ở `../PLAN.md` §1.10 + §3):
 
-| Class | Việc |
+| Class/gói | Việc |
 |---|---|
-| `JwtService` | `issue(AccountPrincipal)` khi login OK · `parse(token)` trong filter. HS256, secret + TTL từ `app.jwt.*`. |
-| `JwtAuthFilter` | `OncePerRequestFilter`: đọc `Authorization: Bearer …` → set `SecurityContext`. |
-| `AccountPrincipal` | `record(Long accountId, String username, String role)` — `@AuthenticationPrincipal` bơm vào controller. |
-| `OwnershipGuard` | `assertOwnsBankAccount(me, id)` — query nhẹ qua `fn_*_validate_owner` / view; sai → ném 403. |
-| `PasswordConfig` | `@Bean BCryptPasswordEncoder`. |
-| `SecurityConfig` (sửa) | thêm `JwtAuthFilter`, `@EnableMethodSecurity`, đổi `anyRequest().permitAll()` → rule theo route. |
+| `Microsoft.AspNetCore.Authentication.JwtBearer` | `AddAuthentication().AddJwtBearer(...)` — verify token có sẵn trong middleware, không tự viết filter. |
+| `JwtIssuer` | `Issue(accountId, username, role)` khi login OK — dùng `JwtSecurityTokenHandler` (đi kèm gói JwtBearer). |
+| `[Authorize]` / `ClaimsPrincipal` | Có sẵn trong ASP.NET Core — không cần tự viết class `AccountPrincipal`, đọc claim qua `User.FindFirst(...)`. |
+| `OwnershipGuard` | `AssertOwnsBankAccount(user, id)` — query nhẹ qua `fn_*_validate_owner` / view; sai → ném lỗi 403 (`ForbidHttpException` tự định nghĩa hoặc trả thẳng `403` từ controller). |
+| `PasswordHasher<object>` (từ `Microsoft.AspNetCore.Identity`) | Hash + verify mật khẩu (PBKDF2). Có sẵn khi thêm gói `Microsoft.AspNetCore.Identity` — khỏi cần NuGet BCrypt của bên thứ 3. |
+| `Program.cs` (sửa) | Thêm `app.UseAuthentication()` trước `UseAuthorization()`; route nào cần khoá thì gắn `[Authorize]`. |
 
-`login` **so mật khẩu ở Spring** (`passwordEncoder.matches`), không để proc so — vì proc chỉ so `password_hash = @password` chuỗi thẳng.
+`login` **so mật khẩu ở app** (`passwordHasher.VerifyHashedPassword`), không để proc so — proc chỉ so `password_hash = @password` chuỗi thẳng.
 
-### 5.6 Một feature = Controller + Service + dto
+### 5.6 Một feature = Controller + Service + Dto
 
-**Mẫu 1 — `branch/` (CRUD thuần).** `sp_branch_create(@branch_name, @address, @phone_number)` → `SELECT * FROM vw_Branch ... , 'Branch created successfully.' AS message`.
+**Mẫu 1 — `Branch/` (CRUD thuần).** `sp_branch_create(@branch_name, @address, @phone_number)` → `SELECT * FROM vw_Branch ... , 'Branch created successfully.' AS message`.
 
-`dto/CreateBranchRequest.java`:
-```java
-package com.bankingsystem.branch.dto;
-import jakarta.validation.constraints.*;
+`Dto/CreateBranchRequest.cs`:
+```csharp
+namespace Backend.Branch.Dto;
+
+using System.ComponentModel.DataAnnotations;
 
 public record CreateBranchRequest(
-    @NotBlank @Size(max = 100) String branchName,
-    @NotBlank @Size(max = 100) String address,
-    @NotBlank @Size(max = 20)  String phoneNumber
-) {}
+    [property: Required, MaxLength(100)] string BranchName,
+    [property: Required, MaxLength(100)] string Address,
+    [property: Required, MaxLength(20)]  string PhoneNumber
+);
 ```
 
-`dto/BranchResponse.java` — mirror `vw_Branch` (7 cột: `branch_id, branch_name, address, phone_number, created_at, updated_at, status`) đổi sang camelCase:
-```java
-package com.bankingsystem.branch.dto;
-import java.time.LocalDateTime;
+`Dto/BranchResponse.cs` — mirror `vw_Branch` (7 cột: `branch_id, branch_name, address, phone_number, created_at, updated_at, status`):
+```csharp
+namespace Backend.Branch.Dto;
 
 public record BranchResponse(
-    String branchId, String branchName, String address, String phoneNumber,
-    LocalDateTime createdAt, LocalDateTime updatedAt, String status
-) {}
+    string BranchId, string BranchName, string Address, string PhoneNumber,
+    DateTime? CreatedAt, DateTime? UpdatedAt, string Status
+);
 ```
 
-`BranchService.java`:
-```java
-package com.bankingsystem.branch;
+`BranchService.cs`:
+```csharp
+namespace Backend.Branch;
 
-import java.util.Map;
-import org.springframework.stereotype.Service;
-import com.bankingsystem.branch.dto.*;
-import com.bankingsystem.common.ApiResponse;
-import com.bankingsystem.db.Rows;
-import com.bankingsystem.db.StoredProcedureExecutor;
+using Backend.Branch.Dto;
+using Backend.Common;
+using Backend.Db;
 
-@Service
-public class BranchService {
-
-    private final StoredProcedureExecutor sp;
-    public BranchService(StoredProcedureExecutor sp) { this.sp = sp; }
-
-    public ApiResponse<BranchResponse> create(CreateBranchRequest r) {
-        Map<String, Object> row = sp.one("sp_branch_create",
-            r.branchName(), r.address(), r.phoneNumber());     // ĐÚNG thứ tự param trong .sql
-        return ApiResponse.ok(sp.message(row), map(row));
+public sealed class BranchService(StoredProcedureExecutor sp)
+{
+    public async Task<ApiResponse<BranchResponse>> CreateAsync(CreateBranchRequest r)
+    {
+        var row = await sp.OneAsync("sp_branch_create",
+            ("@branch_name", r.BranchName), ("@address", r.Address), ("@phone_number", r.PhoneNumber));
+        return ApiResponse<BranchResponse>.Ok(sp.Message(row), Map(row));
     }
 
-    private BranchResponse map(Map<String, Object> m) {
-        return new BranchResponse(
-            Rows.str(m, "branch_id"),   Rows.str(m, "branch_name"),
-            Rows.str(m, "address"),     Rows.str(m, "phone_number"),
-            Rows.dt(m, "created_at"),   Rows.dt(m, "updated_at"),
-            Rows.str(m, "status"));
-    }
+    private static BranchResponse Map(Dictionary<string, object?> m) => new(
+        Rows.Str(m, "branch_id")!, Rows.Str(m, "branch_name")!,
+        Rows.Str(m, "address")!,   Rows.Str(m, "phone_number")!,
+        Rows.Dt(m, "created_at"),  Rows.Dt(m, "updated_at"),
+        Rows.Str(m, "status")!);
 }
 ```
 
-`BranchController.java`:
-```java
-package com.bankingsystem.branch;
+`BranchController.cs`:
+```csharp
+namespace Backend.Branch;
 
-import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.*;
-import com.bankingsystem.branch.dto.*;
-import com.bankingsystem.common.ApiResponse;
+using Microsoft.AspNetCore.Mvc;
+using Backend.Branch.Dto;
+using Backend.Common;
 
-@RestController
-@RequestMapping("/api/branches")
-public class BranchController {
-
-    private final BranchService service;
-    public BranchController(BranchService service) { this.service = service; }
-
-    @PostMapping
-    // @PreAuthorize("hasRole('ADMIN')")   // bật ở Phase 3
-    public ApiResponse<BranchResponse> create(@Valid @RequestBody CreateBranchRequest req) {
-        return service.create(req);
-    }
+[ApiController]
+[Route("api/branches")]
+public sealed class BranchController(BranchService service) : ControllerBase
+{
+    [HttpPost]
+    // [Authorize(Roles = "Admin")]   // bật ở Phase 3
+    public Task<ApiResponse<BranchResponse>> Create([FromBody] CreateBranchRequest req)
+        => service.CreateAsync(req);
 }
 ```
+
+`(BranchService sp)` / `(BranchService service)` trong khai báo class là **primary constructor** (C# 12) — thay cho việc tự viết constructor gán field, ngắn hơn hẳn bản Java tương đương.
 
 Các endpoint branch còn lại (`PUT /{id}`, `PUT /{id}/status`, `GET /{id}`, `GET /{id}/summary`, `GET ?name=&status=` — xem Phụ lục A) = copy y hệt cấu trúc trên, đổi proc + dto.
 
-**Mẫu 2 — `transaction/` (có ownership, Phase 6).** Khác mẫu 1 ở 2 điểm — xem `../PLAN.md` §3.3:
-```java
-@PostMapping("/transfer")
-public ApiResponse<TransactionResponse> transfer(@Valid @RequestBody TransferRequest req,
-                                                 @AuthenticationPrincipal AccountPrincipal me) {
-    ownership.assertOwnsBankAccount(me, req.fromBankAccountId());   // (1) chặn thao tác TK người khác
-    Map<String,Object> row = sp.one("sp_bank_transaction_transfer",
-        req.fromBankAccountId(), req.toBankAccountId(),
-        req.amount(), req.fee() == null ? BigDecimal.ZERO : req.fee(), req.description());
-    notifier.afterTransfer(row);                                    // (2) bắn Notification (Phase 9, best-effort)
-    return ApiResponse.ok(sp.message(row), TransactionResponse.from(row));
+**Mẫu 2 — `Transaction/` (có ownership, Phase 6).** Khác mẫu 1 ở 2 điểm — xem `../PLAN.md` §3.3:
+```csharp
+[HttpPost("transfer")]
+[Authorize]
+public async Task<ApiResponse<TransactionResponse>> Transfer([FromBody] TransferRequest req)
+{
+    await ownership.AssertOwnsBankAccountAsync(User, req.FromBankAccountId);   // (1) chặn thao tác TK người khác
+    var row = await sp.OneAsync("sp_bank_transaction_transfer",
+        ("@from_account_id", req.FromBankAccountId), ("@to_account_id", req.ToBankAccountId),
+        ("@amount", req.Amount), ("@fee", req.Fee ?? 0m), ("@description", req.Description));
+    await notifier.AfterTransferAsync(row);                                   // (2) bắn Notification (Phase 9, best-effort)
+    return ApiResponse<TransactionResponse>.Ok(sp.Message(row), TransactionResponse.From(row));
 }
 ```
-Phần đồng thời (20 lệnh transfer song song vượt số dư) do **guarded UPDATE trong proc** lo — Spring không làm gì thêm. Test kịch bản này ở `../PLAN.md` §6.
+Phần đồng thời (20 lệnh transfer song song vượt số dư) do **guarded UPDATE trong proc** lo — app không làm gì thêm. Test kịch bản này ở `../PLAN.md` §6.
 
-### 5.7 `loan/AmortizationSchedule` + `saving/MaturedSavingsJob`
+### 5.7 `Loan/AmortizationSchedule` + `Saving/MaturedSavingsJob`
 
-**Toàn bộ** phần Java "tự làm logic". Code đầy đủ + test ở `../PLAN.md` §3.5 — chép từ đó khi tới Phase 7/8.
+**Toàn bộ** phần C# "tự làm logic". Công thức đầy đủ + test ở `../PLAN.md` §3.5 — chuyển từ pseudocode Java sang C# khi tới Phase 7/8 (cùng công thức toán, chỉ đổi cú pháp).
 
 - **`AmortizationSchedule`** (Phase 7): lịch trả góp cho `GET /loans/{id}/schedule`. Khớp công thức `sp_loan_apply` (§1.3): `r = annual/12/100`; `M = P·r·(1+r)^n / ((1+r)^n − 1)`; `r=0` → `M = P/n`; kỳ cuối nuốt phần lẻ để dư nợ = 0. **Không** tạo bảng `LoanRepaymentSchedule` — tính runtime, YAGNI (`../PLAN.md` §2.1).
-- **`MaturedSavingsJob`** (Phase 8): `@Scheduled(cron="0 5 0 * * *", zone="Asia/Ho_Chi_Minh")` gọi `sp_saving_account_settle_matured` mỗi 00:05. Không tiến trình riêng, không thư viện ngoài. Proc này nếu DB chưa có thì thêm bản tối giản (`../PLAN.md` §2.1).
+- **`MaturedSavingsJob`** (Phase 8): `BackgroundService` có sẵn trong ASP.NET Core (`Microsoft.Extensions.Hosting`, không cần thư viện scheduler ngoài như Quartz.NET) dùng `PeriodicTimer`, chạy mỗi ngày lúc 00:05 giờ VN, gọi `sp_saving_account_settle_matured`. Không tiến trình riêng.
 
 ---
 
@@ -728,16 +576,16 @@ Làm đúng thứ tự này — mỗi bước có mốc "chạy được" trư�
 
 | # | Viết | Xong khi |
 |---|---|---|
-| 1 | `pom.xml` (springdoc + jjwt) + sửa `BackendApplication` (§5.1) + xoá `application.properties`, tạo `application.yml` (chưa cần `app.jwt`) | `./mvnw spring-boot:run` → log `Started BackendApplication`, cổng 8080 lên. Chưa có endpoint cũng OK. |
-| 2 | `db/Rows` + `db/StoredProcedureExecutor` | compile sạch (`mvn compile`). |
-| 3 | `common/ApiResponse` + `common/ApiError` | compile sạch. |
-| 4 | `common/SqlErrorCatalog` (chép bảng dải từ `../PLAN.md` §3.2) + `common/GlobalExceptionHandler` | compile sạch. |
-| 5 | `config/JacksonConfig` | restart app, không lỗi bean. |
-| 6 | `security/SecurityConfig` (bản "mở hết" §5.5) | restart, `/` trả 404 (không phải 401/redirect login). |
-| 7 | `branch/dto/*` → `branch/BranchService` → `branch/BranchController` | restart, `/swagger-ui.html` hiện `POST /api/branches`. |
+| 1 | `dotnet new webapi --use-controllers` + thêm gói `Microsoft.Data.SqlClient`, `Swashbuckle.AspNetCore` (§2) + xoá `Controllers/WeatherForecast*` mẫu | `dotnet run` → log `Now listening on: http://localhost:5xxx`. Chưa có endpoint thật cũng OK. |
+| 2 | `Db/Rows.cs` + `Db/StoredProcedureExecutor.cs` | `dotnet build` sạch. |
+| 3 | `Common/ApiResponse.cs` + `Common/ApiError.cs` | build sạch. |
+| 4 | `Common/SqlErrorCatalog.cs` (chép bảng dải từ `../PLAN.md` §3.2) + `Common/ApiExceptionHandler.cs` | build sạch. |
+| 5 | `Common/DecimalAsStringConverter.cs` + `DateTimeNoOffsetConverter.cs`, đăng ký trong `Program.cs` (§5.1) | restart app, không lỗi. |
+| 6 | `appsettings.Development.json` (connection string) | app kết nối được DB — thử log 1 câu ping đơn giản hoặc bỏ qua, kiểm ở bước 8. |
+| 7 | `Branch/Dto/*` → `Branch/BranchService.cs` → `Branch/BranchController.cs` | restart, `/swagger` hiện `POST /api/branches`. |
 | 8 | Test tay trên Swagger (§7) | body trả `{"success":true,"message":"Branch created successfully.","data":{...}}`. |
 | 9 | Thử input rỗng `branchName` → nhận `400` + `error.code:400`. Thử `phoneNumber` quá 20 ký tự. | envelope lỗi đúng format. |
-| 10 | `test/branch/BranchApiIT` (§7) | `mvn test` xanh. |
+| 10 | Tạo `test/Backend.Tests/`, thêm gói `Microsoft.AspNetCore.Mvc.Testing` + `xunit`, viết `BranchApiTests.cs` (§7) | `dotnet test` xanh. |
 
 Sau bước 10: Phase 2 xong. Các module khác = lặp bước 7 theo Phụ lục A.
 
@@ -748,71 +596,71 @@ Sau bước 10: Phase 2 xong. Các module khác = lặp bước 7 theo Phụ l�
 **Chạy:**
 ```bash
 cd backend
-./mvnw spring-boot:run
+dotnet run
 ```
-Hoặc trong IntelliJ: Run `BackendApplication`.
+Hoặc trong IDE: nhấn Run trên project `Backend`.
 
-**Swagger UI:** http://localhost:8080/swagger-ui.html → `POST /api/branches` → Try it out:
+**Swagger UI:** `http://localhost:<port>/swagger` → `POST /api/branches` → Try it out:
 ```json
 { "branchName": "Chi nhánh Quận 1", "address": "12 Lê Lợi, Q1, TP.HCM", "phoneNumber": "02838220001" }
 ```
 
 **Hoặc curl:**
 ```bash
-curl -X POST http://localhost:8080/api/branches -H "Content-Type: application/json" -d "{\"branchName\":\"Chi nhánh Quận 1\",\"address\":\"12 Le Loi\",\"phoneNumber\":\"02838220001\"}"
+curl -X POST http://localhost:5000/api/branches -H "Content-Type: application/json" -d "{\"branchName\":\"Chi nhánh Quận 1\",\"address\":\"12 Le Loi\",\"phoneNumber\":\"02838220001\"}"
 ```
 
-**Integration test** `src/test/java/com/bankingsystem/branch/BranchApiIT.java`:
-```java
-package com.bankingsystem.branch;
+**Integration test** `test/Backend.Tests/BranchApiTests.cs`:
+```csharp
+namespace Backend.Tests;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import com.bankingsystem.branch.dto.CreateBranchRequest;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class BranchApiIT {
+public class BranchApiTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+{
+    [Fact]
+    public async Task Create_branch_returns_envelope()
+    {
+        var client = factory.CreateClient();
+        var res = await client.PostAsJsonAsync("/api/branches", new
+        {
+            branchName = "Chi nhánh Test", address = "1 Nguyễn Huệ", phoneNumber = "02838220099"
+        });
+        var body = await res.Content.ReadFromJsonAsync<JsonElement>();
 
-    @Autowired TestRestTemplate http;
-
-    @Test
-    void create_branch_returns_envelope() {
-        var body = new CreateBranchRequest("Chi nhánh Test", "1 Nguyễn Huệ", "02838220099");
-        var res = http.postForObject("/api/branches", body, java.util.Map.class);
-
-        assertThat(res.get("success")).isEqualTo(true);
-        assertThat(res.get("message")).isEqualTo("Branch created successfully.");
-        assertThat((java.util.Map<?,?>) res.get("data")).containsKey("branchId");
+        Assert.True(body.GetProperty("success").GetBoolean());
+        Assert.Equal("Branch created successfully.", body.GetProperty("message").GetString());
+        Assert.True(body.GetProperty("data").TryGetProperty("branchId", out _));
     }
 }
 ```
 
 ```bash
-./mvnw test
+dotnet test
 ```
 
 > Test này **ghi 1 dòng branch thật** vào DB dev. Chấp nhận được cho đồ án học — chạy lại `pwsh -File database/deploy.ps1 -Docker -Seed` để reset.
-> `ponytail:` chưa dùng Testcontainers — thêm ở Phase 11 (CI) khi cần DB sạch mỗi lần chạy.
+> `ponytail:` chưa dùng Testcontainers/DB riêng cho test — thêm ở Phase 11 (CI) khi cần DB sạch mỗi lần chạy.
 
 ---
 
-## 8. Bảng tra: kiểu DB → Java → JSON
+## 8. Bảng tra: kiểu DB → C# → JSON
 
-Chi tiết + lý do ở `../PLAN.md` §1. Tóm tắt cho lúc viết `map(row)`:
+Chi tiết + lý do ở `../PLAN.md` §1. Tóm tắt cho lúc viết `Map(row)`:
 
-| Cột DB | Kiểu SQL | Đọc bằng | Field Java | JSON |
+| Cột DB | Kiểu SQL | Đọc bằng | Field C# | JSON |
 |---|---|---|---|---|
-| `branch_id`, `customer_id`, `employee_id` | `NCHAR(10)` | `Rows.str` (**có trim**) | `String` | `"BR00000001"` |
-| `bank_account_id`, `transaction_id`, `loan_id`… | `BIGINT` | `Rows.lng` | `Long` | `42` (number) |
-| `bank_account_number` | `NCHAR(20)` | `Rows.str` | `String` | `"0001234500000000000"` (giữ leading zero) |
-| `card_number` | `VARCHAR(20)` | `Rows.str` | `String` | mask `"400000******1234"` — trừ response `POST /api/cards` (§1.8) |
-| `balance`, `amount`, `fee`, `interest_rate` | `DECIMAL(18,2)` | `Rows.money` | `BigDecimal` | `"1000000.00"` (**string**, 2 số lẻ) |
-| `created_at`, `updated_at` | `DATETIME` | `Rows.dt` | `LocalDateTime` | `"2026-09-09T14:30:00"` (không offset) |
-| `date_of_birth`, `maturity_date` | `DATE` | `Rows.date` | `LocalDate` | `"2026-09-09"` |
-| `status`, `role`, `transaction_type`… | lookup string | `Rows.str` | `String` | đúng chuỗi gốc, kể cả `"Loan Officer"` (§1.5) |
+| `branch_id`, `customer_id`, `employee_id` | `NCHAR(10)` | `Rows.Str` (**có Trim**) | `string` | `"BR00000001"` |
+| `bank_account_id`, `transaction_id`, `loan_id`… | `BIGINT` | `Rows.Lng` | `long` | `42` (number) |
+| `bank_account_number` | `NCHAR(20)` | `Rows.Str` | `string` | `"0001234500000000000"` (giữ leading zero) |
+| `card_number` | `VARCHAR(20)` | `Rows.Str` | `string` | mask `"400000******1234"` — trừ response `POST /api/cards` (§1.8) |
+| `balance`, `amount`, `fee`, `interest_rate` | `DECIMAL(18,2)` | `Rows.Money` | `decimal` | `"1000000.00"` (**string**, 2 số lẻ — `DecimalAsStringConverter`) |
+| `created_at`, `updated_at` | `DATETIME` | `Rows.Dt` | `DateTime` | `"2026-09-09T14:30:00"` (không offset — `DateTimeNoOffsetConverter`) |
+| `date_of_birth`, `maturity_date` | `DATE` | `Rows.Date` | `DateOnly` | `"2026-09-09"` (serialize mặc định đã đúng ISO, không cần converter riêng) |
+| `status`, `role`, `transaction_type`… | lookup string | `Rows.Str` | `string` | đúng chuỗi gốc, kể cả `"Loan Officer"` (§1.5) |
 
 **Không bao giờ** map ra response: `password_hash`, `cvv_hash`, `otp_code` (§1.8, §1.10).
 
@@ -820,14 +668,14 @@ Chi tiết + lý do ở `../PLAN.md` §1. Tóm tắt cho lúc viết `map(row)`:
 
 ## 9. Checklist "Phase 2 xong"
 
-- [ ] `./mvnw spring-boot:run` lên cổng 8080, không lỗi bean/DataSource.
-- [ ] `/swagger-ui.html` mở được, thấy `POST /api/branches`.
+- [ ] `dotnet run` lên cổng, không lỗi kết nối DB.
+- [ ] `/swagger` mở được, thấy `POST /api/branches`.
 - [ ] `POST /api/branches` hợp lệ → `200` + `{success:true, message:"Branch created successfully.", data:{branchId:"BR…", …}}`.
 - [ ] `branchName` rỗng → `400` + `{success:false, error:{code:400, domain:"validation"}}`.
-- [ ] Tắt SQL Server → gọi API → `500` + envelope (không phải stacktrace HTML).
-- [ ] `./mvnw test` xanh (`BranchApiIT`).
-- [ ] Không class nào ngoài `db/` `import java.sql.*`.
-- [ ] `application-local.yml` / `target/` đã trong `.gitignore`.
+- [ ] Tắt SQL Server → gọi API → `500` + envelope (không phải trang lỗi HTML mặc định).
+- [ ] `dotnet test` xanh (`BranchApiTests`).
+- [ ] Không class nào ngoài `Db/` `using Microsoft.Data.SqlClient`.
+- [ ] `appsettings.Development.json` (hoặc user-secrets) không lộ password thật trong git.
 - [ ] Commit: `backend/` skeleton + branch slice.
 
 ---
@@ -836,14 +684,14 @@ Chi tiết + lý do ở `../PLAN.md` §1. Tóm tắt cho lúc viết `map(row)`:
 
 | Phase | Thêm gì | Tài liệu |
 |---|---|---|
-| 3 | `security/*` đầy đủ, `auth/` (register→otp→activate→login→`/me`), `loginhistory/` | `../PLAN.md` §1.10, §3, roadmap Phase 3 |
-| 4 | `customer/`, `employee/`, phần còn lại `branch/` | Phụ lục A |
-| 5 | `bankingaccount/`, `card/` | Phụ lục A |
-| 6 | `transaction/` (Mẫu 2) — **test đồng thời bắt buộc** | `../PLAN.md` §1.11, §6 |
-| 7 | `loan/` + `AmortizationSchedule` + test | `../PLAN.md` §3.5 |
-| 8 | `saving/` + `MaturedSavingsJob` `@Scheduled` | `../PLAN.md` §3.5 |
-| 9 | `beneficiary/`, `notification/` (bắn sau transfer/loan, best-effort) | Phụ lục A |
-| 10 | `admin/` + endpoint thống kê dashboard | Phụ lục A |
-| 11 | Gửi OTP email thật, rate-limit + khoá login, Testcontainers, CI | roadmap Phase 11 |
+| 3 | `Security/*` đầy đủ, `Auth/` (register→otp→activate→login→`/me`), `LoginHistory/` | `../PLAN.md` §1.10, §3, roadmap Phase 3 |
+| 4 | `Customer/`, `Employee/`, phần còn lại `Branch/` | Phụ lục A |
+| 5 | `BankingAccount/`, `Card/` | Phụ lục A |
+| 6 | `Transaction/` (Mẫu 2) — **test đồng thời bắt buộc** | `../PLAN.md` §1.11, §6 |
+| 7 | `Loan/` + `AmortizationSchedule` + test | `../PLAN.md` §3.5 |
+| 8 | `Saving/` + `MaturedSavingsJob` (`BackgroundService`) | `../PLAN.md` §3.5 |
+| 9 | `Beneficiary/`, `Notification/` (bắn sau transfer/loan, best-effort) | Phụ lục A |
+| 10 | `Admin/` + endpoint thống kê dashboard | Phụ lục A |
+| 11 | Gửi OTP email thật, rate-limit + khoá login, DB riêng cho test, CI | roadmap Phase 11 |
 
-**Cách nhân bản:** mỗi endpoint trong Phụ lục A = 1 method controller + 1 method service + dto. Mở file `.sql` của proc để lấy **đúng thứ tự tham số**, mở file `vw_*.sql` để lấy **đúng danh sách cột** cho `Response`. Không có logic mới — chỉ nối HTTP ↔ proc.
+**Cách nhân bản:** mỗi endpoint trong Phụ lục A = 1 method controller + 1 method service + dto. Mở file `.sql` của proc để lấy **đúng tên tham số** (không phải thứ tự — §5.2), mở file `vw_*.sql` để lấy **đúng danh sách cột** cho `Response`. Không có logic mới — chỉ nối HTTP ↔ proc.
