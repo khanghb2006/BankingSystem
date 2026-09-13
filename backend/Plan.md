@@ -4,7 +4,7 @@
 > - `../PLAN.md` = **hợp đồng / spec**: định dạng ID–tiền–enum–ngày–lỗi (§1), danh sách endpoint đầy đủ (Phụ lục A), bảng mã lỗi (Phụ lục B). Là **nguồn sự thật**, không chép lại vào đây.
 > - `backend/Plan.md` (file này) = **cầm tay chỉ việc**: tạo project, cây thư mục, từng file làm gì, viết theo thứ tự nào, chạy & test ra sao.
 >
-> ⚠️ **2026-09-12: đổi từ Spring Boot (Java) sang ASP.NET Core (C#).** `../PLAN.md` §3 vẫn còn nhắc "Spring/Java" ở vài chỗ — đó là tài liệu cũ chưa cập nhật theo stack mới, cứ đọc như đang nói về ASP.NET Core (kiến trúc — proc là nguồn sự thật, thin service, không ORM — giữ nguyên, chỉ đổi ngôn ngữ/framework). Không có code C# nào tồn tại trước đây trong repo này — bắt đầu từ đầu.
+> ⚠️ **2026-09-12: đổi từ Spring Boot (Java) sang ASP.NET Core (C#).** `../PLAN.md` §3 đã cập nhật theo stack mới cùng ngày. Không có code C# nào tồn tại trước đây trong repo này — bắt đầu từ đầu.
 >
 > Trước khi code: đọc `../PLAN.md` §1 (contract), §3 (backend — bỏ qua chi tiết Java, giữ nguyên tắc), Phụ lục A + B. Roadmap tổng ở `../PLAN.md` §5 — file này chi tiết hoá **Phase 2** (skeleton + 1 lát cắt dọc `sp_branch_create`).
 
@@ -62,20 +62,21 @@ Gọi proc bằng ADO.NET thuần (`Microsoft.Data.SqlClient`) qua `SqlCommand` 
 
 | Cần | Kiểm tra |
 |---|---|
-| .NET SDK (LTS mới nhất — 8 hoặc 10 tuỳ bản đang hỗ trợ khi cài) | `dotnet --version` |
-| Visual Studio 2022+ hoặc Rider hoặc VS Code + C# Dev Kit | — |
+| .NET SDK 10 (LTS) | `dotnet --version` — cài bằng `winget install --id Microsoft.DotNet.SDK.10 -e` |
+| VS Code + extension **C# Dev Kit** (`ms-dotnettools.csdevkit`) — hoặc Visual Studio 2022+/Rider nếu có | `code --install-extension ms-dotnettools.csdevkit` |
 | SQL Server đang chạy + đã deploy `BankingSystem` | xem dưới |
 
-**DB cho backend dev — dùng Docker cho nhẹ đầu:**
+**DB cho backend dev — dùng luôn `SQLEXPRESS01` có sẵn, KHÔNG cần Docker:**
+
+Máy đã có SQL Server Express chạy sẵn dưới tên instance `SQLEXPRESS01` (Windows service `MSSQL$SQLEXPRESS01`) — đây cũng chính là instance `database/deploy.ps1` mặc định deploy vào (`-Server 'localhost\SQLEXPRESS01'`, dùng `-E` tức Windows Authentication). Không cần bật Docker Desktop:
 
 ```bash
-docker compose up -d
-pwsh -File database/deploy.ps1 -Docker -Seed
+pwsh -File database/deploy.ps1 -Seed
 ```
 
-→ SQL Server ở `localhost:1433`, user `sa`, password `BankSys_2026!` (trong `docker-compose.yml`), có sẵn demo data (1 branch, 2 customer…).
+→ Không cần **SQL Server Browser** chạy — kết nối cùng máy (localhost) dùng named pipes/shared memory nội bộ, tự phân giải được instance name mà không qua dịch vụ Browser (UDP 1434 chỉ cần cho client ở máy khác). Connection string cho backend ở §4.
 
-> Vì sao không dùng `localhost\SQLEXPRESS01` như `deploy.ps1` mặc định: named instance cần dịch vụ SQL Server Browser bật + Windows auth hoặc 1 login SQL riêng — lằng nhằng hơn Docker (SQL auth, cắm phát chạy).
+> Docker chỉ cần khi máy **không có sẵn** SQL Server nào — không phải trường hợp này.
 
 ---
 
@@ -185,24 +186,24 @@ test/
 }
 ```
 
-`appsettings.Development.json` (thêm `.gitignore`, chứa password thật):
+`appsettings.Development.json` (thêm `.gitignore` — trên máy này dùng Windows Authentication nên không có password nào để lộ, nhưng vẫn tách file cho đúng thói quen khi sau này đổi sang SQL auth):
 
 ```json
 {
   "ConnectionStrings": {
-    "BankingSystem": "Server=localhost,1433;Database=BankingSystem;User Id=sa;Password=BankSys_2026!;TrustServerCertificate=True;Encrypt=False"
+    "BankingSystem": "Server=localhost\\SQLEXPRESS01;Database=BankingSystem;Trusted_Connection=True;TrustServerCertificate=True"
   },
   "Jwt": { "Secret": "dev-only-secret-please-change-min-32-bytes-long" }
 }
 ```
 
-> **Thay thế khác nếu không muốn thêm file:** `dotnet user-secrets init` rồi `dotnet user-secrets set "ConnectionStrings:BankingSystem" "..."` — Secret Manager là tính năng có sẵn của SDK, không lưu trong repo, không cần nhớ thêm 1 file vào `.gitignore`. Chọn 1 trong 2 cách, không cần cả hai.
+`Trusted_Connection=True` = Windows Authentication, giống hệt cách `deploy.ps1` đang kết nối (`-E`) — không cần user/password.
 
-**`TrustServerCertificate=True;Encrypt=False`** bắt buộc khi test local: driver mặc định `Encrypt=True` (bắt buộc từ các bản driver mới), gặp self-signed cert của SQL Server local sẽ ném lỗi handshake.
+> **Nếu dùng Docker thay vì SQLEXPRESS01** (máy khác, không có SQL Server sẵn): `Server=localhost,1433;Database=BankingSystem;User Id=sa;Password=BankSys_2026!;TrustServerCertificate=True;Encrypt=False` (password trong `docker-compose.yml`) — khi đó **có** password thật nên bắt buộc phải gitignore file này hoặc dùng `dotnet user-secrets init` + `dotnet user-secrets set "ConnectionStrings:BankingSystem" "..."`.
+
+**`TrustServerCertificate=True`** bắt buộc khi test local: driver mặc định `Encrypt=True` (bắt buộc từ các bản driver mới), gặp self-signed cert của SQL Server local sẽ ném lỗi handshake.
 
 > **Không có khái niệm "timezone mặc định của app" như JVM.** `DateTime` đọc từ cột `DATETIME` qua ADO.NET có `Kind = Unspecified` — cứ để nguyên, **đừng** gọi `.ToLocalTime()`/`.ToUniversalTime()` ở đâu cả, serialize thẳng ra JSON không offset (§1.4, §8). SQL Server và máy dev cùng hiểu là giờ `Asia/Ho_Chi_Minh` theo quy ước, không cần ép ở tầng C#.
-
-> **Named instance** (nếu không dùng Docker): `Server=localhost\SQLEXPRESS01;Database=BankingSystem;...` — cần dịch vụ **SQL Server Browser** đang chạy.
 
 ---
 
