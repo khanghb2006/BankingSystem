@@ -1,7 +1,7 @@
 namespace Backend.Common;
 
 public record ApiResponse<T>(bool Success , string? Message , T? Data , ApiError? Error) {
-    public static ApiResponse<T> Ok(T data , string? message)
+    public static ApiResponse<T> Ok(string? message , T? data)
     {
         return new(true , message , data , null);
     }

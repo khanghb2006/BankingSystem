@@ -1,6 +1,6 @@
 # PLAN.md — Kế hoạch triển khai Banking System
 
-> Tài liệu này là hợp đồng làm việc chung cho 3 tầng: **SQL Server (đã có)** → **Spring Boot API** → **React + TypeScript**.
+> Tài liệu này là hợp đồng làm việc chung cho 3 tầng: **SQL Server (đã có)** → **ASP.NET Core API (C#)** → **React + TypeScript**.
 > Mọi con số / định dạng / tên gọi phải theo đúng **§1 Hợp đồng chuẩn dùng chung** để frontend và backend không xung đột.
 
 ---
@@ -10,7 +10,7 @@
 - [0. Tổng quan & kiến trúc](#0-tổng-quan--kiến-trúc)
 - [1. Hợp đồng chuẩn dùng chung (Shared Contract)](#1-hợp-đồng-chuẩn-dùng-chung-shared-contract)
 - [2. Tầng Database — bổ sung](#2-tầng-database--bổ-sung)
-- [3. Backend — Spring Boot](#3-backend--spring-boot)
+- [3. Backend — ASP.NET Core](#3-backend--aspnet-core)
 - [4. Frontend — React + TypeScript](#4-frontend--react--typescript)
 - [5. Thứ tự thực hiện (Roadmap)](#5-thứ-tự-thực-hiện-roadmap)
 - [6. Kiểm thử (Verification)](#6-kiểm-thử-verification)
@@ -27,7 +27,7 @@
 | Thành phần | Trạng thái |
 |---|---|
 | Database (SQL Server, `BankingSystem`) | **Đã có**: 14 bảng + 18 lookup + 14 view + 63 `dbo.sp_*` + 54 `dbo.fn_*`, deploy bằng `database/deploy.ps1` lên `localhost\SQLEXPRESS01` |
-| Backend API | **Chưa có** — sẽ dựng Spring Boot |
+| Backend API | **Chưa có** — sẽ dựng ASP.NET Core (C#) |
 | Frontend | **Chưa có** — sẽ dựng React + TypeScript (Vite) |
 
 ### 0.2 Quyết định stack (đã chốt)
@@ -36,23 +36,24 @@
 |---|---|---|
 | Database | **Giữ SQL Server**, không migrate | 63 proc + deploy.ps1 đã chạy được, migrate PostgreSQL là làm lại từ đầu |
 | Nơi chứa business logic | **Stored procedures** là nguồn sự thật | Đã cài đặt xong, có chống-đua (guarded UPDATE) |
-| API cho React | **Spring Boot (Java 17+)** gọi `sp_*` qua JDBC `CallableStatement` | Không ORM, mapper mỏng, hợp SQL Server |
+| API cho React | **ASP.NET Core** (C#, .NET LTS) gọi `sp_*` qua ADO.NET (`Microsoft.Data.SqlClient`) | Không ORM (không EF Core), mapper mỏng, hợp SQL Server. Xem `backend/Plan.md` §0.1 (vì sao không ORM, tham số có tên chứ không vị trí) |
 | Frontend | **React + TypeScript** | Cả 2 tài liệu định hướng đều nhắc React |
-| ~~C++ core~~ | **Bỏ** (2026-09-09) | Proc đã là nguồn sự thật; core C++ chỉ là bản sao thứ 2 của quy tắc, phải tự đồng bộ tay, thêm 1 toolchain. Business thật chạy 1 backend. Domain OOP + tính toán → tầng service Spring (§3.5) |
+| ~~C++ core~~ | **Bỏ** (2026-09-09) | Proc đã là nguồn sự thật; core C++ chỉ là bản sao thứ 2 của quy tắc, phải tự đồng bộ tay, thêm 1 toolchain. Business thật chạy 1 backend. Domain OOP + tính toán → tầng service backend (§3.5) |
+| ~~Spring Boot (Java)~~ | **Bỏ** (2026-09-12) | Người dùng muốn code backend bằng C#. Đổi sang ASP.NET Core, kiến trúc giữ nguyên (proc là nguồn sự thật, thin service, không ORM) |
 
 ### 0.3 Kiến trúc 3 tầng
 
 ```
-┌────────────────┐   HTTP/JSON    ┌────────────────────┐  JDBC {call dbo.sp_*}  ┌──────────────────────┐
-│  React + TS    │ ─────────────▶ │  Spring Boot API   │ ─────────────────────▶ │ SQL Server           │
+┌────────────────┐   HTTP/JSON    ┌────────────────────┐  ADO.NET {call dbo.sp_*} ┌──────────────────────┐
+│  React + TS    │ ─────────────▶ │  ASP.NET Core API  │ ─────────────────────▶ │ SQL Server           │
 │  (Vite SPA)    │ ◀───────────── │  (envelope, JWT)   │ ◀───────────────────── │ BankingSystem        │
 └────────────────┘  ApiResponse   └────────────────────┘   result set + THROW   │  - 63 sp_*  (ghi)    │
                                    - domain/tính toán (§3.5)                     │  - 14 vw_*  (đọc)    │
-                                   - @Scheduled job đáo hạn tiết kiệm            │  - 54 fn_*  (validate)│
+                                   - BackgroundService job đáo hạn tiết kiệm     │  - 54 fn_*  (validate)│
                                                                                 └──────────────────────┘
 ```
 
-**Vì sao 1 backend:** mọi thao tác ghi đi qua `sp_*` ⇒ một bản cài đặt quy tắc nghiệp vụ duy nhất. Spring chỉ: validate input (Bean Validation) → gọi proc → map result (§3.3). Phần Java tự tính (không có trong proc) chỉ còn **lịch trả góp** (§3.5). Job nền (đáo hạn tiết kiệm) là một method `@Scheduled` gọi proc — không cần tiến trình riêng.
+**Vì sao 1 backend:** mọi thao tác ghi đi qua `sp_*` ⇒ một bản cài đặt quy tắc nghiệp vụ duy nhất. Backend chỉ: validate input (DataAnnotations) → gọi proc → map result (§3.3). Phần C# tự tính (không có trong proc) chỉ còn **lịch trả góp** (§3.5). Job nền (đáo hạn tiết kiệm) là một `BackgroundService` gọi proc — không cần tiến trình riêng.
 
 ### 0.4 Bug DB — ✅ đã sửa hết & verify
 
@@ -81,10 +82,10 @@
 |---|---|
 | Kiểu DB | `DECIMAL(18, 2)` cho **tất cả** cột tiền |
 | JSON | **string** `"1000000.00"` — luôn đúng 2 chữ số lẻ. **Không** dùng `number` (mất chính xác float) |
-| Backend (Java) | `BigDecimal` `setScale(2, HALF_UP)` khắp nơi. Không cần class `Money` bọc lại — chỉ tính trong 1 currency (lịch trả góp §3.5); chuyển tiền do proc lo |
+| Backend (C#) | `decimal` + `Math.Round(v, 2, MidpointRounding.AwayFromZero)` khắp nơi. Không cần class `Money` bọc lại — chỉ tính trong 1 currency (lịch trả góp §3.5); chuyển tiền do proc lo |
 | Currency | Field **riêng**, mã từ lookup `Currency`: `USD | EUR | GBP | JPY | VND`. **Không có FX / quy đổi.** Mỗi transaction/loan/saving kế thừa currency của banking account nguồn |
 | Làm tròn | **half-up** về 2 chữ số (khớp `CAST(... AS DECIMAL(18,2))` của T-SQL) |
-| Cộng/trừ khác currency | **Cấm** — proc chặn; Spring không bao giờ cộng tiền 2 currency |
+| Cộng/trừ khác currency | **Cấm** — proc chặn; backend không bao giờ cộng tiền 2 currency |
 
 ### 1.3 Lãi suất
 
@@ -101,7 +102,7 @@
 | Khía cạnh | Quy ước |
 |---|---|
 | Kiểu DB | `DATETIME` (không timezone, ~3ms) cho timestamp; `DATE` cho ngày |
-| Timezone server | `Asia/Ho_Chi_Minh` — cấu hình JVM `-Duser.timezone=Asia/Ho_Chi_Minh`, SQL Server dùng giờ máy |
+| Timezone server | `Asia/Ho_Chi_Minh` — .NET không có "timezone mặc định của app" như JVM; đọc `DATETIME` qua ADO.NET giữ `DateTimeKind.Unspecified`, không gọi `.ToLocalTime()/.ToUniversalTime()`. SQL Server dùng giờ máy |
 | JSON timestamp | ISO-8601 **không offset**: `"2026-09-07T14:30:00"` — hiểu là giờ server |
 | JSON ngày | `"2026-09-07"` |
 | Frontend | **Không** tự cộng/trừ offset; hiển thị nguyên như server trả |
@@ -134,7 +135,7 @@
 
 ### 1.6 Response envelope
 
-Stored proc trả về: **1..N dòng từ một `vw_*`** + cột `message` (hoặc `result_message`) ở cuối. Spring Boot chuẩn hoá lại:
+Stored proc trả về: **1..N dòng từ một `vw_*`** + cột `message` (hoặc `result_message`) ở cuối. ASP.NET Core chuẩn hoá lại:
 
 **Thành công**
 ```json
@@ -159,7 +160,7 @@ Stored proc trả về: **1..N dòng từ một `vw_*`** + cột `message` (ho�
 
 | Tình huống | HTTP |
 |---|---|
-| Validate input sai (Bean Validation) | `400` |
+| Validate input sai (DataAnnotations) | `400` |
 | ID không tồn tại (`fn_*_validate_id = 0`) | `404` |
 | Vi phạm quy tắc nghiệp vụ (số dư, trạng thái, trùng, sai state machine) | `409` |
 | Sai giá trị enum / tham số ngoài miền | `422` |
@@ -171,7 +172,7 @@ Stored proc trả về: **1..N dòng từ một `vw_*`** + cột `message` (ho�
 ### 1.7 Casing & field mapping
 
 - DB dùng `snake_case`; JSON/DTO dùng `camelCase`.
-- Một tầng mapper **tường minh** trong Spring theo từng view (không auto). Ví dụ `vw_TransactionDetails`:
+- Một tầng mapper **tường minh** trong backend theo từng view (không auto). Ví dụ `vw_TransactionDetails`:
 
 | Cột DB | Field JSON |
 |---|---|
@@ -194,22 +195,22 @@ Stored proc trả về: **1..N dòng từ một `vw_*`** + cột `message` (ho�
 ### 1.9 Phân trang & tìm kiếm
 
 - Proc `*_search` trả **toàn bộ** dòng, không phân trang.
-- Contract: Spring nhận query `?page=0&size=20&sort=createdAt,desc`, cắt trang **trong bộ nhớ**, trả:
+- Contract: backend nhận query `?page=0&size=20&sort=createdAt,desc`, cắt trang **trong bộ nhớ**, trả:
   - body: `data` = array trang hiện tại
   - header: `X-Total-Count: <tổng>`
 - Ngưỡng nâng cấp: khi một search trả > ~5.000 dòng, chuyển sang proc có `@offset/@fetch` (`OFFSET ... FETCH NEXT`). Chưa cần cho đồ án.
 
 ### 1.10 Xác thực & OTP
 
-**DB không giữ** session / JWT / hash mật khẩu. Spring Boot sở hữu:
+**DB không giữ** session / JWT / hash mật khẩu. ASP.NET Core sở hữu:
 
 | Việc | Cách làm |
 |---|---|
-| Hash mật khẩu | **BCrypt** (`BCryptPasswordEncoder`). Proc lưu nguyên chuỗi truyền vào → **truyền hash BCrypt** vào `@password` của `sp_account_register` / `sp_account_change_password` / `sp_account_reset_password`. `sp_account_login` so khớp bằng `password_hash = @password` nên **login phải so ở tầng Spring**: đọc account, `passwordEncoder.matches(raw, hash)`, rồi (nếu cần) vẫn gọi `sp_account_login` với hash để lấy `vw_Account`. |
-| JWT | Phát khi login OK (claims: `sub`=account_id, `role`, `username`). Verify bằng `JwtAuthFilter`. TTL 1h, refresh token 7 ngày (tuỳ chọn). |
-| `LoginHistory` | **Spring gọi** `sp_login_history_create` sau mỗi lần login (thành công/thất bại) với `ip_address`, `device` từ request. |
-| Khoá đăng nhập | Đếm số lần sai **phía Spring** (Redis hoặc bảng phụ) — DB không có cột. Sai ≥ 5 lần / 15 phút → `sp_admin_update_account_status` set `Locked` hoặc chặn tạm ở Spring. |
-| OTP | `sp_otp_generate_otpcode` **trả `otp_code` plaintext trong result set**. Spring **KHÔNG** forward cho client. Gửi qua email/SMS (dev: ghi log). Response chỉ có `{ "otpId": ..., "expiresAt": ... }`. |
+| Hash mật khẩu | **`PasswordHasher<T>`** (`Microsoft.AspNetCore.Identity`, PBKDF2 — không cần BCrypt.Net ngoài). Proc lưu nguyên chuỗi truyền vào → **truyền hash** vào `@password` của `sp_account_register` / `sp_account_change_password` / `sp_account_reset_password`. `sp_account_login` so khớp bằng `password_hash = @password` nên **login phải so ở tầng backend**: đọc account, `hasher.VerifyHashedPassword(...)`, rồi (nếu cần) vẫn gọi `sp_account_login` với hash để lấy `vw_Account`. |
+| JWT | Phát khi login OK (claims: `sub`=account_id, `role`, `username`) bằng `Microsoft.AspNetCore.Authentication.JwtBearer`. TTL 1h, refresh token 7 ngày (tuỳ chọn). |
+| `LoginHistory` | **Backend gọi** `sp_login_history_create` sau mỗi lần login (thành công/thất bại) với `ip_address`, `device` từ request. |
+| Khoá đăng nhập | Đếm số lần sai **phía backend** (Redis hoặc bảng phụ) — DB không có cột. Sai ≥ 5 lần / 15 phút → `sp_admin_update_account_status` set `Locked` hoặc chặn tạm ở backend. |
+| OTP | `sp_otp_generate_otpcode` **trả `otp_code` plaintext trong result set**. Backend **KHÔNG** forward cho client. Gửi qua email/SMS (dev: ghi log). Response chỉ có `{ "otpId": ..., "expiresAt": ... }`. |
 
 **OTP replay (đã vá — 2026-09-07):** trước đây `sp_otp_generate_otpcode` đánh dấu OTP cũ là `verified = 1`, khiến sinh OTP lần 2 là `sp_account_activate` / `sp_account_reset_password` qua được dù chưa nhập mã. Nay OTP cũ bị cho **hết hạn** (`SET expired_at = GETDATE()`), chỉ `sp_otp_verify` mới set `verified = 1`. Khi làm OTP xác thực chuyển tiền (Phase 6) cần thêm cột `consumed` + `sp_otp_consume` — xem ghi chú trong `sp_otp_generate_otpcode.sql`.
 
@@ -223,7 +224,7 @@ Stored proc trả về: **1..N dòng từ một `vw_*`** + cột `message` (ho�
   IF @@ROWCOUNT = 0 THROW <code>, '...', 1;
   ```
 - **Cấm** `SELECT balance` rồi `UPDATE` (race condition).
-- Spring: **luôn** qua `sp_*`, không tự viết SQL số dư. Job nền cũng gọi proc (§3.5).
+- Backend: **luôn** qua `sp_*`, không tự viết SQL số dư. Job nền cũng gọi proc (§3.5).
 
 ### 1.12 Mã lỗi — hai hệ đang tồn tại
 
@@ -235,7 +236,7 @@ T-SQL `THROW` yêu cầu số ≥ 50000. Hiện có 2 hệ:
 | 6 chữ số, `+1` | login_history (101xxx–102xxx), otp (121xxx–122xxx) | `+1` |
 | **5 chữ số** (chưa remap, vẫn ≥ 50000 nên chạy tốt) | branch (51xxx–56xxx), card (61xxx–64xxx), customer (71xxx–76xxx), employee (81xxx–87xxx), loan (91xxx–96xxx) | `+1` |
 
-→ **`SqlErrorCatalog` phía Spring xử lý cả hai hệ** (Phụ lục B). Proc **mới** đặt mã theo chuẩn `MMSPCC` 6 chữ số, ≥ 50000 (xem memory *THROW error number range*). Không bắt buộc remap 5 chữ số cũ.
+→ **`SqlErrorCatalog` phía backend xử lý cả hai hệ** (Phụ lục B). Proc **mới** đặt mã theo chuẩn `MMSPCC` 6 chữ số, ≥ 50000 (xem memory *THROW error number range*). Không bắt buộc remap 5 chữ số cũ.
 
 ---
 
@@ -253,9 +254,9 @@ T-SQL `THROW` yêu cầu số ≥ 50000. Hiện có 2 hệ:
 | `dbo.sp_admin_update_account_status` | `account/admin_update_account_status.sql` | `@account_id BIGINT, @new_status VARCHAR(20)` | Lock / Disable / Enable account | `171000`–`171020` | ✅ đã tạo + test |
 | ~~`dbo.sp_notification_list`~~ | — | — | **Bỏ** — `sp_notification_search(@account_id, NULL, 0, NULL, NULL)` đã làm "unread only", `(@account_id, NULL, NULL, NULL, NULL)` là "tất cả". YAGNI. | — | — |
 
-> Bỏ `sp_loan_get_schedule` + bảng `LoanRepaymentSchedule` — Spring tính runtime (§3.5 `AmortizationSchedule`) từ `amount`, `interest_rate`, `duration_months`, `start_date`. YAGNI.
+> Bỏ `sp_loan_get_schedule` + bảng `LoanRepaymentSchedule` — backend tính runtime (§3.5 `AmortizationSchedule`) từ `amount`, `interest_rate`, `duration_months`, `start_date`. YAGNI.
 >
-> `sp_saving_account_settle_matured` (đáo hạn sổ tiết kiệm) — nếu chưa có proc thì thêm 1 proc tối giản: `UPDATE SavingAccount SET status='Matured' WHERE status='Active' AND maturity_date <= CAST(GETDATE() AS DATE)`. Spring gọi qua `@Scheduled` (§3.5). **Không** có job "vay quá hạn" — `LoanStatus` không có giá trị `Overdue`, YAGNI.
+> `sp_saving_account_settle_matured` (đáo hạn sổ tiết kiệm) — nếu chưa có proc thì thêm 1 proc tối giản: `UPDATE SavingAccount SET status='Matured' WHERE status='Active' AND maturity_date <= CAST(GETDATE() AS DATE)`. Backend gọi qua `BackgroundService` (§3.5). **Không** có job "vay quá hạn" — `LoanStatus` không có giá trị `Overdue`, YAGNI.
 
 ### 2.2 `deploy.ps1` — đã viết lại
 
@@ -278,274 +279,258 @@ pwsh -File database/deploy.ps1 -Docker -Seed
 
 ---
 
-## 3. Backend — Spring Boot
+## 3. Backend — ASP.NET Core
 
-### 3.1 Cấu trúc package `com.bankingsystem`
+> ⚠️ Đổi từ Spring Boot (Java) sang ASP.NET Core (C#) ngày 2026-09-12 — người dùng muốn code backend bằng C#, kiến trúc không đổi (proc là nguồn sự thật, service mỏng, không ORM). Chi tiết cầm tay chỉ việc (thứ tự viết, checklist, giải thích từng dòng) ở `backend/Plan.md` — phần dưới chỉ là **hợp đồng** giữa các module.
+
+### 3.1 Cấu trúc namespace `Backend`
 
 ```
-config/       DataSourceConfig (mssql-jdbc), JacksonConfig (BigDecimal→string, date format),
-              SecurityConfig (JWT filter chain), CorsConfig
-security/     JwtService, JwtAuthFilter, AccountPrincipal, OwnershipGuard, PasswordConfig (BCrypt)
-common/       ApiResponse<T>, ApiError, GlobalExceptionHandler, SqlErrorCatalog, PageMeta
-db/           StoredProcedureExecutor, Rows (helper trim NCHAR + parse Timestamp/BigDecimal)
-auth/         AuthController, AuthService
-customer/     CustomerController, CustomerService
-employee/     ...
-branch/  bankingaccount/  card/  transaction/  loan/  saving/  beneficiary/  notification/
-          loginhistory/  admin/
-loan/         + AmortizationSchedule.java (§3.5 — tính toán duy nhất không có trong proc)
-saving/       + MaturedSavingsJob.java   (§3.5 — @Scheduled gọi sp_saving_account_settle_matured)
-dto/          request/*  (record + Bean Validation)   response/*  (record camelCase mirror view)
+Db/           StoredProcedureExecutor, Rows (helper trim NCHAR + ép DateTime/decimal)
+Common/       ApiResponse<T>, ApiError, ApiExceptionHandler (IExceptionHandler), SqlErrorCatalog, PagedResponse
+Security/     JwtIssuer, OwnershipGuard, dùng sẵn Microsoft.AspNetCore.Authentication.JwtBearer + Identity.PasswordHasher<T>
+Auth/         AuthController, AuthService
+Customer/     CustomerController, CustomerService
+Employee/     ...
+Branch/  BankingAccount/  Card/  Transaction/  Loan/  Saving/  Beneficiary/  Notification/
+         LoginHistory/  Admin/
+Loan/         + AmortizationSchedule.cs (§3.5 — tính toán duy nhất không có trong proc)
+Saving/       + MaturedSavingsJob.cs    (§3.5 — BackgroundService gọi sp_saving_account_settle_matured)
+*/Dto/        CreateXxxRequest/UpdateXxxRequest (record + DataAnnotations)   XxxResponse (record mirror view)
 ```
 
-**Không** có `@Entity` / JPA / repository interface — chỉ `StoredProcedureExecutor` + mapper.
-**Không** có tầng "domain object" song song (Loan/SavingAccount/BankingAccount class với state machine) — proc đã ép mọi state + invariant, class Java lặp lại chỉ tạo gánh nặng đồng bộ. Service = validate → gọi proc → map (§3.3).
+**Không** có `DbContext` / EF Core / repository interface — chỉ `StoredProcedureExecutor` + mapper.
+**Không** có tầng "domain object" song song (Loan/SavingAccount/BankingAccount class với state machine) — proc đã ép mọi state + invariant, class C# lặp lại chỉ tạo gánh nặng đồng bộ. Service = validate → gọi proc → map (§3.3).
 
 ### 3.2 Thành phần cốt lõi
 
 **`ApiResponse` / `ApiError`**
-```java
-public record ApiResponse<T>(boolean success, String message, T data, ApiError error) {
-    public static <T> ApiResponse<T> ok(String message, T data)      { return new ApiResponse<>(true,  message, data, null); }
-    public static <T> ApiResponse<T> fail(String message, ApiError e) { return new ApiResponse<>(false, message, null, e);  }
+```csharp
+public record ApiResponse<T>(bool Success, string? Message, T? Data, ApiError? Error)
+{
+    public static ApiResponse<T> Ok(string? message, T? data) => new(true, message, data, null);
+    public static ApiResponse<T> Fail(string? message, ApiError error) => new(false, message, default, error);
 }
-public record ApiError(int code, String domain) {}
+public record ApiError(int Code, string Domain);
 ```
 
-**`StoredProcedureExecutor`** — điểm tiếp xúc DUY NHẤT với `sp_*`
-```java
-@Component
-public class StoredProcedureExecutor {
-    private final JdbcTemplate jdbc;
-    public StoredProcedureExecutor(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+**`StoredProcedureExecutor`** — điểm tiếp xúc DUY NHẤT với `sp_*`. Tham số **có tên** (ADO.NET bind theo tên, khác JDBC positional):
+```csharp
+public sealed class StoredProcedureExecutor(IConfiguration config)
+{
+    private readonly string _connectionString = config.GetConnectionString("BankingSystem")!;
 
-    /** Gọi {call dbo.<proc>(?, ?, ...)}; trả các dòng của result set đầu tiên. */
-    public List<Map<String, Object>> call(String proc, Object... args) {
-        String ph = args.length == 0 ? "" : String.join(", ", Collections.nCopies(args.length, "?"));
-        String sql = "{call dbo." + proc + "(" + ph + ")}";
-        return jdbc.execute((ConnectionCallback<List<Map<String, Object>>>) con -> {
-            try (CallableStatement cs = con.prepareCall(sql)) {
-                for (int i = 0; i < args.length; i++) cs.setObject(i + 1, args[i]);
-                if (!cs.execute()) return List.of();
-                try (ResultSet rs = cs.getResultSet()) { return Rows.toMaps(rs); }
-            }
-        });
+    public async Task<List<Dictionary<string, object?>>> CallAsync(string proc, params (string Name, object? Value)[] args)
+    {
+        await using var conn = new SqlConnection(_connectionString);
+        await using var cmd = new SqlCommand($"dbo.{proc}", conn) { CommandType = CommandType.StoredProcedure };
+        foreach (var (name, value) in args) cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
+        await conn.OpenAsync();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        return await Rows.ToMapsAsync(reader);
     }
-    public String message(Map<String, Object> row) {
-        Object m = row.containsKey("message") ? row.get("message") : row.get("result_message");
-        return m == null ? null : m.toString();
-    }
+
+    public string? Message(Dictionary<string, object?> row)
+        => (row.GetValueOrDefault("message") ?? row.GetValueOrDefault("result_message"))?.ToString();
 }
 ```
 
 **`SqlErrorCatalog`** — map mã `THROW` → (domain, HTTP). Dùng list khoảng vì hai hệ mã interleave (account 12xxxx vs otp 121xxx).
-```java
-public final class SqlErrorCatalog {
-    public record Entry(String domain, HttpStatus status) {}
-    private record Band(int lo, int hi, String domain, HttpStatus status) {}
+```csharp
+public static class SqlErrorCatalog
+{
+    public record Entry(string Domain, int Status);
+    private record Band(int Lo, int Hi, string Domain, int Status);
 
-    // Sắp theo lo; first-match. Đầy đủ dải ở Phụ lục B.
-    private static final List<Band> BANDS = List.of(
-        new Band( 51000,  56999, "branch",           HttpStatus.CONFLICT),
-        new Band( 61000,  64999, "card",             HttpStatus.CONFLICT),
-        new Band( 71000,  76999, "customer",         HttpStatus.CONFLICT),
-        new Band( 81000,  87999, "employee",         HttpStatus.CONFLICT),
-        new Band( 91000,  96999, "loan",             HttpStatus.CONFLICT),
-        new Band(101000, 102999, "login_history",    HttpStatus.BAD_REQUEST),
-        new Band(110000, 110999, "account",          HttpStatus.CONFLICT),
-        new Band(111000, 114999, "notification",     HttpStatus.CONFLICT),
-        new Band(120000, 120999, "account",          HttpStatus.CONFLICT),
-        new Band(121000, 122999, "otp",              HttpStatus.UNPROCESSABLE_ENTITY),
-        new Band(130000, 159999, "account",          HttpStatus.CONFLICT),
-        new Band(160000, 179999, "admin",            HttpStatus.CONFLICT),
-        new Band(210000, 279999, "bank_transaction", HttpStatus.CONFLICT),
-        new Band(310000, 349999, "banking_account",  HttpStatus.CONFLICT),
-        new Band(350000, 359999, "saving_account",   HttpStatus.CONFLICT),
-        new Band(410000, 449999, "beneficiary",      HttpStatus.CONFLICT)
-    );
-    public static Entry lookup(int code) {
-        if (code < 50000) return new Entry("system", HttpStatus.INTERNAL_SERVER_ERROR);
-        return BANDS.stream().filter(b -> code >= b.lo() && code <= b.hi()).findFirst()
-            .map(b -> new Entry(b.domain(), b.status()))
-            .orElse(new Entry("business", HttpStatus.UNPROCESSABLE_ENTITY));
+    // Sắp theo Lo; first-match. Đầy đủ dải ở Phụ lục B.
+    private static readonly List<Band> Bands =
+    [
+        new( 51000,  56999, "branch",           StatusCodes.Status409Conflict),
+        new( 61000,  64999, "card",             StatusCodes.Status409Conflict),
+        new( 71000,  76999, "customer",         StatusCodes.Status409Conflict),
+        new( 81000,  87999, "employee",         StatusCodes.Status409Conflict),
+        new( 91000,  96999, "loan",             StatusCodes.Status409Conflict),
+        new(101000, 102999, "login_history",    StatusCodes.Status400BadRequest),
+        new(110000, 110999, "account",          StatusCodes.Status409Conflict),
+        new(111000, 114999, "notification",     StatusCodes.Status409Conflict),
+        new(120000, 120999, "account",          StatusCodes.Status409Conflict),
+        new(121000, 122999, "otp",              StatusCodes.Status422UnprocessableEntity),
+        new(130000, 159999, "account",          StatusCodes.Status409Conflict),
+        new(160000, 179999, "admin",            StatusCodes.Status409Conflict),
+        new(210000, 279999, "bank_transaction", StatusCodes.Status409Conflict),
+        new(310000, 349999, "banking_account",  StatusCodes.Status409Conflict),
+        new(350000, 359999, "saving_account",   StatusCodes.Status409Conflict),
+        new(410000, 449999, "beneficiary",      StatusCodes.Status409Conflict),
+    ];
+
+    public static Entry Lookup(int code)
+    {
+        if (code < 50000) return new Entry("system", StatusCodes.Status500InternalServerError);
+        var b = Bands.FirstOrDefault(b => code >= b.Lo && code <= b.Hi);
+        return b is null ? new Entry("business", StatusCodes.Status422UnprocessableEntity) : new Entry(b.Domain, b.Status);
     }
     // "id không tồn tại" (mã kết thúc ...000 và message chứa "does not exist"/"Invalid") → override 404 ở handler
 }
 ```
 
-**`GlobalExceptionHandler`**
-```java
-@RestControllerAdvice
-public class GlobalExceptionHandler {
-    @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<ApiResponse<Void>> onSql(DataAccessException ex) {
-        var sql = NestedExceptionUtils.getMostSpecificCause(ex);
-        int code = (sql instanceof SQLException se) ? se.getErrorCode() : 0;
-        var e = SqlErrorCatalog.lookup(code);
-        String msg = stripThrowNoise(sql.getMessage());
-        HttpStatus http = looksLikeNotFound(msg) ? HttpStatus.NOT_FOUND : e.status();
-        return ResponseEntity.status(http).body(ApiResponse.fail(msg, new ApiError(code, e.domain())));
-    }
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> onValid(MethodArgumentNotValidException ex) {
-        String msg = ex.getBindingResult().getFieldErrors().stream()
-            .map(f -> f.getField() + ": " + f.getDefaultMessage()).collect(Collectors.joining("; "));
-        return ResponseEntity.badRequest().body(ApiResponse.fail(msg, new ApiError(400, "validation")));
+**`ApiExceptionHandler`** (dùng `IExceptionHandler`, có sẵn từ .NET 8 — thay cho middleware tự viết tay):
+```csharp
+public sealed class ApiExceptionHandler : IExceptionHandler
+{
+    public async ValueTask<bool> TryHandleAsync(HttpContext ctx, Exception ex, CancellationToken ct)
+    {
+        if (ex is not SqlException sql) return false;
+        var e = SqlErrorCatalog.Lookup(sql.Number);
+        var msg = sql.Message.Split('\n')[0];
+        var status = msg.Contains("does not exist", StringComparison.OrdinalIgnoreCase)
+                     || msg.Contains("Invalid", StringComparison.OrdinalIgnoreCase)
+            ? StatusCodes.Status404NotFound : e.Status;
+        ctx.Response.StatusCode = status;
+        await ctx.Response.WriteAsJsonAsync(ApiResponse<object>.Fail(msg, new ApiError(sql.Number, e.Domain)), ct);
+        return true;
     }
 }
 ```
+Lỗi validate (`[Required]`… fail) được `ApiBehaviorOptions.InvalidModelStateResponseFactory` xử lý riêng trong `Program.cs`, không đi qua đây — xem `backend/Plan.md` §5.1/§5.3.
 
-**`JacksonConfig`** — tiền là string, ngày không offset
-```java
-@Bean Jackson2ObjectMapperBuilderCustomizer json() {
-    return b -> {
-        b.serializerByType(BigDecimal.class, new ToStringSerializer());
-        b.simpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        b.serializers(new LocalDateTimeSerializer(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
-        b.serializers(new LocalDateSerializer(DateTimeFormatter.ISO_LOCAL_DATE));
-    };
-}
-```
+**JSON: tiền là string, ngày không offset.** `PropertyNamingPolicy = JsonNamingPolicy.CamelCase` + 2 converter nhỏ (`DecimalAsStringConverter`, `DateTimeNoOffsetConverter`) đăng ký trong `Program.cs` — không cần class config riêng như Jackson. Chi tiết `backend/Plan.md` §5.4.
 
 ### 3.3 Hai ví dụ đầy đủ (mẫu để nhân bản)
 
 **Branch — create** (`sp_branch_create` → `POST /api/branches`)
-```java
-@RestController @RequestMapping("/api/branches")
-class BranchController {
-    private final BranchService service;
-    BranchController(BranchService s) { this.service = s; }
-
-    @PostMapping @PreAuthorize("hasRole('ADMIN')")
-    ApiResponse<BranchResponse> create(@Valid @RequestBody CreateBranchRequest req) {
-        return service.create(req);
-    }
+```csharp
+[ApiController, Route("api/branches")]
+public sealed class BranchController(BranchService service) : ControllerBase
+{
+    [HttpPost, Authorize(Roles = "Admin")]
+    public Task<ApiResponse<BranchResponse>> Create([FromBody] CreateBranchRequest req) => service.CreateAsync(req);
 }
 
-record CreateBranchRequest(
-    @NotBlank @Size(max = 100) String branchName,
-    @NotBlank @Size(max = 100) String address,
-    @NotBlank @Size(max = 20)  String phoneNumber) {}
+public record CreateBranchRequest(
+    [property: Required, MaxLength(100)] string BranchName,
+    [property: Required, MaxLength(100)] string Address,
+    [property: Required, MaxLength(20)]  string PhoneNumber);
 
-record BranchResponse(String branchId, String branchName, String address,
-                      String phoneNumber, String status,
-                      LocalDateTime createdAt, LocalDateTime updatedAt) {}
+public record BranchResponse(string BranchId, string BranchName, string Address, string PhoneNumber,
+                              string Status, DateTime? CreatedAt, DateTime? UpdatedAt);
 
-@Service
-class BranchService {
-    private final StoredProcedureExecutor sp;
-    BranchService(StoredProcedureExecutor sp) { this.sp = sp; }
-
-    ApiResponse<BranchResponse> create(CreateBranchRequest r) {
-        var rows = sp.call("sp_branch_create", r.branchName(), r.address(), r.phoneNumber());
-        var row = rows.get(0);
-        return ApiResponse.ok(sp.message(row), map(row));
+public sealed class BranchService(StoredProcedureExecutor sp)
+{
+    public async Task<ApiResponse<BranchResponse>> CreateAsync(CreateBranchRequest r)
+    {
+        var rows = await sp.CallAsync("sp_branch_create",
+            ("@branch_name", r.BranchName), ("@address", r.Address), ("@phone_number", r.PhoneNumber));
+        var row = rows[0];
+        return ApiResponse<BranchResponse>.Ok(sp.Message(row), Map(row));
     }
-    private BranchResponse map(Map<String, Object> m) {
-        return new BranchResponse(
-            Rows.str(m, "branch_id"), Rows.str(m, "branch_name"), Rows.str(m, "address"),
-            Rows.str(m, "phone_number"), Rows.str(m, "status"),
-            Rows.dt(m, "created_at"), Rows.dt(m, "updated_at"));
-    }
+    private static BranchResponse Map(Dictionary<string, object?> m) => new(
+        Rows.Str(m, "branch_id")!, Rows.Str(m, "branch_name")!, Rows.Str(m, "address")!,
+        Rows.Str(m, "phone_number")!, Rows.Str(m, "status")!, Rows.Dt(m, "created_at"), Rows.Dt(m, "updated_at"));
 }
 ```
 
 **Transaction — transfer** (`sp_bank_transaction_transfer` → `POST /api/transactions/transfer`)
-```java
-@PostMapping("/transfer") @PreAuthorize("hasRole('CUSTOMER')")
-ApiResponse<TransactionResponse> transfer(@Valid @RequestBody TransferRequest req,
-                                          @AuthenticationPrincipal AccountPrincipal me) {
-    ownership.assertOwnsBankAccount(me, req.fromBankAccountId());   // TK nguồn phải của người đăng nhập
-    var rows = sp.call("sp_bank_transaction_transfer",
-        req.fromBankAccountId(), req.toBankAccountId(),
-        req.amount(), req.fee() == null ? BigDecimal.ZERO : req.fee(), req.description());
-    var row = rows.get(0);
-    notifier.afterTransfer(row);                                    // §Phase 10: bắn Notification
-    return ApiResponse.ok(sp.message(row), TransactionResponse.from(row));
+```csharp
+[HttpPost("transfer"), Authorize(Roles = "Customer")]
+public async Task<ApiResponse<TransactionResponse>> Transfer([FromBody] TransferRequest req)
+{
+    await ownership.AssertOwnsBankAccountAsync(User, req.FromBankAccountId);   // TK nguồn phải của người đăng nhập
+    var rows = await sp.CallAsync("sp_bank_transaction_transfer",
+        ("@from_account_id", req.FromBankAccountId), ("@to_account_id", req.ToBankAccountId),
+        ("@amount", req.Amount), ("@fee", req.Fee ?? 0m), ("@description", req.Description));
+    var row = rows[0];
+    await notifier.AfterTransferAsync(row);                                   // §Phase 10: bắn Notification
+    return ApiResponse<TransactionResponse>.Ok(sp.Message(row), TransactionResponse.From(row));
 }
 
-record TransferRequest(
-    @NotNull Long fromBankAccountId,
-    @NotNull Long toBankAccountId,
-    @NotNull @DecimalMin("0.01") BigDecimal amount,
-    @DecimalMin("0.00") BigDecimal fee,
-    @Size(max = 255) String description) {}
+public record TransferRequest(
+    [property: Required] long FromBankAccountId,
+    [property: Required] long ToBankAccountId,
+    [property: Required, Range(0.01, double.MaxValue)] decimal Amount,
+    [property: Range(0, double.MaxValue)] decimal? Fee,
+    [property: MaxLength(255)] string? Description);
 ```
 
 ### 3.4 Quy tắc chung backend
 
 - Mọi controller trả `ApiResponse<T>`.
-- Validate input bằng annotation **trước** khi gọi proc (fail-fast, HTTP 400).
-- **Không** `@Transactional` — proc tự `BEGIN/COMMIT/ROLLBACK`. Một request = một `sp.call`.
-- Role check: `@PreAuthorize("hasRole('CUSTOMER'|'EMPLOYEE'|'ADMIN')")`; nghiệp vụ Loan review thêm check `position = 'Loan Officer'`.
+- Validate input bằng DataAnnotations **trước** khi gọi proc (fail-fast, HTTP 400 — tự động qua `[ApiController]`).
+- **Không** `TransactionScope` — proc tự `BEGIN/COMMIT/ROLLBACK`. Một request = một `sp.CallAsync`.
+- Role check: `[Authorize(Roles = "Customer"|"Employee"|"Admin")]`; nghiệp vụ Loan review thêm check `position = 'Loan Officer'`.
 - Ownership: `OwnershipGuard` — customer chỉ thao tác trên banking account / loan / saving / beneficiary của chính mình (query nhẹ qua `fn_*_validate_owner` hoặc view).
 - Danh sách endpoint đầy đủ: **Phụ lục A**.
 
 ### 3.5 Domain / tính toán + job nền
 
-> Đây là **toàn bộ** phần Java "tự làm logic". Mọi thứ khác đi qua proc. Nếu chỗ này thấy trống thì đúng — kiến trúc "proc là nguồn sự thật" khiến tầng app mỏng theo thiết kế.
+> Đây là **toàn bộ** phần C# "tự làm logic". Mọi thứ khác đi qua proc. Nếu chỗ này thấy trống thì đúng — kiến trúc "proc là nguồn sự thật" khiến tầng app mỏng theo thiết kế.
 
-**`loan/AmortizationSchedule.java`** — lịch trả góp cho `GET /loans/{id}/schedule`. Khớp công thức `sp_loan_apply` (§1.3): `r = annual/12/100` ; `M = P·r·(1+r)^n / ((1+r)^n − 1)` ; `r == 0` → `M = P/n`. Kỳ cuối nuốt phần lẻ để dư nợ về 0.
+**`Loan/AmortizationSchedule.cs`** — lịch trả góp cho `GET /loans/{id}/schedule`. Khớp công thức `sp_loan_apply` (§1.3): `r = annual/12/100` ; `M = P·r·(1+r)^n / ((1+r)^n − 1)` ; `r == 0` → `M = P/n`. Kỳ cuối nuốt phần lẻ để dư nợ về 0.
 
-```java
-public record AmortRow(int period, BigDecimal payment, BigDecimal principal,
-                       BigDecimal interest, BigDecimal balance) {}
+```csharp
+public record AmortRow(int Period, decimal Payment, decimal Principal, decimal Interest, decimal Balance);
 
-public final class AmortizationSchedule {
-    private static final int SC = 2;               // DECIMAL(18,2)
-    private static final RoundingMode RM = RoundingMode.HALF_UP;
-
-    public static BigDecimal monthlyPayment(BigDecimal principal, BigDecimal annualPct, int months) {
-        if (months <= 0) throw new IllegalArgumentException("Duration must be greater than zero.");
-        double r = annualPct.doubleValue() / 12.0 / 100.0;
-        if (r == 0.0) return principal.divide(BigDecimal.valueOf(months), SC, RM);
-        double p  = principal.doubleValue();
-        double pw = Math.pow(1.0 + r, months);
-        return BigDecimal.valueOf(p * r * pw / (pw - 1.0)).setScale(SC, RM);
+public static class AmortizationSchedule
+{
+    public static decimal MonthlyPayment(decimal principal, decimal annualPct, int months)
+    {
+        if (months <= 0) throw new ArgumentException("Duration must be greater than zero.");
+        double r = (double)annualPct / 12.0 / 100.0;
+        if (r == 0.0) return Math.Round(principal / months, 2, MidpointRounding.AwayFromZero);
+        double p = (double)principal, pw = Math.Pow(1.0 + r, months);
+        return Math.Round((decimal)(p * r * pw / (pw - 1.0)), 2, MidpointRounding.AwayFromZero);
     }
 
-    public static List<AmortRow> build(BigDecimal principal, BigDecimal annualPct, int months) {
-        BigDecimal pay = monthlyPayment(principal, annualPct, months);
-        double r = annualPct.doubleValue() / 12.0 / 100.0;
-        BigDecimal bal = principal.setScale(SC, RM);
-        List<AmortRow> rows = new ArrayList<>(months);
-        for (int k = 1; k <= months; k++) {
-            BigDecimal interest  = bal.multiply(BigDecimal.valueOf(r)).setScale(SC, RM);
-            BigDecimal principalPart = pay.subtract(interest);
-            BigDecimal thisPay = pay;
-            if (k == months) { principalPart = bal; thisPay = principalPart.add(interest); }
-            bal = bal.subtract(principalPart);
-            rows.add(new AmortRow(k, thisPay, principalPart, interest, bal));
+    public static List<AmortRow> Build(decimal principal, decimal annualPct, int months)
+    {
+        var pay = MonthlyPayment(principal, annualPct, months);
+        double r = (double)annualPct / 12.0 / 100.0;
+        var bal = Math.Round(principal, 2, MidpointRounding.AwayFromZero);
+        var rows = new List<AmortRow>(months);
+        for (int k = 1; k <= months; k++)
+        {
+            var interest = Math.Round(bal * (decimal)r, 2, MidpointRounding.AwayFromZero);
+            var principalPart = pay - interest;
+            var thisPay = pay;
+            if (k == months) { principalPart = bal; thisPay = principalPart + interest; }
+            bal -= principalPart;
+            rows.Add(new AmortRow(k, thisPay, principalPart, interest, bal));
         }
         return rows;
     }
 }
 ```
 
-Test (`AmortizationScheduleTest`): `build(12_000_000, 12.00, 12)` → 12 dòng; `Σ principal == principal`; `rows.getLast().balance()` == 0.
+Test (`AmortizationScheduleTests`): `Build(12_000_000, 12.00m, 12)` → 12 dòng; `Σ Principal == principal`; dòng cuối `Balance == 0`.
 
-**`saving/MaturedSavingsJob.java`** — thay batch job riêng bằng một method `@Scheduled`:
+**`Saving/MaturedSavingsJob.cs`** — thay batch job riêng bằng một `BackgroundService` (có sẵn trong `Microsoft.Extensions.Hosting`, không cần Quartz.NET):
 
-```java
-@Component
-class MaturedSavingsJob {
-    private final StoredProcedureExecutor sp;
-    MaturedSavingsJob(StoredProcedureExecutor sp) { this.sp = sp; }
+```csharp
+public sealed class MaturedSavingsJob(IServiceScopeFactory scopeFactory, ILogger<MaturedSavingsJob> log) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
+        while (await timer.WaitForNextTickAsync(ct))
+        {
+            var vn = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vn);
+            if (now.Hour != 0 || now.Minute != 5) continue;   // chạy 1 lần lúc 00:05
 
-    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Ho_Chi_Minh")   // 00:05 mỗi ngày
-    void settleMatured() {
-        var rows = sp.call("sp_saving_account_settle_matured");
-        log.info("Settled {} matured saving account(s)", rows.size());
+            using var scope = scopeFactory.CreateScope();
+            var sp = scope.ServiceProvider.GetRequiredService<StoredProcedureExecutor>();
+            var rows = await sp.CallAsync("sp_saving_account_settle_matured");
+            log.LogInformation("Settled {Count} matured saving account(s)", rows.Count);
+        }
     }
 }
 ```
 
-Bật bằng `@EnableScheduling` trên class config. Không cần thư viện ngoài, không tiến trình riêng.
+Đăng ký bằng `builder.Services.AddHostedService<MaturedSavingsJob>()` trong `Program.cs`. Không cần thư viện ngoài, không tiến trình riêng.
 
 **Bỏ qua có chủ đích:**
-- Class `Money` bọc `BigDecimal` — `setScale(2, HALF_UP)` + serializer §3.2 đã đủ; chỉ thêm khi phải cộng tiền nhiều currency trong Java (hiện không).
-- `Luhn` trong Java — `sp_card_create` sinh + check digit trong SQL; FE muốn validate số thẻ gõ tay thì tự làm ở `validation.ts`.
-- Domain state machine (Loan/Saving) trong Java — proc đã ép; xem §3.1.
+- Class `Money` bọc `decimal` — `Math.Round(v, 2, AwayFromZero)` + converter §3.2 đã đủ; chỉ thêm khi phải cộng tiền nhiều currency (hiện không).
+- `Luhn` trong C# — `sp_card_create` sinh + check digit trong SQL; FE muốn validate số thẻ gõ tay thì tự làm ở `validation.ts`.
+- Domain state machine (Loan/Saving) trong C# — proc đã ép; xem §3.1.
 
 ---
 
@@ -576,7 +561,7 @@ State: **React Query** (server cache) + **AuthContext** (session). **Không Redu
 
 ### 4.2 Nguyên tắc chống xung đột
 
-- `types/models.ts` viết **thủ công theo §1** (hoặc sinh từ OpenAPI của Spring bằng `openapi-typescript`).
+- `types/models.ts` viết **thủ công theo §1** (hoặc sinh từ OpenAPI của backend — Swashbuckle — bằng `openapi-typescript`).
 - **Mọi** số tiền đi qua `money.ts`; **mọi** enum đi qua `enums.ts`; **mọi** ngày qua `format.ts`. Không component nào tự `parseFloat` / `new Date()` trực tiếp trên dữ liệu API.
 - Form validation (`validation.ts`) mirror đúng ràng buộc DB + validate của proc (`amount > 0`, `gender ∈ {Male,Female,Other}`, `duration_months > 0`, …).
 
@@ -711,14 +696,14 @@ export const transactionApi = {
 |---|---|---|
 | **0** | ✅ Xong: schema + 63 proc + 17 bug DB đã vá + `deploy.ps1` (`DEPLOY OK` + `SEED OK`). Còn lại: proc bổ sung §2.1 (`sp_admin_*`, và `sp_saving_account_settle_matured` nếu chưa có) — làm ở Phase 3/8/10 | — |
 | **1** | Chốt §1 (contract) với cả nhóm. Tạo repo `backend/`, `frontend/` | Contract được review, 2 skeleton build rỗng chạy được |
-| **2** | Spring skeleton: `DataSourceConfig`, `StoredProcedureExecutor`, `ApiResponse`, `GlobalExceptionHandler`, `SqlErrorCatalog`, `JacksonConfig`; 1 lát cắt dọc `sp_branch_create` → `POST /api/branches` + integration test | 1 endpoint end-to-end xanh |
-| **3** | Auth: register → OTP → activate → login (JWT) → `/me`; BCrypt; Spring ghi `LoginHistory`. FE: trang Login/Register/OtpVerify + `AuthContext` + `ProtectedRoute` | Đăng ký + đăng nhập thật, token hoạt động |
-| **4** | Customer / Employee / Branch CRUD: Spring endpoints + React pages | 3 module CRUD đủ trên cả 2 tầng |
+| **2** | ASP.NET Core skeleton: `StoredProcedureExecutor`, `ApiResponse`, `ApiExceptionHandler`, `SqlErrorCatalog`, JSON converters; 1 lát cắt dọc `sp_branch_create` → `POST /api/branches` + integration test | 1 endpoint end-to-end xanh |
+| **3** | Auth: register → OTP → activate → login (JWT) → `/me`; `PasswordHasher<T>`; backend ghi `LoginHistory`. FE: trang Login/Register/OtpVerify + `AuthContext` + `ProtectedRoute` | Đăng ký + đăng nhập thật, token hoạt động |
+| **4** | Customer / Employee / Branch CRUD: backend endpoints + React pages | 3 module CRUD đủ trên cả 2 tầng |
 | **5** | BankingAccount + Card: mở/đóng/freeze TK, phát hành/khoá thẻ. FE: OpenAccount, Cards, IssueCard | Mở TK + phát thẻ (số thẻ pass Luhn — do proc sinh) |
 | **6** | **Transactions** (trọng yếu về đồng thời): deposit/withdraw/transfer/payment. FE: Transfer + TransactionHistory | Test 20 lệnh chuyển song song vượt số dư → đúng phần được phép thành công, `available_balance ≥ 0` |
-| **7** | Loan: apply/review/disburse/repay. Spring `AmortizationSchedule` + test (§3.5). FE: LoanApply, LoanDetail (bảng trả góp), Employee `LoanReviewQueue` | Vòng đời khoản vay đủ; lịch trả góp FE = Java = công thức proc |
-| **8** | Saving: open/close/settle-matured. Spring `MaturedSavingsJob` `@Scheduled` (§3.5). FE: Savings, OpenSaving | Mở + tất toán (đúng hạn & trước hạn); job đổi status `Matured` |
-| **9** | Beneficiary + Notification. Spring bắn `sp_notification_create` sau khi transfer/loan thành công (best-effort, không rollback nghiệp vụ nếu notify lỗi) | Chuyển tiền xong nhận thông báo |
+| **7** | Loan: apply/review/disburse/repay. Backend `AmortizationSchedule` + test (§3.5). FE: LoanApply, LoanDetail (bảng trả góp), Employee `LoanReviewQueue` | Vòng đời khoản vay đủ; lịch trả góp FE = C# = công thức proc |
+| **8** | Saving: open/close/settle-matured. Backend `MaturedSavingsJob` (`BackgroundService`, §3.5). FE: Savings, OpenSaving | Mở + tất toán (đúng hạn & trước hạn); job đổi status `Matured` |
+| **9** | Beneficiary + Notification. Backend bắn `sp_notification_create` sau khi transfer/loan thành công (best-effort, không rollback nghiệp vụ nếu notify lỗi) | Chuyển tiền xong nhận thông báo |
 | **10** | Admin + Dashboard: `sp_admin_update_account_status`, `vw_CustomerStatistics` (đã sửa), trang Stats | Admin khoá/mở account; dashboard hiện số liệu |
 | **11** | Hardening: gửi OTP qua email thật, rate-limit + khoá đăng nhập, `/security-review`, load test transfer, CI (`deploy.ps1` + `mvn test` + `npm run build && npm test`) | CI xanh toàn bộ |
 
@@ -733,12 +718,12 @@ pwsh -File database/deploy.ps1 -Seed
 ```
 Smoke test 30 case (search/get toàn bộ module + 2 proc admin mới): **30/30 PASS**, mã lỗi 170000/171010 đúng band.
 
-**Backend (Spring)**
+**Backend (ASP.NET Core)**
 ```bash
-cd backend && mvn test
-# integration test trỏ DB test (dựng bằng chính deploy.ps1 trong @BeforeAll hoặc Testcontainers mssql)
+cd backend && dotnet test
+# integration test trỏ DB test (dựng bằng chính deploy.ps1 trước khi chạy, hoặc Testcontainers for .NET mssql)
 ```
-Kịch bản tối thiểu: `POST /api/branches` (201 + envelope) · register→otp→activate→login (JWT hợp lệ) · transfer thiếu số dư → 409 + `error.code = 250040` · `AmortizationScheduleTest` (§3.5): Σ principal == principal, dư nợ kỳ cuối == 0.
+Kịch bản tối thiểu: `POST /api/branches` (201 + envelope) · register→otp→activate→login (JWT hợp lệ) · transfer thiếu số dư → 409 + `error.code = 250040` · `AmortizationScheduleTests` (§3.5): Σ Principal == principal, dư nợ kỳ cuối == 0.
 
 **Frontend**
 ```bash
@@ -766,7 +751,7 @@ tổng credit vào các TK đích = 1.000.000.
 | POST | `/otp` | `sp_otp_generate_otpcode` | - | `{accountId,purpose}` | `{otpId,expiresAt}` (KHÔNG trả code) |
 | POST | `/otp/verify` | `sp_otp_verify` | - | `{accountId,otpCode,purpose}` | `AccountView` |
 | POST | `/activate` | `sp_account_activate` | - | `{accountId}` | `AccountView` |
-| POST | `/login` | `sp_account_login` (+ BCrypt + JWT + `sp_login_history_create`) | - | `{username,password}` | `{token,account:AccountView}` |
+| POST | `/login` | `sp_account_login` (+ PasswordHasher + JWT + `sp_login_history_create`) | - | `{username,password}` | `{token,account:AccountView}` |
 | POST | `/password/change` | `sp_account_change_password` | C/E/A | `{oldPassword,newPassword}` | `{accountId,updatedAt}` |
 | POST | `/password/reset` | `sp_account_reset_password` | - | `{accountId,newPassword}` (sau khi verify OTP `PasswordReset`) | `{accountId,updatedAt}` |
 | GET | `/me` | — (đọc JWT + `vw_Account`) | C/E/A | — | `AccountView` |
@@ -881,7 +866,8 @@ tổng credit vào các TK đích = 1.000.000.
 
 ## Ghi chú kết
 
-- C++ core đã bỏ (2026-09-09) — xem §0.2. Domain OOP + tính toán ở tầng service Spring (§3.5); job nền là `@Scheduled`.
+- C++ core đã bỏ (2026-09-09); Spring Boot/Java đã đổi sang ASP.NET Core/C# (2026-09-12) — xem §0.2. Domain OOP + tính toán ở tầng service backend (§3.5); job nền là `BackgroundService`.
 - SQL sửa DB (§2) là **snippet để chép tay** vào file `.sql` tương ứng, không ghi đè tự động.
 - Không viết sẵn cả 60 controller — dùng 2 mẫu §3.3 nhân bản theo Phụ lục A.
 - Mọi thay đổi phải giữ `database/deploy.ps1` chạy ra `DEPLOY OK` (xem memory *Clean deploy workflow*).
+- CI (§5 Phase 11): `mvn test` cũ đổi thành `dotnet test`.

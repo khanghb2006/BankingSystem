@@ -1,6 +1,7 @@
 using Backend.Db;
 using Backend.Common;
 using System.Text.Json;
+using Backend.Branch;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +55,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options 
 builder.Services.AddScoped<StoredProcedureExecutor>();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails(); // required plumbing for AddExceptionHandler to work
+builder.Services.AddScoped<BranchService>();
 
 // Allow the React dev server (different port = different origin) to call this API
 builder.Services.AddCors(options =>
