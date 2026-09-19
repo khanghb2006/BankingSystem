@@ -2,6 +2,9 @@ using Backend.Db;
 using Backend.Common;
 using System.Text.Json;
 using Backend.Branch;
+using Backend.Auth;
+using Backend.Security;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +59,26 @@ builder.Services.AddScoped<StoredProcedureExecutor>();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails(); // required plumbing for AddExceptionHandler to work
 builder.Services.AddScoped<BranchService>();
+
+
+/* 
+    Auth wiring
+    JwtOptions is read once at startup from the "Jwt" section (Secret comes from 
+        appsettings.Development.json , TtlMinutes from appsettings.json)
+*/
+JwtOptions jwtOptions = builder.Configuration
+    .GetSection(JwtOptions.SectionName)
+    .Get<JwtOptions>()!;
+
+// Fail fast : a missing secret would otherwise only blow up on the first login
+if (string.IsNullOrWhiteSpace(jwtOptions.Secret))
+    throw new Exception("Jwt:Secret is not configured.");
+
+builder.Services.AddSingleton(jwtOptions);
+builder.Services.AddSingleton<JwtIssuer>();
+builder.Services.AddSingleton<PasswordHasher<object>>();
+builder.Services.AddScoped<AuthService>();
+
 
 // Allow the React dev server (different port = different origin) to call this API
 builder.Services.AddCors(options =>
