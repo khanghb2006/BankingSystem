@@ -231,6 +231,31 @@ public sealed class AuthService (
         return ApiResponse<PasswordUpdateResponse>.Ok(message, new PasswordUpdateResponse(updatedAccountId , updatedAt));
     }
 
+    /* 
+        Reset Password - the forgot-password flow , the caller is NOT logged in 
+        Step is already happened before this method is called
+            1. Generate OTP (purpose = "PasswordReset")
+            2. Verify OTP (purpose = "PasswordReset")
+    */
+    public async Task<ApiResponse<PasswordUpdateResponse>> ResetPasswordAsync 
+        (ResetPasswordRequest request)
+    {
+        string newPasswordHash = passwordHasher.HashPassword(DummyUser , request.NewPassword);
+
+        Dictionary<string , object?> row = await storedProcedureExecutor.OneAsync (
+            "sp_account_reset_password",
+            ("@account_id" , request.AccountId),
+            ("@new_password" , newPasswordHash)
+        );
+
+        string? message = storedProcedureExecutor.Message(row);
+        long updatedAccountId = Rows.Lng(row , "account_id")!.Value;
+        DateTime updatedAt = Rows.Dt(row , "updated_at")!.Value;
+
+        return ApiResponse<PasswordUpdateResponse>.Ok(message, 
+            new PasswordUpdateResponse(updatedAccountId , updatedAt));
+    }
+
     /*
         Convert one raw database row (a row of vw_Account plus message column) into a typed
             AccountResponse
