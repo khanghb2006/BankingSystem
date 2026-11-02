@@ -23,7 +23,7 @@ GO
     Note:
         + Returns 0 rows when not found.
 */
-CREATE OR ALTER PROCEDURE sp_account_get_credentials
+CREATE OR ALTER PROCEDURE dbo.sp_account_get_credentials
     @account_id BIGINT = NULL,
     @username VARCHAR(50) = NULL
 AS
