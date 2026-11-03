@@ -1,4 +1,6 @@
+using BankingSystem.Api.Data;
 using BankingSystem.Api.Common;
+using BankingSystem.Api.Features.Branches;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,12 @@ builder.Services.AddOpenApi();
 // Register the global handler so exceptions become the standard JSON evenlope
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.AddSingleton<StoredProcedureExecutor>();
+
+
+// Scoped : on instance per HTTP Request
+builder.Services.AddScoped<BranchRepository>();
+builder.Services.AddScoped<IBranchService, BranchService>();
 
 var app = builder.Build();
 

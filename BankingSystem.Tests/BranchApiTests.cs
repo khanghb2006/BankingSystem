@@ -47,8 +47,6 @@ public class BranchApiTests (WebApplicationFactory<Program> factory)
             */
             var branchId = branch.GetProperty("branchId").GetString()!;
 
-            foundSeededBranch = false;
-
             // The NCHAR(10) column pads ids with spaces; the API must trim them.
             Assert.Equal(branchId.Trim() , branchId);
 
