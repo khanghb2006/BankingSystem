@@ -44,8 +44,9 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 | **M3 — Sản phẩm** | Thẻ, khoản vay, tiết kiệm | 13–17 |
 | **M4 — Vận hành** | Thông báo, khoá tài khoản, lịch sử đăng nhập, thống kê | 18–20 |
 | **M5 — Sẵn sàng triển khai** | Bảo mật nâng cao, Docker, CI | 21–22 |
+| **M6 — Mở rộng quy mô** | Nhiều bản API chạy sau load balancer; thông báo đi qua message queue | 23–24 |
 
-**Vòng làm chuẩn cho mỗi task** (chi tiết: [`docs/pipeline.md`](docs/pipeline.md) §3): viết test theo tiêu chí nghiệm thu → chạy thấy fail → cài đặt Repository → Service → Controller → `deploy.ps1 -Seed` + `dotnet test` xanh → kiểm Definition of Done → commit.
+**Vòng làm chuẩn cho mỗi task** (chi tiết: [`docs/pipeline.md`](docs/pipeline.md) §3): cài đặt Repository → Service → Controller → viết test theo tiêu chí nghiệm thu → `deploy.ps1 -Seed` + `dotnet test` xanh → kiểm Definition of Done → commit.
 
 ---
 
@@ -114,8 +115,8 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - OTP sai → `422`. OTP đúng + kích hoạt → tài khoản `Active`.
 - Yêu cầu OTP lần 2 → OTP lần 1 không còn dùng được.
 
-- [ ] Viết test cho 5 tiêu chí → fail.
-- [ ] Cài đặt luồng đăng ký → OTP → kích hoạt; OTP chỉ ghi log ở môi trường Development → test xanh.
+- [ ] Cài đặt luồng đăng ký → OTP → kích hoạt; OTP chỉ ghi log ở môi trường Development.
+- [ ] Viết test cho 5 tiêu chí → xanh.
 - [ ] Commit: `feat(auth): registration and OTP activation`
 
 ### Task 4: Đăng nhập & phiên làm việc (UC-02, FR-07)
@@ -134,8 +135,8 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - `GET /api/auth/me` không token → `401`; có token → `200`, không có `password_hash`. *(Review Focus 5)*
 - Token hết hạn → `401`.
 
-- [ ] Viết test → fail.
-- [ ] Cài đặt đăng nhập, phát token, cấu hình xác thực JWT (authentication trước authorization) → test xanh.
+- [ ] Cài đặt đăng nhập, phát token, cấu hình xác thực JWT (authentication trước authorization).
+- [ ] Viết test → xanh.
 - [ ] Khoá endpoint ghi của chi nhánh (chuẩn bị cho Task 8) bằng vai trò Admin.
 - [ ] Commit: `feat(auth): login, JWT session and login history`
 
@@ -151,7 +152,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Đặt lại mật khẩu sau khi xác thực OTP `PasswordReset` → đăng nhập được bằng mật khẩu mới.
 - Đặt lại khi chưa xác thực OTP → bị từ chối.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(auth): change and reset password`
 
 ### Task 6: Hồ sơ khách hàng (UC-04, UC-05)
@@ -169,7 +170,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Khách hàng gọi tổng quan của khách hàng khác → `403`. *(Review Focus 2)*
 - Nhân viên tìm theo CCCD hoặc họ tên → thấy kết quả; khách hàng gọi tìm kiếm → `403`.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(users): customer profile and staff lookup`
 
 ### Task 7: Quản lý nhân viên (UC-06)
@@ -184,7 +185,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Khách hàng hoặc nhân viên gọi các thao tác quản lý → `403`.
 - Nhân viên xem và sửa hồ sơ của chính mình.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(users): employee management`
 
 ### Task 8: Quản lý chi nhánh (UC-07)
@@ -199,7 +200,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Không phải Admin → `403` với mọi thao tác ghi.
 - Nhân viên / Admin xem tổng quan chi nhánh; khách hàng → `403`.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(branches): branch administration`
 
 ---
@@ -222,7 +223,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Xem tài khoản của người khác → `403`. *(Review Focus 2)*
 - Nhân viên đóng băng → `Frozen`; khách hàng tự đổi trạng thái → `403`.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(accounts): open and manage banking accounts`
 
 ### Task 10: Nạp, rút tiền & lịch sử giao dịch (UC-10, UC-13)
@@ -242,7 +243,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Hai lệnh rút song song, tổng vượt số dư → đúng một lệnh thành công, số dư khả dụng không âm. *(Review Focus 1)*
 - Lịch sử lọc được theo loại, trạng thái, khoảng ngày, có phân trang; xem lịch sử tài khoản người khác → `403`.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(transactions): deposit, withdraw and history`
 
 ### Task 11: Chuyển khoản & thanh toán (UC-11, UC-12)
@@ -262,7 +263,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Thanh toán trừ đúng số tiền từ tài khoản nguồn.
 
 - [ ] Chốt quyết định xác nhận OTP (ghi vào PLAN).
-- [ ] Viết test (gồm test đồng thời) → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test (gồm test đồng thời) → xanh.
 - [ ] Commit: `feat(transactions): transfer and payment`
 
 ### Task 12: Người thụ hưởng (UC-14)
@@ -277,7 +278,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Xem người thụ hưởng của khách hàng khác → `403` / `404`.
 - Chuyển khoản tới người thụ hưởng đã lưu → thành công như Task 11.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(transactions): beneficiaries`
 
 ---
@@ -296,7 +297,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Phát hành cho tài khoản của người khác → `403`. *(Review Focus 2)*
 - Khoá thẻ → `Blocked`.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(cards): issue and block cards`
 
 ### Task 14: Vòng đời khoản vay (UC-16, UC-17, UC-18 phần trả nợ)
@@ -312,7 +313,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Trả một kỳ → dư nợ giảm; trả hết → `Closed`.
 - Khách hàng chỉ thấy khoản vay của mình; xem khoản vay người khác → `403`. *(Review Focus 2)*
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(loans): loan lifecycle`
 
 ### Task 15: Lịch trả góp (UC-18)
@@ -328,7 +329,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Số tháng ≤ 0 → bị từ chối.
 - Endpoint: chủ khoản vay xem được; người khác → `403`.
 
-- [ ] Viết unit test → fail → cài đặt → xanh; thêm integration test cho endpoint.
+- [ ] Cài đặt → viết unit test → xanh; thêm integration test cho endpoint.
 - [ ] Commit: `feat(loans): amortization schedule`
 
 ### Task 16: Tiết kiệm (UC-19)
@@ -343,7 +344,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Tất toán sổ đã đáo hạn → nhận gốc + lãi đơn (BR-11).
 - Mở sổ từ tài khoản người khác / xem sổ người khác → `403`. *(Review Focus 2)*
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(savings): open and close saving accounts`
 
 ### Task 17: Tự động đáo hạn (UC-20)
@@ -358,7 +359,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Job gặp lỗi → ghi log, API vẫn phục vụ request bình thường.
 - Lịch chạy: 00:05 giờ Việt Nam hằng ngày.
 
-- [ ] Viết test cho phần gọi proc của job → fail → cài đặt → xanh; kiểm tay với chu kỳ rút ngắn.
+- [ ] Cài đặt → viết test cho phần gọi proc của job → xanh; kiểm tay với chu kỳ rút ngắn.
 - [ ] Commit: `feat(savings): daily maturity settlement job`
 
 ---
@@ -380,7 +381,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Xem danh sách chưa đọc, đánh dấu đã đọc.
 - Xem thông báo của người khác → `403` / `404`.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(notifications): transaction notifications and inbox`
 
 ### Task 19: Khoá tài khoản & lịch sử đăng nhập (UC-22, UC-23)
@@ -396,7 +397,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Khách hàng chỉ xem lịch sử đăng nhập của mình; Admin xem của mọi người.
 - Không phải Admin gọi khoá / mở khoá → `403`.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(admin): account locking and login history`
 
 ### Task 20: Thống kê (UC-24)
@@ -409,7 +410,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Admin nhận số liệu thống kê khớp với dữ liệu seed.
 - Không phải Admin → `403`.
 
-- [ ] Viết test → fail → cài đặt → xanh.
+- [ ] Cài đặt → viết test → xanh.
 - [ ] Commit: `feat(admin): statistics dashboard data`
 
 ---
@@ -427,7 +428,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - Rà soát: không có secret trong git; mọi endpoint có id tài nguyên đều kiểm tra quyền sở hữu (đối chiếu api_contract §3).
 - Load test 100 người dùng đồng thời trên luồng đăng nhập + chuyển khoản: 95% request dưới 2 giây (NFR-05), không số dư nào âm.
 
-- [ ] Viết test → fail → cài đặt → xanh; chạy rà soát bảo mật.
+- [ ] Cài đặt → viết test → xanh; chạy rà soát bảo mật.
 - [ ] Commit: `feat(security): login throttling, rate limiting, email OTP`
 
 ### Task 22: Đóng gói & CI
@@ -445,3 +446,47 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - [ ] Viết workflow CI → push → xanh.
 - [ ] Cập nhật README phần "Chạy bằng Docker".
 - [ ] Commit: `ci: dockerize api and add CI pipeline`
+
+---
+
+## M6 — Mở rộng quy mô
+
+> Chỉ bắt đầu sau Task 22. Load test ở Task 21 phải chạy trước để biết nút thắt nằm ở đâu: nếu SQL Server là chỗ nghẽn thì thêm bản API hay message queue không làm hệ thống nhanh hơn. Hai task dưới đây là bài học kiến trúc có chủ đích, không phải yêu cầu của SRS.
+
+### Task 23: Load balancer & nhiều bản API
+
+**Kết quả:** Chạy từ 2 bản API trở lên sau một load balancer; mất một bản thì hệ thống vẫn phục vụ.
+
+**Phạm vi:** `docker-compose.yml` (thêm `nginx`, chạy `api` nhiều bản), `nginx.conf`.
+
+**Điều kiện:** API không giữ trạng thái trong bộ nhớ (JWT, không session), nên thêm bản chỉ là chạy thêm container. Cần kiểm tra lại: JWT secret lấy từ biến môi trường và giống nhau ở mọi bản; `MaturitySettlementJob` (Task 17) chạy đồng thời ở mọi bản mà kết quả không đổi.
+
+**Tiêu chí nghiệm thu:**
+- `docker compose up --scale api=2`: 20 request liên tiếp tới cổng 8080 được chia cho cả hai bản (nhìn qua log hoặc header tên bản).
+- Dừng một bản API → request vẫn `200`.
+- Token cấp ở bản 1 dùng được ở bản 2.
+- Job đáo hạn chạy trên hai bản cùng lúc → kết quả không đổi.
+- Chạy lại load test của Task 21: không số dư nào âm; ghi lại số đo trước và sau để biết LB có giúp hay không.
+
+- [ ] Cập nhật compose + viết `nginx.conf` → kiểm tay các tiêu chí trên.
+- [ ] Ghi số đo trước/sau của load test vào `docs/`.
+- [ ] Commit: `feat(infra): nginx load balancer with two api instances`
+
+### Task 24: Message queue cho thông báo
+
+**Kết quả:** Gửi thông báo (và email OTP) không làm chậm hay làm hỏng giao dịch; thông báo không mất khi API khởi động lại.
+
+**Phạm vi:** `Features/Notifications` (đầu gửi + `BackgroundService` đầu nhận), service RabbitMQ trong `docker-compose.yml`. Giữ nguyên `INotificationService.NotifyAsync` của Task 18, chỉ đổi phần cài đặt bên trong nên Transactions và Loans không phải sửa.
+
+**Không đưa vào queue:** nạp, rút, chuyển khoản, thanh toán. Mỗi request vẫn đúng một lần gọi proc và trả kết quả ngay (system_design §7.3); đưa vào queue sẽ phải thêm trạng thái "đang xử lý" và xử lý trùng lệnh.
+
+**Tiêu chí nghiệm thu:**
+- Chuyển khoản thành công → response không chờ thông báo; thông báo xuất hiện sau vài giây.
+- Dừng bên nhận, chuyển khoản, bật lại → thông báo vẫn được tạo (queue bền vững).
+- RabbitMQ không chạy → chuyển khoản vẫn `200`, lỗi có trong log (BR-13).
+- Xử lý một message lỗi quá số lần thử lại → vào dead-letter queue, không chặn các message sau.
+- Giới hạn đã biết: queue giao ít nhất một lần nên hiếm khi trùng thông báo; ghi vào system_design §10.
+
+- [ ] Thêm RabbitMQ vào compose; cài đặt → viết test → xanh.
+- [ ] Ghi giới hạn vào `docs/system_design.md` §10.
+- [ ] Commit: `feat(notifications): publish notifications through message queue`

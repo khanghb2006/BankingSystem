@@ -175,10 +175,10 @@ stateDiagram-v2
 ```mermaid
 flowchart LR
     A[Chọn task kế tiếp<br/>trong PLAN.md] --> B[Đọc use case + proc liên quan]
-    B --> C[Viết test theo tiêu chí nghiệm thu<br/>→ chạy, thấy fail]
-    C --> D[Cài đặt Repository → Service → Controller]
+    B --> C[Cài đặt Repository → Service → Controller]
+    C --> D[Viết test theo tiêu chí nghiệm thu]
     D --> E[deploy.ps1 -Seed<br/>+ dotnet test]
-    E -- fail --> D
+    E -- fail --> C
     E -- pass --> F[Tự review theo Definition of Done]
     F --> G[Commit]
 ```

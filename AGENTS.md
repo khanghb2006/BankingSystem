@@ -9,13 +9,13 @@
 
 Người dùng **học backend C#** qua project này. Mục tiêu là họ hiểu và tự viết được, không phải agent viết cho xong.
 
-| Quy tắc                        | Chi tiết                                                                                                                                                                                       |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Không tự ghi code vào file** | Code mới (C#, SQL) phải **hiện trong chat**, người dùng tự gõ vào file. Agent chỉ ghi trực tiếp khi người dùng yêu cầu rõ ràng cho lần đó. Tài liệu (`.md`) thì được ghi khi được yêu cầu.     |
-| **Giải thích trước, code sau** | Mỗi đoạn code đi kèm phải clean và abstract: nó làm gì, vì sao viết vậy, thuộc task nào trong `PLAN.md`. Giải thích cú pháp C# mới (record, primary constructor, async/await, nullable, LINQ). |
-| **Comment kiểu doanh nghiệp**  | Comment nói _mục đích_ (vì sao), không diễn giải từng dòng. Code sạch, đặt tên rõ ràng, không viết tắt khó hiểu.                                                                               |
-| **Đi đúng thứ tự task**        | Không làm trước task sau. Không thêm thư viện, interface, abstraction "để sau dùng".                                                                                                           |
-| **Khi review code người dùng** | Chỉ ra lỗi, giải thích nguyên nhân, gợi ý hướng sửa. Để người dùng tự sửa trước khi đưa đáp án.                                                                                                |
+| Quy tắc                        | Chi tiết                                                                                                                                                                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Không tự ghi code vào file** | Code mới (C#, SQL) phải **hiện trong chat**, người dùng tự gõ vào file. Agent chỉ ghi trực tiếp khi người dùng yêu cầu rõ ràng cho lần đó. Tài liệu (`.md`) thì được ghi khi được yêu cầu.                                                                   |
+| **Giải thích trước, code sau** | Mỗi đoạn code đi kèm phải clean và abstract: nó làm gì, vì sao viết vậy, thuộc task nào trong `PLAN.md`. Giải thích cú pháp C# mới (record, primary constructor, async/await, nullable, LINQ). Giải thích thêm các hàm kế thừa lạ hoặc những kiểu dữ liệu lạ |
+| **Comment kiểu doanh nghiệp**  | Comment nói _mục đích_ (vì sao), không diễn giải từng dòng. Code sạch, đặt tên rõ ràng, không viết tắt khó hiểu. Viết bằng tiếng anh                                                                                                                         |
+| **Đi đúng thứ tự task**        | Không làm trước task sau. Không thêm thư viện, interface, abstraction "để sau dùng".                                                                                                                                                                         |
+| **Khi review code người dùng** | Chỉ ra lỗi, giải thích nguyên nhân, gợi ý hướng sửa. Để người dùng tự sửa trước khi đưa đáp án.                                                                                                                                                              |
 
 ---
 
@@ -64,8 +64,8 @@ dotnet run --project BankingSystem.Api        # chạy API, mở /swagger
 
 1. **Đọc** task trong `PLAN.md` và use case liên quan trong SRS. Khái niệm nào chưa hiểu thì hỏi để được _giải thích_, chưa xin code vội.
 2. **Mở file `.sql`** của proc liên quan, ghi ra: tên proc, tham số, cột trả về, mã lỗi.
-3. **Viết test** theo tiêu chí nghiệm thu, chạy thấy fail.
-4. **Tự viết code**: Repository → Service → Controller. Bí quá 20–30 phút mới hỏi gợi ý.
+3. **Tự viết code**: Repository → Service → Controller. Bí quá 20–30 phút mới hỏi gợi ý.
+4. **Viết test** theo tiêu chí nghiệm thu của task. Test là bắt buộc; chỉ thứ tự là code trước, test sau.
 5. **Chạy** `deploy.ps1 -Seed` + `dotnet test` cho tới khi xanh.
 6. **Tự giải thích lại** bằng lời: "file này làm gì, vì sao cần nó". Không nói được nghĩa là chưa hiểu.
 7. **Commit** theo message gợi ý trong task, rồi đánh dấu `- [x]` trong `PLAN.md`.
