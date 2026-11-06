@@ -7,8 +7,14 @@ namespace BankingSystem.Api.Features.Branches;
     One method per stored procedure. It only maps rows
         to domain objects
 */
-public class BranchRepository (StoredProcedureExecutor executor)
+public class BranchRepository
 {
+    private readonly StoredProcedureExecutor m_executor;
+
+    public BranchRepository(StoredProcedureExecutor executor)
+    {
+        this.m_executor = executor;
+    }
     // dbo.sp_branch_search: both parameters are optional (null = no filter)
     public async Task<List<Branch>> SearchAsync(
         string? name,
@@ -21,7 +27,7 @@ public class BranchRepository (StoredProcedureExecutor executor)
             ["@status"] = status
         };
 
-        var rows = await executor.QueryAsync(
+        var rows = await m_executor.QueryAsync(
             "dbo.sp_branch_search",
             parameters,
             cancellationToken);
@@ -44,7 +50,7 @@ public class BranchRepository (StoredProcedureExecutor executor)
             ["@branch_id"] = branchId
         };
 
-        var rows = await executor.QueryAsync(
+        var rows = await m_executor.QueryAsync(
             "dbo.sp_branch_get_info",
             parameters,
             cancellation);
@@ -57,7 +63,8 @@ public class BranchRepository (StoredProcedureExecutor executor)
         return new Branch(
             Id : row.Get<string>("branch_id").Trim(),
             Name : row.Get<string>("branch_name").Trim(),
-            Address : row.Get<string>("address").Trim(),
+            // address is nullable in the schema, and NVARCHAR is never padded, so read it as-is
+            Address : row.Get<string?>("address"),
             PhoneNumber : row.Get<string>("phone_number").Trim(),
             CreatedAt : row.Get<DateTime>("created_at"),
             UpdatedAt : row.Get<DateTime?>("updated_at"),
