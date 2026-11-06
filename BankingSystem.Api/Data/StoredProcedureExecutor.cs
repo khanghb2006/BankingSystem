@@ -9,11 +9,15 @@ namespace BankingSystem.Api.Data;
         + call stored procedures by name with named
         + Parameters and returns it rows
 */
-public class StoredProcedureExecutor(IConfiguration config)
+public class StoredProcedureExecutor
 {
-    private readonly string _connectionString = 
-        config.GetConnectionString("BankingSystem")
-        ?? throw new InvalidOperationException("Connection string is not configured");
+    private readonly string m_connectionString;
+
+    public StoredProcedureExecutor(IConfiguration config)
+    {
+        this.m_connectionString = config.GetConnectionString("BankingSystem")   
+            ?? throw new InvalidOperationException("Missing connection string 'BankingSystem'");
+    }
 
     /*
         procedureName : e.g "dbo.sp_branch_get_info"
