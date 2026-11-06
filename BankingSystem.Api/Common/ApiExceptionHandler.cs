@@ -5,10 +5,16 @@ namespace BankingSystem.Api.Common;
 // Global exception handler (IExceptionHandler, built into ASP.NET Core since .NET 8).
 // Controllers and services never need try/catch: they just throw, and this turns the
 // exception into the standard error envelope.
-public sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : IExceptionHandler
+public sealed class ApiExceptionHandler : IExceptionHandler
 {
     // THROW in T-SQL only accepts numbers >= 50000, so these are the procedures' business errors.
     private const int FirstBusinessErrorNumber = 50000;
+
+    private readonly ILogger<ApiExceptionHandler> m_logger;
+    public ApiExceptionHandler(ILogger<ApiExceptionHandler> logger)
+    {
+        this.m_logger = logger;
+    }
 
     // Returning true tells ASP.NET Core the exception is handled and nothing else should run.
     public async ValueTask<bool> TryHandleAsync(
