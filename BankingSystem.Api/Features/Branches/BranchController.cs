@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using BankingSystem.Api.Common;
 using BankingSystem.Api.Features.Branches.Dtos;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +11,15 @@ namespace BankingSystem.Api.Features.Branches;
 */
 [ApiController]
 [Route("api/branches")]
-public class BranchController(IBranchService branchService)
-    : ControllerBase
+public class BranchController : ControllerBase
 {
+    private readonly IBranchService m_branchService;
+
+    public BranchController(IBranchService branchService)
+    {
+        this.m_branchService = branchService;
+    }
+
     // GET api/branches?name=...&status=...&page=...&size=...
     [HttpGet]
     public async Task<ApiResponse<List<BranchResponseDto>>> Search (
@@ -22,7 +29,7 @@ public class BranchController(IBranchService branchService)
         [FromQuery] int size = Pagination.DefaultPageSize,
         CancellationToken cancellation = default)
     {
-        var branches = await branchService.SearchAsync
+        var branches = await m_branchService.SearchAsync
             (name , status, cancellation);
 
         // The total counts every match, not only the current page
@@ -38,10 +45,12 @@ public class BranchController(IBranchService branchService)
     // GET api/branches/{Id}
     [HttpGet("{Id}")]
     public async Task<ApiResponse<BranchResponseDto>> GetById (
-        string id,
+        // branch_id is NCHAR(10): SQL Server would silently cut a longer value to 10 chars
+        // and return the wrong branch, so reject it here with 400 instead
+        [MaxLength(10)] string id,
         CancellationToken cancellation)
     {
-        var branch = await branchService.GetByIdAsync(id, cancellation);
+        var branch = await m_branchService.GetByIdAsync(id, cancellation);
         return ApiResponse<BranchResponseDto>.Ok(BranchResponseDto.From(branch));
     }
     
