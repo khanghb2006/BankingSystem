@@ -31,7 +31,7 @@ public class StoredProcedureExecutor
         try
         {
             // The connection is opened per call and return to the pool on dispose
-            await using var connection = new SqlConnection(_connectionString);
+            await using var connection = new SqlConnection(m_connectionString);
             await connection.OpenAsync(cancellationToken);
 
             await using var command = new SqlCommand(procedureName , connection);
