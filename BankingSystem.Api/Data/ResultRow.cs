@@ -5,15 +5,19 @@ namespace BankingSystem.Api.Data;
         column name -> value
     It lets repositories read results without referencing any SqlClient type
 */
-public class ResultRow(Dictionary<string , object?> values)
+public class ResultRow
 {
-    /*
-        Reads a column and casts it to the expected C# type
+    private readonly Dictionary<string , object?> values;
 
-    */
+    public ResultRow(Dictionary<string , object?> values)
+    {
+        this.values = values;
+    }
+
+    // Read a column and casts it to the expected C# type
     public T Get<T>(string columnName)
     {
         var value = values[columnName];
-        return (T) value!;
+        return (T)value!;
     }
 }
