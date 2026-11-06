@@ -47,7 +47,7 @@ public sealed class ApiExceptionHandler : IExceptionHandler
         {
             // Unexpected failure (database down, bug...). Details go to the log only;
             // the client gets a generic message so no server internals leak.
-            logger.LogError(
+            m_logger.LogError(
                 exception,
                 "Unhandled exception for {Method} {Path}",
                 httpContext.Request.Method,
