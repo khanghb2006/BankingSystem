@@ -45,6 +45,7 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 | **M4 — Vận hành** | Thông báo, khoá tài khoản, lịch sử đăng nhập, thống kê | 18–20 |
 | **M5 — Sẵn sàng triển khai** | Bảo mật nâng cao, Docker, CI | 21–22 |
 | **M6 — Mở rộng quy mô** | Nhiều bản API chạy sau load balancer; thông báo đi qua message queue | 23–24 |
+| **M7 — Middleware pipeline** | Đủ 6 middleware: truy vết, log, header bảo mật, CORS, JWT, giới hạn tốc độ | 25–28 (+ Task 4, 21) |
 
 **Vòng làm chuẩn cho mỗi task** (chi tiết: [`docs/pipeline.md`](docs/pipeline.md) §3): cài đặt Repository → Service → Controller → viết test theo tiêu chí nghiệm thu → `deploy.ps1 -Seed` + `dotnet test` xanh → kiểm Definition of Done → commit.
 
@@ -490,3 +491,84 @@ Năm tình huống dễ gây hại nhất mà người dùng thật sẽ gặp. 
 - [ ] Thêm RabbitMQ vào compose; cài đặt → viết test → xanh.
 - [ ] Ghi giới hạn vào `docs/system_design.md` §10.
 - [ ] Commit: `feat(notifications): publish notifications through message queue`
+
+---
+
+## M7 — Middleware pipeline
+
+> Hệ thống có 6 middleware (ngoài exception handler đã làm ở Task 2). Hai cái đã có task riêng: JWT Authentication ở Task 4, rate limiting ở Task 21. Bốn cái còn lại là Task 25–28. Không cần chờ M6: làm được bất cứ lúc nào sau Task 2; riêng CORS phải xong trước khi nối frontend. Middleware tự viết là class có `private readonly RequestDelegate _next`, constructor tường minh và `InvokeAsync(HttpContext context)` (AGENTS.md §3 quy tắc 9).
+
+| # | Middleware | Loại | Làm ở |
+|---|---|---|---|
+| 1 | Correlation ID | tự viết | Task 25 |
+| 2 | Request logging | tự viết | Task 26 |
+| 3 | Security headers | tự viết | Task 27 |
+| 4 | CORS | có sẵn | Task 28 |
+| 5 | JWT Authentication | có sẵn | Task 4 |
+| 6 | Rate limiting | có sẵn | Task 21 |
+
+**Thứ tự đăng ký trong `Program.cs`** (sai thứ tự là lỗi, xem [`docs/pipeline.md`](docs/pipeline.md) §1):
+
+`Correlation ID` → `Request logging` → `UseExceptionHandler` → `Security headers` → `UseHttpsRedirection` → `CORS` → `Rate limiting` → `Authentication` → `Authorization` → `MapControllers`
+
+- Correlation ID đứng đầu để mọi log và mọi lỗi phía sau đều có mã truy vết.
+- Request logging nằm ngoài exception handler để ghi được status cuối cùng (kể cả `500`).
+- CORS đứng trước Authentication để preflight `OPTIONS` (không mang token) không bị `401`.
+- Rate limiting đứng trước Authentication để chặn dò mật khẩu trước khi tốn công kiểm token.
+
+### Task 25: Correlation ID
+
+**Kết quả:** Mỗi request có một mã truy vết, trả về trong response và có mặt trong mọi dòng log của request đó.
+
+**Phạm vi:** `Common/CorrelationIdMiddleware.cs`, `Program.cs`.
+
+**Tiêu chí nghiệm thu:**
+- Request không có header `X-Correlation-Id` → response có header đó với giá trị mới (GUID).
+- Request có header hợp lệ → response trả lại đúng giá trị.
+- Giá trị dài quá 64 ký tự hoặc có ký tự ngoài chữ, số, `-` → bỏ qua và tạo mã mới (chống chèn nội dung giả vào log).
+- Response lỗi (`404`, `500`) cũng có header.
+
+- [ ] Cài đặt middleware, đưa mã vào log scope (`ILogger.BeginScope`) → viết test → xanh.
+- [ ] Commit: `feat(common): correlation id middleware`
+
+### Task 26: Request logging
+
+**Kết quả:** Mỗi request để lại đúng một dòng log: method, path, status code, thời gian xử lý.
+
+**Phạm vi:** `Common/RequestLoggingMiddleware.cs`, `Program.cs`.
+
+**Tiêu chí nghiệm thu:**
+- Request thành công → có một dòng log dạng `GET /api/branches -> 200 in 12ms`.
+- Request làm exception handler bắt lỗi → dòng log có status `500`. *(vì middleware nằm ngoài exception handler)*
+- Log không chứa body, header `Authorization` hay query string. *(Review Focus 5)*
+
+- [ ] Cài đặt (đo thời gian bằng `Stopwatch`) → viết test → xanh.
+- [ ] Commit: `feat(common): request logging middleware`
+
+### Task 27: Security headers
+
+**Kết quả:** Mọi response mang header bảo mật cơ bản; dữ liệu tài chính không bị trình duyệt hay proxy cache.
+
+**Phạm vi:** `Common/SecurityHeadersMiddleware.cs`, `Program.cs`.
+
+**Tiêu chí nghiệm thu:**
+- Mọi response (kể cả `404` và `500`) có: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store`.
+- Swagger vẫn mở được ở Development.
+
+- [ ] Cài đặt (gắn header qua `Response.OnStarting` để không bị mất khi có lỗi) → viết test → xanh.
+- [ ] Commit: `feat(common): security headers middleware`
+
+### Task 28: CORS
+
+**Kết quả:** Chỉ frontend được cấu hình mới gọi được API từ trình duyệt, và đọc được các header tuỳ chỉnh.
+
+**Phạm vi:** `Program.cs`, `appsettings.json` (`Cors:AllowedOrigins`).
+
+**Tiêu chí nghiệm thu:**
+- Preflight `OPTIONS` từ origin trong danh sách → `Access-Control-Allow-Origin` trả đúng origin đó.
+- Origin lạ → không có header `Access-Control-Allow-Origin`.
+- Không dùng `AllowAnyOrigin`; danh sách origin lấy từ cấu hình, không viết cứng trong code.
+- Header `X-Total-Count` và `X-Correlation-Id` nằm trong `Access-Control-Expose-Headers`, nếu không frontend không đọc được tổng số bản ghi.
+
+- [ ] Cấu hình policy + danh sách origin → viết test → xanh.
+- [ ] Commit: `feat(common): cors policy for frontend`

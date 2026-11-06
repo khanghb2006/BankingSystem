@@ -11,8 +11,10 @@ Người dùng **học backend C#** qua project này. Mục tiêu là họ hiể
 
 | Quy tắc                        | Chi tiết                                                                                                                                                                                                                                                     |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Không sửa code của người dùng** | Kể cả refactor hay đổi phong cách (ví dụ đổi constructor): chỉ liệt kê file cần sửa, chỉ chỗ sửa và cách sửa để người dùng tự gõ. Không dùng `git checkout` / `git restore` để hoàn tác vì sẽ mất thay đổi chưa commit của họ. |
+| **Không tự commit** | Agent không chạy `git add`, `git commit`, `git push`, `git reset`, `git rebase`. Khi xong một bước chỉ gợi ý lệnh commit (kèm message) trong chat để người dùng tự gõ. |
 | **Không tự ghi code vào file** | Code mới (C#, SQL) phải **hiện trong chat**, người dùng tự gõ vào file. Agent chỉ ghi trực tiếp khi người dùng yêu cầu rõ ràng cho lần đó. Tài liệu (`.md`) thì được ghi khi được yêu cầu.                                                                   |
-| **Giải thích trước, code sau** | Mỗi đoạn code đi kèm phải clean và abstract: nó làm gì, vì sao viết vậy, thuộc task nào trong `PLAN.md`. Giải thích cú pháp C# mới (record, primary constructor, async/await, nullable, LINQ). Giải thích thêm các hàm kế thừa lạ hoặc những kiểu dữ liệu lạ |
+| **Giải thích trước, code sau** | Mỗi đoạn code đi kèm phải clean và abstract: nó làm gì, vì sao viết vậy, thuộc task nào trong `PLAN.md`. Giải thích cú pháp C# mới (record, async/await, nullable, LINQ). Giải thích thêm các hàm kế thừa lạ hoặc những kiểu dữ liệu lạ |
 | **Comment kiểu doanh nghiệp**  | Comment nói _mục đích_ (vì sao), không diễn giải từng dòng. Code sạch, đặt tên rõ ràng, không viết tắt khó hiểu. Viết bằng tiếng anh                                                                                                                         |
 | **Đi đúng thứ tự task**        | Không làm trước task sau. Không thêm thư viện, interface, abstraction "để sau dùng".                                                                                                                                                                         |
 | **Khi review code người dùng** | Chỉ ra lỗi, giải thích nguyên nhân, gợi ý hướng sửa. Để người dùng tự sửa trước khi đưa đáp án.                                                                                                                                                              |
@@ -45,7 +47,8 @@ Người dùng **học backend C#** qua project này. Mục tiêu là họ hiể
 6. **Định dạng dữ liệu theo [`docs/api_contract.md`](docs/api_contract.md):** tiền là chuỗi 2 chữ số lẻ, ngày không offset, enum đúng chuỗi gốc, id `NCHAR` phải `.Trim()`.
 7. **Không bao giờ trả ra client:** `password_hash`, `cvv_hash`, `otp_code`. Số thẻ đầy đủ chỉ trong response phát hành thẻ.
 8. **Proc mới:** viết `dbo.sp_xxx` (thiếu `dbo.` sẽ lỗi Msg 208 khi deploy DB mới), mã `THROW` 6 chữ số ≥ 50000.
-9. **Kiểm chứng thật:** "build được" chưa phải là xong. Phải đạt tiêu chí nghiệm thu của task và Definition of Done ([`docs/pipeline.md`](docs/pipeline.md) §3.2). Sửa DB thì chạy `pwsh -File database/deploy.ps1 -Seed`; "chạy được trong SSMS" không phải là bằng chứng.
+9. **Constructor kiểu truyền thống, không dùng primary constructor.** Class khai báo `private readonly _field` + constructor tường minh (`public XService(IXRepository repository) { _repository = repository; }`); đặt tên field bắt đầu bằng `_`. Không viết `class X(IDep dep)`. Riêng `record` (DTO, entity) vẫn dùng cú pháp positional bình thường.
+10. **Kiểm chứng thật:** "build được" chưa phải là xong. Phải đạt tiêu chí nghiệm thu của task và Definition of Done ([`docs/pipeline.md`](docs/pipeline.md) §3.2). Sửa DB thì chạy `pwsh -File database/deploy.ps1 -Seed`; "chạy được trong SSMS" không phải là bằng chứng.
 
 ---
 
@@ -68,7 +71,7 @@ dotnet run --project BankingSystem.Api        # chạy API, mở /swagger
 4. **Viết test** theo tiêu chí nghiệm thu của task. Test là bắt buộc; chỉ thứ tự là code trước, test sau.
 5. **Chạy** `deploy.ps1 -Seed` + `dotnet test` cho tới khi xanh.
 6. **Tự giải thích lại** bằng lời: "file này làm gì, vì sao cần nó". Không nói được nghĩa là chưa hiểu.
-7. **Commit** theo message gợi ý trong task, rồi đánh dấu `- [x]` trong `PLAN.md`.
+7. **Commit**: agent gợi ý lệnh với message trong task, người dùng tự chạy; sau đó đánh dấu `- [x]` trong `PLAN.md`.
 
 ---
 
