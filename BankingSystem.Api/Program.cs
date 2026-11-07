@@ -28,6 +28,7 @@ builder.Services.AddScoped<IBranchService, BranchService>();
 
 var app = builder.Build();
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
