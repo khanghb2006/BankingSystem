@@ -47,7 +47,7 @@ Người dùng **học backend C#** qua project này. Mục tiêu là họ hiể
 6. **Định dạng dữ liệu theo [`docs/api_contract.md`](docs/api_contract.md):** tiền là chuỗi 2 chữ số lẻ, ngày không offset, enum đúng chuỗi gốc, id `NCHAR` phải `.Trim()`.
 7. **Không bao giờ trả ra client:** `password_hash`, `cvv_hash`, `otp_code`. Số thẻ đầy đủ chỉ trong response phát hành thẻ.
 8. **Proc mới:** viết `dbo.sp_xxx` (thiếu `dbo.` sẽ lỗi Msg 208 khi deploy DB mới), mã `THROW` 6 chữ số ≥ 50000.
-9. **Constructor kiểu truyền thống, không dùng primary constructor.** Class khai báo `private readonly _field` + constructor tường minh (`public XService(IXRepository repository) { _repository = repository; }`); đặt tên field bắt đầu bằng `_`. Không viết `class X(IDep dep)`. Riêng `record` (DTO, entity) vẫn dùng cú pháp positional bình thường.
+9. **Constructor kiểu truyền thống, không dùng primary constructor.** Class khai báo `private readonly` field **tiền tố `m_`** + constructor tường minh, gán bằng `this.` (`private readonly IXRepository m_repository;` / `public XService(IXRepository repository) { this.m_repository = repository; }`); dùng `m_repository` ở mọi chỗ khác trong class. Property viết getter tường minh (`get { return errorNumber; }`), không dùng `{ get; }` rút gọn. Constructor class con gọi class cha bằng `: base(...)` khi cần. Không viết `class X(IDep dep)`. Riêng `record` (DTO, entity) vẫn dùng cú pháp positional bình thường.
 10. **Kiểm chứng thật:** "build được" chưa phải là xong. Phải đạt tiêu chí nghiệm thu của task và Definition of Done ([`docs/pipeline.md`](docs/pipeline.md) §3.2). Sửa DB thì chạy `pwsh -File database/deploy.ps1 -Seed`; "chạy được trong SSMS" không phải là bằng chứng.
 
 ---
