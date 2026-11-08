@@ -4,7 +4,7 @@ namespace BankingSystem.Api.Common;
     Give every request a trace id so all log lines of one request can be found
     The client may send its own id; otherwise generate new one
 */
-public class CorrelationMiddleware
+public class CorrelationIdMiddleware
 {
     public const string HeaderName = "X-Correlation-Id";
     
@@ -15,9 +15,9 @@ public class CorrelationMiddleware
     private const int MaxLength = 64;
 
     private readonly RequestDelegate m_next;
-    private readonly ILogger<CorrelationMiddleware> m_logger;
+    private readonly ILogger<CorrelationIdMiddleware> m_logger;
 
-    public CorrelationMiddleware(RequestDelegate next , ILogger<CorrelationMiddleware> logger)
+    public CorrelationIdMiddleware(RequestDelegate next , ILogger<CorrelationIdMiddleware> logger)
     {
         this.m_next = next;
         this.m_logger = logger;
@@ -29,7 +29,7 @@ public class CorrelationMiddleware
         if (id.Length > MaxLength) return false;
 
         foreach (var c in id)
-            if (!char.IsAsciiLetterOrDigit(c) || c != '-')
+            if (!char.IsAsciiLetterOrDigit(c) && c != '-')
                 return false;
 
         return true;
@@ -58,5 +58,16 @@ public class CorrelationMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var correlationId = ReadOrCreateId(context);
+
+        context.Items[ItemsKey] = correlationId;
+        
+        context.Response.OnStarting(AddHeaderToResponse , context);
+
+        var scope = new Dictionary<string, object> { ["CorrelationId"] = correlationId };
+
+        using (m_logger.BeginScope(scope))
+        {
+            await m_next(context);
+        }
     }
 }
