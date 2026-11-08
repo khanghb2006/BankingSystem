@@ -21,7 +21,7 @@ BankingSystem/
 ├── BankingSystem.Api/      API: Features/ (theo nghiệp vụ), Domain/, Data/, Common/
 ├── BankingSystem.Tests/    test
 ├── database/               schema, stored procedure, seed, deploy.ps1
-├── docs/                   SRS, system design, pipeline, API contract
+├── docs/                   SRS, system design, pipeline, API contract, knowledge (sổ tay kiến thức)
 ├── AGENTS.md               quy tắc cho AI agent
 └── PLAN.md                 lộ trình triển khai
 ```
@@ -59,6 +59,10 @@ pwsh -File database/deploy.ps1 -Docker -Seed
 ## Tài liệu
 
 Bắt đầu từ [`docs/README.md`](docs/README.md).
+
+**Muốn học kiến thức nền** (khái niệm và cú pháp C#, ASP.NET Core dùng trong dự án) đọc [`docs/knowledge/`](docs/knowledge/):
+
+- [`Middleware.md`](docs/knowledge/Middleware.md): middleware, DI, async/await, delegate, cú pháp test xUnit.
 
 ## Tác giả
 
