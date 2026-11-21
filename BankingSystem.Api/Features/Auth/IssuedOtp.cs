@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace BankingSystem.Api.Features.Auth.Dtos;
+namespace BankingSystem.Api.Features.Auth;
 
 /*
     Result of generating an OTP code. It carries the plaintext code so the service can
