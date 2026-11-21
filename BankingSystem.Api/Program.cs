@@ -1,5 +1,7 @@
 using BankingSystem.Api.Data;
+using Microsoft.AspNetCore.Mvc;
 using BankingSystem.Api.Common;
+using BankingSystem.Api.Features.Auth;
 using BankingSystem.Api.Features.Branches;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +13,21 @@ builder.Services.AddControllers()
      {
          options.JsonSerializerOptions.Converters.Add(new DecimalAsStringConverter());
          options.JsonSerializerOptions.Converters.Add(new DateTimeNoOffsetConverter());
-     });
+     })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var invalidFields = context.ModelState
+                .Where(entry => entry.Value?.Errors.Count > 0)
+                .Select(entry => string.IsNullOrEmpty(entry.Key) ? "body" : entry.Key);
+
+            var message = "Invalid input: " + string.Join(", ", invalidFields);
+            var error = new ApiError(StatusCodes.Status400BadRequest, "validation");
+
+            return new BadRequestObjectResult(ApiResponse<object>.Fail(message, error));
+        };
+    });
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -25,6 +41,8 @@ builder.Services.AddSingleton<StoredProcedureExecutor>();
 // Scoped : on instance per HTTP Request
 builder.Services.AddScoped<BranchRepository>();
 builder.Services.AddScoped<IBranchService, BranchService>();
+builder.Services.AddScoped<AuthRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
