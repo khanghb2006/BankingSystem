@@ -63,6 +63,7 @@ Bắt đầu từ [`docs/README.md`](docs/README.md).
 **Muốn học kiến thức nền** (khái niệm và cú pháp C#, ASP.NET Core dùng trong dự án) đọc [`docs/knowledge/`](docs/knowledge/):
 
 - [`Middleware.md`](docs/knowledge/Middleware.md): middleware, DI, async/await, delegate, cú pháp test xUnit.
+- [`Commit.md`](docs/knowledge/Commit.md): quy ước đặt tên commit và lệnh git thường dùng.
 
 ## Tác giả
 
