@@ -27,8 +27,8 @@ public class AuthRepository
         {
             ["@username"] = username,
             ["@email"] = email,
-            ["@phoneNumber"] = phoneNumber,
-            ["@passwordHash"] = passwordHash
+            ["@phone_number"] = phoneNumber,
+            ["@password"] = passwordHash
         };
 
         var rows = await m_executor.QueryAsync(
@@ -40,7 +40,7 @@ public class AuthRepository
         return ToAccount(rows[0]);
     }
 
-    // dbo.sp_generate_otpcode
+    // dbo.sp_otp_generate_otpcode
     public async Task<IssuedOtp> GenerateOtpAsync(
         long accountId,
         string purpose,
@@ -48,12 +48,12 @@ public class AuthRepository
     {
         var parameters = new Dictionary<string , object?>
         {
-            ["@accountId"] = accountId,
+            ["@account_id"] = accountId,
             ["@purpose"] = purpose
         };
 
         var rows = await m_executor.QueryAsync(
-            "dbo.sp_generate_otpcode",
+            "dbo.sp_otp_generate_otpcode",
             parameters,
             cancellationToken
         );
@@ -70,8 +70,8 @@ public class AuthRepository
     {
         var parameters = new Dictionary<string , object?>
         {
-            ["@accountId"] = accountId,
-            ["@otpCode"] = otpCode,
+            ["@account_id"] = accountId,
+            ["@otp_code"] = otpCode,
             ["@purpose"] = purpose
         };
 
