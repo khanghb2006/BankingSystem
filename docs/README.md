@@ -20,6 +20,7 @@ Sổ tay học tập, tách riêng khỏi tài liệu đặc tả ở trên: m�
 |---|---|---|
 | [`knowledge/Middleware.md`](knowledge/Middleware.md) | Middleware là gì, đọc từng dòng `CorrelationIdMiddleware`, từ điển cú pháp C# (so sánh C++), cú pháp test xUnit | Task 25 (M7) |
 | [`knowledge/Commit.md`](knowledge/Commit.md) | Quy ước đặt tên commit (Conventional Commits), các loại và phạm vi, lệnh git thường dùng, cách sửa sai | Mọi task |
+| [`knowledge/AuthRegistration.md`](knowledge/AuthRegistration.md) | Bài học Task 3: luồng đăng ký, OTP, kích hoạt; record và validation; bảo mật; sáu lỗi đã gặp; cách đọc kết quả test; bài tự kiểm tra | Task 3 (M1) |
 
 Quy ước: mỗi chủ đề một file trong `knowledge/`, đặt tên theo chủ đề, và thêm một dòng vào bảng trên.
 
