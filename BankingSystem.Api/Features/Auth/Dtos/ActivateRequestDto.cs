@@ -6,5 +6,5 @@ namespace BankingSystem.Api.Features.Auth.Dtos;
         will check it inside the databse
 */
 public record ActivateRequestDto (
-    [property : Range(1 , long.MaxValue)] long AccountId
+    [Range(1 , long.MaxValue)] long AccountId
 );

@@ -8,6 +8,6 @@ namespace BankingSystem.Api.Features.Auth.Dtos;
     Purposes as Transaction or Login belong to authenticated flow
 */
 public record RequestOtpDto (
-    [property : Range(1 , long.MaxValue)] long AccountId,
-    [property : Required , AllowedValues("Register" , "PasswordReset")] string Purpose
+    [Range(1 , long.MaxValue)] long AccountId,
+    [Required , AllowedValues("Register" , "PasswordReset")] string Purpose
 );

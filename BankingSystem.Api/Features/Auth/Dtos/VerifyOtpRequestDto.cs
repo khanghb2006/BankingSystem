@@ -8,9 +8,9 @@ namespace BankingSystem.Api.Features.Auth.Dtos;
 */
 
 public record VerifyOtpRequestDto (
-    [property : Range(1 , long.MaxValue)] long AccountId,
-    [property: Required, RegularExpression(@"^[0-9]{6}\z")] string OtpCode,
-    [property : Required , AllowedValues("Register" , "PasswordReset")] string Purpose
+    [Range(1 , long.MaxValue)] long AccountId,
+    [Required, RegularExpression(@"^[0-9]{6}\z")] string OtpCode,
+    [Required , AllowedValues("Register" , "PasswordReset")] string Purpose
 )
 {
     // Print the identifier only; the generated ToString would include OTPcode
