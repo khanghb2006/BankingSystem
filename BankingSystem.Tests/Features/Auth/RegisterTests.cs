@@ -97,4 +97,31 @@ public class RegisterTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.DoesNotContain("password" , responseText , StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("hash" , responseText , StringComparison.OrdinalIgnoreCase);
     }
+
+    // REG-05 , REG-06 , REG-07 : duplicate username , email or phone number each exactly one account
+    [Theory]
+    [InlineData("username" , 140000)]
+    [InlineData("email" , 140010)]
+    [InlineData("phoneNumber" , 140020)]
+    public async Task Register_DuplicateField_ReturnConflict(string field , int expectedCode)
+    {
+        var existing = ApiTestHelpers.NewRegisterBody();
+        (await m_client.PostAsJsonAsync(RegisterUrl , existing))
+            .EnsureSuccessStatusCode();
+
+        // Only one field is reused so the conflict cannot from anything else
+        var duplicate = ApiTestHelpers.NewRegisterBody();
+        duplicate[field] = existing[field];
+
+        var response = await m_client.PostAsJsonAsync(RegisterUrl , duplicate);
+
+        Assert.Equal(HttpStatusCode.Conflict , response.StatusCode);
+
+        using var body = await ApiTestHelpers.ReadBodyAsync(response);
+        Assert.False(body.RootElement.GetProperty("success").GetBoolean());
+
+        var error = body.RootElement.GetProperty("error");
+        Assert.Equal(expectedCode , error.GetProperty("code").GetInt32());
+        Assert.Equal("account" , error.GetProperty("domain").GetString());
+    }
 }               
