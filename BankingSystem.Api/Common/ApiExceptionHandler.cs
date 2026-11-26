@@ -9,6 +9,7 @@ public sealed class ApiExceptionHandler : IExceptionHandler
 {
     // THROW in T-SQL only accepts numbers >= 50000, so these are the procedures' business errors.
     private const int FirstBusinessErrorNumber = 50000;
+    private const int WrongOtpErrorNumber = 122001;
 
     private readonly ILogger<ApiExceptionHandler> m_logger;
     public ApiExceptionHandler(ILogger<ApiExceptionHandler> logger)
@@ -37,8 +38,9 @@ public sealed class ApiExceptionHandler : IExceptionHandler
             statusCode = info.HttpStatus;
 
             // api_contract section 2: "does not exist" / "Invalid" always means 404.
-            if (message.Contains("does not exist", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("Invalid", StringComparison.OrdinalIgnoreCase))
+            if (procedureException.ErrorNumber != WrongOtpErrorNumber
+                && (message.Contains("does not exist" , StringComparison.OrdinalIgnoreCase)
+                || message.Contains("Invalid" , StringComparison.OrdinalIgnoreCase)))
             {
                 statusCode = StatusCodes.Status404NotFound;
             }

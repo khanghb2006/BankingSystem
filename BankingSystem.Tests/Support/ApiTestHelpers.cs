@@ -1,5 +1,6 @@
-using System.Net.Http.Json;
+using System.Net;
 using System.Text.Json;
+using System.Net.Http.Json;
 
 namespace BankingSystem.Tests;
 
@@ -35,5 +36,18 @@ internal static class ApiTestHelpers
 
         using var body = await ReadBodyAsync(response);
         return body.RootElement.GetProperty("data").GetProperty("accountId").GetInt64();
+    }
+
+    public static async Task AssertErrorAsync(HttpResponseMessage response ,
+        HttpStatusCode status, int code , string domain)
+    {
+        Assert.Equal(status , response.StatusCode);
+
+        using var body = await ReadBodyAsync(response);
+        Assert.False(body.RootElement.GetProperty("success").GetBoolean());
+
+        var error = body.RootElement.GetProperty("error");
+        Assert.Equal(code , error.GetProperty("code").GetInt32());
+        Assert.Equal(domain , error.GetProperty("domain").GetString());
     }
 }

@@ -52,6 +52,26 @@ public class TestDatabase
 
         return (string)(await command.ExecuteScalarAsync())!;
     }
+    
+    // Whether the newest OTP of this account has been accepted by the verify endpoint
+    public async Task<bool> IsLastestVerifiedAsync(long accountId , string purpose)
+    {
+        await using var connection = new SqlConnection(m_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(
+            @"  SELECT TOP 1 verified
+                FROM OTP
+                WHERE account_id = @accountId
+                    AND purpose = @purpose
+                ORDER BY otp_id DESC",
+            connection
+        );
+        command.Parameters.AddWithValue("@accountId" , accountId);
+        command.Parameters.AddWithValue("@purpose" , purpose);
+
+        return (bool)(await command.ExecuteScalarAsync())!;
+    }
 
     private async Task<T> ScalarAsync<T>(string sql , long accountId)
     {
