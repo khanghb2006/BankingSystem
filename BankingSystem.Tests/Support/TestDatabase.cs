@@ -33,6 +33,26 @@ public class TestDatabase
         );
     }
 
+    public async Task<string> GetLatestUnverifiedOtpCodeAsync(long accountId , string purpose)
+    {
+        await using var connection = new SqlConnection(m_connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand (
+            @"  SELECT TOP 1 otp_code
+                FROM OTP
+                WHERE account_id = @accountId 
+                    AND purpose = @purpose 
+                    AND verified = 0
+                ORDER BY otp_id DESC",
+            connection
+        );
+        command.Parameters.AddWithValue("@accountId" , accountId);
+        command.Parameters.AddWithValue("@purpose" , purpose);
+
+        return (string)(await command.ExecuteScalarAsync())!;
+    }
+
     private async Task<T> ScalarAsync<T>(string sql , long accountId)
     {
         await using var connection = new SqlConnection(m_connectionString);

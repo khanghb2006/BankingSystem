@@ -37,13 +37,13 @@ public class RegisterTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Register_ValidRequest_ReturnsPendingCustomer()
     {
-        var request = NewRegisterBody();
+        var request = ApiTestHelpers.NewRegisterBody();
 
         var response = await m_client.PostAsJsonAsync(RegisterUrl, request);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        using var body = await ReadBodyAsync(response);
+        using var body = await ApiTestHelpers.ReadBodyAsync(response);
         Assert.True(body.RootElement.GetProperty("success").GetBoolean());
 
         var data = body.RootElement.GetProperty("data");
@@ -57,13 +57,13 @@ public class RegisterTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Register_ValidRequest_StoresHashNotPlainPassword()
     {
-        var request = NewRegisterBody();
+        var request = ApiTestHelpers.NewRegisterBody();
 
         var response = await m_client.PostAsJsonAsync(RegisterUrl, request);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        using var body = await ReadBodyAsync(response);
+        using var body = await ApiTestHelpers.ReadBodyAsync(response);
         var accountId = body.RootElement.GetProperty("data").GetProperty("accountId").GetInt64();
 
         var storedHash = await m_database.GetPasswordHashAsync(accountId)!;
@@ -81,7 +81,7 @@ public class RegisterTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Register_ValidRequest_ResponseLeaksNoSecret()
     {
-        var request = NewRegisterBody();
+        var request = ApiTestHelpers.NewRegisterBody();
         var response = await m_client.PostAsJsonAsync(RegisterUrl, request);
 
         Assert.Equal(HttpStatusCode.OK , response.StatusCode);
@@ -97,25 +97,4 @@ public class RegisterTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.DoesNotContain("password" , responseText , StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("hash" , responseText , StringComparison.OrdinalIgnoreCase);
     }
-
-    // The database keeps data between runs, so every call returns value that were never used 
-    private static Dictionary<string , object?> NewRegisterBody()
-    {
-        var unique = Guid.NewGuid().ToString("N")[..20];
-        var username = "user_" + unique;
-
-        return new Dictionary<string , object?>
-        {
-            ["username"] = username,
-            ["email"] = username + "@example.com",
-            ["phoneNumber"] = Random.Shared.NextInt64(100_000_000_000, 1_000_000_000_000).ToString(),
-            ["password"] = ValidPassword
-        };
-    }
-
-    private static async Task<JsonDocument> ReadBodyAsync(HttpResponseMessage response)
-    {
-        var responseText = await response.Content.ReadAsStringAsync();
-        return JsonDocument.Parse(responseText);
-    }
-}           
+}               
