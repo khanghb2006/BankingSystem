@@ -50,14 +50,7 @@ public class ActivateTests : IClassFixture<WebApplicationFactory<Program>>
     // Precondition share by the Active cases : a Pending account with a verified Register OTP
     private async Task<long> RegisterVerifiedAccountAsync()
     {
-        string register_api = "/api/auth/register";
-        var registered = await m_client.PostAsJsonAsync(register_api ,  ApiTestHelpers.NewRegisterBody());
-        registered.EnsureSuccessStatusCode();
-
-        using var registeredBody = await ApiTestHelpers.ReadBodyAsync(registered);
-
-        var accountId = registeredBody.RootElement.GetProperty("data").GetProperty("accountId").GetInt64();
-
+        var accountId = await ApiTestHelpers.RegisterAccountAsync(m_client);
 
         string opt_api = "/api/auth/otp";
         (await m_client.PostAsJsonAsync(opt_api , new {accountId , Purpose}))

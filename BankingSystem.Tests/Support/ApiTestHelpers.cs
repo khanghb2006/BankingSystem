@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace BankingSystem.Tests;
@@ -23,5 +24,16 @@ internal static class ApiTestHelpers
     {
         var responseText = await response.Content.ReadAsStringAsync();
         return JsonDocument.Parse(responseText);
+    }
+
+    // Precondition of the OTP and activation cases: a brand new Pending account
+    public static async Task<long> RegisterAccountAsync(HttpClient client)
+    {
+        string register_api = "/api/auth/register";
+        var response = await client.PostAsJsonAsync(register_api , NewRegisterBody());
+        response.EnsureSuccessStatusCode();
+
+        using var body = await ReadBodyAsync(response);
+        return body.RootElement.GetProperty("data").GetProperty("accountId").GetInt64();
     }
 }
